@@ -1316,6 +1316,11 @@ document.addEventListener('DOMContentLoaded', () => {
             img.onload = () => {
                 currentImage = img;
                 
+                // Ẩn màn hình chào đón và hiển thị khu vực làm việc chính
+                const welcomeScreen = document.getElementById('welcome-screen');
+                if (welcomeScreen) welcomeScreen.style.display = 'none';
+                appContent.style.display = 'grid';
+                
                 // Reset zoom & pan for new image
                 zoomScale = 1.0;
                 panX = 0;
@@ -2426,6 +2431,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Reset Application State ---
+    // --- Reset Application State ---
     function resetApp() {
         fileInput.value = '';
         currentImage = null;
@@ -2494,41 +2500,75 @@ document.addEventListener('DOMContentLoaded', () => {
         
         switchTab('tab-live-grid');
         setSlicingMode('grid');
+
+        // Hiện lại màn hình chào đón Welcome Screen và ẩn khu vực làm việc
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const sourceCardsGrid = document.getElementById('source-cards-grid');
+        const aiWelcomePanel = document.getElementById('ai-welcome-panel');
+        const uploadWelcomePanel = document.getElementById('upload-welcome-panel');
+
+        if (welcomeScreen) welcomeScreen.style.display = 'flex';
+        appContent.style.display = 'none';
+        
+        // Đưa màn hình chào về giao diện chọn Card nguồn ban đầu
+        if (sourceCardsGrid) sourceCardsGrid.style.display = 'grid';
+        if (aiWelcomePanel) aiWelcomePanel.style.display = 'none';
+        if (uploadWelcomePanel) uploadWelcomePanel.style.display = 'none';
+        
+        // Reset input bài viết AI
+        const aiArticle = document.getElementById('ai-article');
+        if (aiArticle) aiArticle.value = '';
     }
 
-    // Shortcuts Helper UI Click Listeners
-    const btnShortcutsToggle = document.getElementById('btn-shortcuts-toggle');
-    const btnCloseShortcuts = document.getElementById('btn-close-shortcuts');
-    const shortcutsPopup = document.getElementById('shortcuts-popup');
+    // ==========================================
+    // Welcome Screen & AI Generator Logic
+    // ==========================================
+    const cardSourceAi = document.getElementById('card-source-ai');
+    const cardSourceUpload = document.getElementById('card-source-upload');
+    const sourceCardsGrid = document.getElementById('source-cards-grid');
+    const aiWelcomePanel = document.getElementById('ai-welcome-panel');
+    const uploadWelcomePanel = document.getElementById('upload-welcome-panel');
+    const btnBackToSource = document.getElementById('btn-back-to-source');
+    const btnBackToSourceUpload = document.getElementById('btn-back-to-source-upload');
+    const btnChangeImage = document.getElementById('btn-change-image');
 
-    if (btnShortcutsToggle && shortcutsPopup) {
-        btnShortcutsToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            shortcutsPopup.classList.toggle('active');
+    // 1. Chuyển đổi màn hình chọn nguồn trên Welcome Screen
+    if (cardSourceAi && sourceCardsGrid && aiWelcomePanel) {
+        cardSourceAi.addEventListener('click', () => {
+            sourceCardsGrid.style.display = 'none';
+            aiWelcomePanel.style.display = 'block';
         });
     }
 
-    if (btnCloseShortcuts && shortcutsPopup) {
-        btnCloseShortcuts.addEventListener('click', (e) => {
-            e.stopPropagation();
-            shortcutsPopup.classList.remove('active');
+    if (cardSourceUpload && sourceCardsGrid && uploadWelcomePanel) {
+        cardSourceUpload.addEventListener('click', () => {
+            sourceCardsGrid.style.display = 'none';
+            uploadWelcomePanel.style.display = 'block';
         });
     }
 
-    // Đóng popup khi click ra ngoài
-    document.addEventListener('click', (e) => {
-        if (shortcutsPopup && shortcutsPopup.classList.contains('active')) {
-            if (!shortcutsPopup.contains(e.target) && e.target !== btnShortcutsToggle && !btnShortcutsToggle.contains(e.target)) {
-                shortcutsPopup.classList.remove('active');
-            }
-        }
-    });
+    if (btnBackToSource && sourceCardsGrid && aiWelcomePanel) {
+        btnBackToSource.addEventListener('click', () => {
+            aiWelcomePanel.style.display = 'none';
+            sourceCardsGrid.style.display = 'grid';
+        });
+    }
 
-    // ==========================================
-    // AI Generator Panel Logic (GPT-4o + DALL-E 3)
-    // ==========================================
-    const btnCollapsibleAi = document.getElementById('btn-collapsible-ai');
-    const aiSection = document.getElementById('ai-section');
+    if (btnBackToSourceUpload && sourceCardsGrid && uploadWelcomePanel) {
+        btnBackToSourceUpload.addEventListener('click', () => {
+            uploadWelcomePanel.style.display = 'none';
+            sourceCardsGrid.style.display = 'grid';
+        });
+    }
+
+    // Nút thay đổi ảnh trên Sidebar để quay lại welcome screen
+    if (btnChangeImage) {
+        btnChangeImage.addEventListener('click', () => {
+            resetApp();
+        });
+    }
+
+    // Các phần tử điều khiển AI
     const aiApiKey = document.getElementById('ai-api-key');
     const btnToggleKeyVisibility = document.getElementById('btn-toggle-key-visibility');
     const aiCharacterMode = document.getElementById('ai-character-mode');
@@ -2547,14 +2587,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let referenceFaceBase64 = null;
 
-    // 1. Toggle Collapsible Section
-    if (btnCollapsibleAi && aiSection) {
-        btnCollapsibleAi.addEventListener('click', () => {
-            aiSection.classList.toggle('active');
-        });
-    }
-
-    // 2. Load API Key from localStorage
+    // Load API Key từ localStorage
     if (aiApiKey) {
         const savedKey = localStorage.getItem('openai_api_key');
         if (savedKey) {
@@ -2565,7 +2598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Toggle API Key Visibility
+    // Ẩn/Hiện API Key
     if (btnToggleKeyVisibility && aiApiKey) {
         btnToggleKeyVisibility.addEventListener('click', () => {
             const icon = btnToggleKeyVisibility.querySelector('i');
@@ -2579,7 +2612,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. Character Mode Change
+    // Thay đổi chế độ nhân vật (hiển thị upload ảnh chân dung)
     if (aiCharacterMode && aiFaceUploadGroup) {
         aiCharacterMode.addEventListener('change', () => {
             if (aiCharacterMode.value === 'reference') {
@@ -2590,10 +2623,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. Face Image Upload Handlers
+    // Chọn ảnh khuôn mặt tham chiếu
     if (faceUploadBox && aiFaceInput) {
         faceUploadBox.addEventListener('click', (e) => {
-            // Tránh click đúp nếu bấm vào nút remove
             if (e.target.id === 'btn-remove-face' || e.target.closest('#btn-remove-face')) {
                 return;
             }
@@ -2611,7 +2643,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    referenceFaceBase64 = e.target.result; // Dạng data:image/png;base64,...
+                    referenceFaceBase64 = e.target.result;
                     facePreview.src = referenceFaceBase64;
                     facePrompt.style.display = 'none';
                     facePreviewContainer.style.display = 'flex';
@@ -2632,13 +2664,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 6. Generate AI Carousel Trigger
+    // Gọi API Tạo Carousel bằng AI
     if (btnGenerateAi) {
         btnGenerateAi.addEventListener('click', async () => {
             const apiKey = aiApiKey.value.trim();
             if (!apiKey) {
                 alert('Vui lòng nhập OpenAI API Key của bạn để sử dụng tính năng này!');
-                aiSection.classList.add('active');
                 aiApiKey.focus();
                 return;
             }
@@ -2664,12 +2695,12 @@ document.addEventListener('DOMContentLoaded', () => {
             aiStatusText.textContent = 'Đang phân tích bài viết bằng GPT-4o...';
 
             try {
-                // Bước 1: Gọi GPT-4o để viết lại DALL-E Prompt
+                // Bước 1: GPT-4o viết Prompt
                 const dallEPrompt = await callGPT4oToWritePrompt(apiKey, articleText, cardCount, isReferenceMode, referenceFaceBase64);
                 
                 aiStatusText.textContent = 'Đang vẽ ảnh Carousel bằng DALL-E 3 (mất khoảng 20s)...';
                 
-                // Bước 2: Gọi DALL-E 3 để vẽ ảnh
+                // Bước 2: DALL-E 3 vẽ ảnh
                 const imageUrl = await callDALLE3ToDrawImage(apiKey, dallEPrompt, cardCount);
                 
                 aiStatusText.textContent = 'Đang tải ảnh vào khung làm việc...';
@@ -2682,10 +2713,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleImageSelection(file);
 
                 // Khóa chế độ tự động căn lưới tương ứng với số slide
-                // 6 slide -> 3 hàng x 2 cột hoặc 2 hàng x 3 cột (theo DALL-E template 3:2 -> 3 cột x 2 hàng)
-                // 9 slide -> 3 hàng x 3 cột
-                // 12 slide -> 4 hàng x 3 cột (3:4 -> 3 cột x 4 hàng)
-                // 15 slide -> 5 hàng x 3 cột (3:5 -> 3 cột x 5 hàng)
                 let cols = 3;
                 let rows = 3;
                 if (cardCount === 6) {
@@ -2703,8 +2730,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetGridToEven();
                 handleParamsChange();
 
-                // Đóng panel AI sau khi tạo xong
-                aiSection.classList.remove('active');
                 alert('Đã tạo thành công Carousel bằng AI và tải vào lưới cắt! Bạn có thể nhấn nút "Tự động căn lưới" hoặc điều chỉnh lưới tùy ý, sau đó nhấn "Cắt ảnh".');
 
             } catch (error) {
@@ -2718,7 +2743,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Hàm gọi GPT-4o để viết Prompt DALL-E 3
+    // Hàm gọi GPT-4o
     async function callGPT4oToWritePrompt(apiKey, article, cardCount, isReferenceMode, faceBase64) {
         const url = 'https://api.openai.com/v1/chat/completions';
         
@@ -2746,7 +2771,6 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
         ];
 
         if (isReferenceMode && faceBase64) {
-            // Tách phần đầu base64
             const base64Data = faceBase64.split(',')[1];
             messages.push({
                 role: 'user',
@@ -2797,19 +2821,17 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
         return data.choices[0].message.content.trim();
     }
 
-    // Hàm gọi DALL-E 3 để vẽ ảnh
+    // Hàm gọi DALL-E 3
     async function callDALLE3ToDrawImage(apiKey, prompt, cardCount) {
         const url = 'https://api.openai.com/v1/images/generations';
         
-        // Ánh xạ kích thước DALL-E 3 tương ứng với số slide
-        // DALL-E 3 chỉ hỗ trợ: 1024x1024 (1:1), 1792x1024 (ngang), 1024x1792 (dọc)
         let size = '1024x1024';
         if (cardCount === 6) {
-            size = '1792x1024'; // Ảnh ngang (3:2 xấp xỉ)
+            size = '1792x1024';
         } else if (cardCount === 9) {
-            size = '1024x1024'; // Ảnh vuông (1:1)
+            size = '1024x1024';
         } else if (cardCount === 12 || cardCount === 15) {
-            size = '1024x1792'; // Ảnh dọc (3:4 hoặc 3:5 xấp xỉ)
+            size = '1024x1792';
         }
 
         const response = await fetch(url, {
@@ -2822,9 +2844,7 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
                 model: 'dall-e-3',
                 prompt: prompt,
                 n: 1,
-                size: size,
-                quality: 'standard', // Để chạy nhanh và tiết kiệm, có thể để 'standard'. Muốn cực nét đổi thành 'hd'
-                style: 'vivid' // Giúp ảnh có chiều sâu nghệ thuật và màu sắc bắt mắt hơn
+                size: size
             })
         });
 
@@ -2836,4 +2856,32 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
         const data = await response.json();
         return data.data[0].url;
     }
+
+    // Shortcuts Helper UI Click Listeners
+    const btnShortcutsToggle = document.getElementById('btn-shortcuts-toggle');
+    const btnCloseShortcuts = document.getElementById('btn-close-shortcuts');
+    const shortcutsPopup = document.getElementById('shortcuts-popup');
+
+    if (btnShortcutsToggle && shortcutsPopup) {
+        btnShortcutsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            shortcutsPopup.classList.toggle('active');
+        });
+    }
+
+    if (btnCloseShortcuts && shortcutsPopup) {
+        btnCloseShortcuts.addEventListener('click', (e) => {
+            e.stopPropagation();
+            shortcutsPopup.classList.remove('active');
+        });
+    }
+
+    // Đóng popup khi click ra ngoài
+    document.addEventListener('click', (e) => {
+        if (shortcutsPopup && shortcutsPopup.classList.contains('active')) {
+            if (!shortcutsPopup.contains(e.target) && e.target !== btnShortcutsToggle && !btnShortcutsToggle.contains(e.target)) {
+                shortcutsPopup.classList.remove('active');
+            }
+        }
+    });
 });
