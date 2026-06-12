@@ -80,9 +80,20 @@
                     
                     <div class="ai-form-grid">
                         <div class="ai-form-left">
-                            <!-- OpenAI API Key -->
+                            <!-- AI Provider Selection -->
                             <div class="control-item">
-                                <label for="ai-api-key">
+                                <label for="ai-provider">
+                                    <i class="fa-solid fa-robot"></i> Nhà cung cấp AI
+                                </label>
+                                <select id="ai-provider" class="select-dropdown">
+                                    <option value="openai" selected>OpenAI (GPT-4o + DALL-E 3)</option>
+                                    <option value="gemini">Google Gemini (Gemini 2.5 + Imagen 3)</option>
+                                </select>
+                            </div>
+
+                            <!-- API Key -->
+                            <div class="control-item">
+                                <label for="ai-api-key" id="lbl-api-key">
                                     <i class="fa-solid fa-key"></i> OpenAI API Key
                                 </label>
                                 <div class="input-with-action">
