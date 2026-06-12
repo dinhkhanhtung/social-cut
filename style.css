@@ -302,7 +302,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 120px;
+    height: 130px;
     flex-shrink: 0;
 }
 
@@ -1614,7 +1614,7 @@ input[type="number"] {
     /* Dropzone kéo thả ảnh */
     .dropzone {
         padding: 14px !important;
-        min-height: 90px !important;
+        height: 90px !important;
     }
 
     .dropzone-prompt i {
