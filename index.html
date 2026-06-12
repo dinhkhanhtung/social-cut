@@ -64,6 +64,90 @@
                     </button>
                 </div>
 
+                <!-- Panel: Tạo ảnh bằng AI (Collapsible) -->
+                <div class="collapsible-section" id="ai-section">
+                    <button type="button" class="collapsible-header" id="btn-collapsible-ai">
+                        <span><i class="fa-solid fa-wand-magic-sparkles"></i> Tạo ảnh bằng AI (OpenAI)</span>
+                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    </button>
+                    <div class="collapsible-content" id="ai-content">
+                        <!-- OpenAI API Key -->
+                        <div class="control-item">
+                            <label for="ai-api-key">
+                                <i class="fa-solid fa-key"></i> OpenAI API Key
+                            </label>
+                            <div class="input-with-action">
+                                <input type="password" id="ai-api-key" placeholder="Nhập sk-proj-...">
+                                <button type="button" class="btn-toggle-visibility" id="btn-toggle-key-visibility" title="Hiện/Ẩn Key">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Chế độ nhân vật -->
+                        <div class="control-item">
+                            <label for="ai-character-mode">
+                                <i class="fa-solid fa-user-gear"></i> Chế độ nhân vật
+                            </label>
+                            <select id="ai-character-mode" class="select-dropdown">
+                                <option value="auto">Tự động (Không cần nhân vật)</option>
+                                <option value="reference">Có nhân vật tham chiếu (Upload mặt)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Upload ảnh khuôn mặt (chỉ hiển thị khi chọn reference) -->
+                        <div class="control-item" id="ai-face-upload-group" style="display: none;">
+                            <label>
+                                <i class="fa-solid fa-user-astronaut"></i> Ảnh khuôn mặt tham chiếu
+                            </label>
+                            <div class="face-upload-box" id="face-upload-box">
+                                <input type="file" id="ai-face-input" accept="image/*" style="display: none;">
+                                <div class="face-prompt" id="face-prompt">
+                                    <i class="fa-solid fa-plus"></i> Chọn ảnh khuôn mặt
+                                </div>
+                                <div class="face-preview-container" id="face-preview-container" style="display: none;">
+                                    <img id="face-preview" src="" alt="Face preview">
+                                    <button type="button" class="btn-remove-face" id="btn-remove-face" title="Xóa ảnh khuôn mặt">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Số lượng Slide -->
+                        <div class="control-item">
+                            <label for="ai-slide-count">
+                                <i class="fa-solid fa-layer-group"></i> Số lượng slide
+                            </label>
+                            <select id="ai-slide-count" class="select-dropdown">
+                                <option value="9" selected>9 slide (Tỉ lệ 1:1)</option>
+                                <option value="6">6 slide (Tỉ lệ 3:2)</option>
+                                <option value="12">12 slide (Tỉ lệ 3:4)</option>
+                                <option value="15">15 slide (Tỉ lệ 3:5)</option>
+                            </select>
+                        </div>
+
+                        <!-- Bài viết / Nội dung -->
+                        <div class="control-item">
+                            <label for="ai-article">
+                                <i class="fa-solid fa-file-lines"></i> Nội dung bài viết
+                            </label>
+                            <textarea id="ai-article" placeholder="Dán bài viết hoặc ý tưởng của bạn vào đây..." rows="4" class="custom-textarea"></textarea>
+                        </div>
+
+                        <!-- Nút Tạo Ảnh -->
+                        <button type="button" class="btn-action btn-primary" id="btn-generate-ai" style="width: 100%; margin-top: 8px;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo Carousel bằng AI ⚡
+                        </button>
+                        
+                        <!-- Trạng thái Loading -->
+                        <div class="ai-status-container" id="ai-status-container" style="display: none;">
+                            <div class="ai-spinner"></div>
+                            <span id="ai-status-text">Đang phân tích bài viết...</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- File Dropzone -->
                 <div class="dropzone" id="dropzone">
                     <input type="file" id="file-input" accept="image/*" class="file-input">

@@ -1953,3 +1953,265 @@ input[type="number"] {
         display: none !important;
     }
 }
+
+/* ==========================================
+   AI Generator Panel UI
+   ========================================== */
+.collapsible-section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+}
+
+.collapsible-section:hover {
+    border-color: rgba(6, 182, 212, 0.3);
+}
+
+.collapsible-header {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition-smooth);
+}
+
+.collapsible-header i.fa-wand-magic-sparkles {
+    color: var(--accent);
+    margin-right: 8px;
+}
+
+.collapsible-header .toggle-icon {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+    color: var(--text-secondary);
+}
+
+.collapsible-section.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+    padding: 0 16px;
+}
+
+.collapsible-section.active .collapsible-content {
+    max-height: 2000px; /* Độ cao tối đa khi mở */
+    padding: 16px;
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+}
+
+/* API Key Input Styling */
+.input-with-action {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-action input {
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    transition: var(--transition-smooth);
+}
+
+.input-with-action input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+    outline: none;
+}
+
+.btn-toggle-visibility {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px;
+    transition: var(--transition-smooth);
+}
+
+.btn-toggle-visibility:hover {
+    color: var(--accent);
+}
+
+/* Custom Textarea & Select */
+.custom-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    resize: vertical;
+    font-family: inherit;
+    transition: var(--transition-smooth);
+}
+
+.custom-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+    outline: none;
+}
+
+.select-dropdown {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition-smooth);
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'><path stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 1 4 4 4-4'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px 6px;
+}
+
+.select-dropdown:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+    outline: none;
+}
+
+/* Face Upload Box */
+.face-upload-box {
+    width: 100%;
+    height: 120px;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: var(--transition-smooth);
+}
+
+.face-upload-box:hover {
+    border-color: var(--accent);
+    background: rgba(6, 182, 212, 0.03);
+}
+
+.face-prompt {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+}
+
+.face-prompt i {
+    font-size: 1.5rem;
+}
+
+.face-upload-box:hover .face-prompt {
+    color: var(--accent);
+}
+
+.face-preview-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.face-preview-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+.btn-remove-face {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    z-index: 5;
+}
+
+.btn-remove-face:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    transform: scale(1.1);
+}
+
+/* AI Status & Spinner */
+.ai-status-container {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    background: rgba(6, 182, 212, 0.05);
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: pulse 2s infinite ease-in-out;
+}
+
+.ai-status-container span {
+    font-size: 0.85rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.ai-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top: 2px solid var(--accent);
+    border-radius: 50%;
+    animation: rotate 1s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.6; }
+}

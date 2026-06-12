@@ -2523,4 +2523,317 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // ==========================================
+    // AI Generator Panel Logic (GPT-4o + DALL-E 3)
+    // ==========================================
+    const btnCollapsibleAi = document.getElementById('btn-collapsible-ai');
+    const aiSection = document.getElementById('ai-section');
+    const aiApiKey = document.getElementById('ai-api-key');
+    const btnToggleKeyVisibility = document.getElementById('btn-toggle-key-visibility');
+    const aiCharacterMode = document.getElementById('ai-character-mode');
+    const aiFaceUploadGroup = document.getElementById('ai-face-upload-group');
+    const aiFaceInput = document.getElementById('ai-face-input');
+    const faceUploadBox = document.getElementById('face-upload-box');
+    const facePrompt = document.getElementById('face-prompt');
+    const facePreviewContainer = document.getElementById('face-preview-container');
+    const facePreview = document.getElementById('face-preview');
+    const btnRemoveFace = document.getElementById('btn-remove-face');
+    const aiSlideCount = document.getElementById('ai-slide-count');
+    const aiArticle = document.getElementById('ai-article');
+    const btnGenerateAi = document.getElementById('btn-generate-ai');
+    const aiStatusContainer = document.getElementById('ai-status-container');
+    const aiStatusText = document.getElementById('ai-status-text');
+
+    let referenceFaceBase64 = null;
+
+    // 1. Toggle Collapsible Section
+    if (btnCollapsibleAi && aiSection) {
+        btnCollapsibleAi.addEventListener('click', () => {
+            aiSection.classList.toggle('active');
+        });
+    }
+
+    // 2. Load API Key from localStorage
+    if (aiApiKey) {
+        const savedKey = localStorage.getItem('openai_api_key');
+        if (savedKey) {
+            aiApiKey.value = savedKey;
+        }
+        aiApiKey.addEventListener('input', () => {
+            localStorage.setItem('openai_api_key', aiApiKey.value.trim());
+        });
+    }
+
+    // 3. Toggle API Key Visibility
+    if (btnToggleKeyVisibility && aiApiKey) {
+        btnToggleKeyVisibility.addEventListener('click', () => {
+            const icon = btnToggleKeyVisibility.querySelector('i');
+            if (aiApiKey.type === 'password') {
+                aiApiKey.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                aiApiKey.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    }
+
+    // 4. Character Mode Change
+    if (aiCharacterMode && aiFaceUploadGroup) {
+        aiCharacterMode.addEventListener('change', () => {
+            if (aiCharacterMode.value === 'reference') {
+                aiFaceUploadGroup.style.display = 'block';
+            } else {
+                aiFaceUploadGroup.style.display = 'none';
+            }
+        });
+    }
+
+    // 5. Face Image Upload Handlers
+    if (faceUploadBox && aiFaceInput) {
+        faceUploadBox.addEventListener('click', (e) => {
+            // Tránh click đúp nếu bấm vào nút remove
+            if (e.target.id === 'btn-remove-face' || e.target.closest('#btn-remove-face')) {
+                return;
+            }
+            aiFaceInput.click();
+        });
+    }
+
+    if (aiFaceInput) {
+        aiFaceInput.addEventListener('change', () => {
+            if (aiFaceInput.files && aiFaceInput.files[0]) {
+                const file = aiFaceInput.files[0];
+                if (!file.type.startsWith('image/')) {
+                    alert('Vui lòng chọn file hình ảnh hợp lệ!');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    referenceFaceBase64 = e.target.result; // Dạng data:image/png;base64,...
+                    facePreview.src = referenceFaceBase64;
+                    facePrompt.style.display = 'none';
+                    facePreviewContainer.style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (btnRemoveFace) {
+        btnRemoveFace.addEventListener('click', (e) => {
+            e.stopPropagation();
+            referenceFaceBase64 = null;
+            aiFaceInput.value = '';
+            facePreview.src = '';
+            facePreviewContainer.style.display = 'none';
+            facePrompt.style.display = 'flex';
+        });
+    }
+
+    // 6. Generate AI Carousel Trigger
+    if (btnGenerateAi) {
+        btnGenerateAi.addEventListener('click', async () => {
+            const apiKey = aiApiKey.value.trim();
+            if (!apiKey) {
+                alert('Vui lòng nhập OpenAI API Key của bạn để sử dụng tính năng này!');
+                aiSection.classList.add('active');
+                aiApiKey.focus();
+                return;
+            }
+
+            const articleText = aiArticle.value.trim();
+            if (!articleText) {
+                alert('Vui lòng nhập hoặc dán nội dung bài viết!');
+                aiArticle.focus();
+                return;
+            }
+
+            const cardCount = parseInt(aiSlideCount.value);
+            const isReferenceMode = aiCharacterMode.value === 'reference';
+
+            if (isReferenceMode && !referenceFaceBase64) {
+                alert('Vui lòng tải lên ảnh khuôn mặt để làm nhân vật tham chiếu!');
+                return;
+            }
+
+            // Lock UI
+            btnGenerateAi.disabled = true;
+            aiStatusContainer.style.display = 'flex';
+            aiStatusText.textContent = 'Đang phân tích bài viết bằng GPT-4o...';
+
+            try {
+                // Bước 1: Gọi GPT-4o để viết lại DALL-E Prompt
+                const dallEPrompt = await callGPT4oToWritePrompt(apiKey, articleText, cardCount, isReferenceMode, referenceFaceBase64);
+                
+                aiStatusText.textContent = 'Đang vẽ ảnh Carousel bằng DALL-E 3 (mất khoảng 20s)...';
+                
+                // Bước 2: Gọi DALL-E 3 để vẽ ảnh
+                const imageUrl = await callDALLE3ToDrawImage(apiKey, dallEPrompt, cardCount);
+                
+                aiStatusText.textContent = 'Đang tải ảnh vào khung làm việc...';
+
+                // Tải ảnh trực tiếp vào ứng dụng
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                const file = new File([blob], `ai_carousel_${cardCount}s.png`, { type: 'image/png' });
+                
+                handleImageSelection(file);
+
+                // Khóa chế độ tự động căn lưới tương ứng với số slide
+                // 6 slide -> 3 hàng x 2 cột hoặc 2 hàng x 3 cột (theo DALL-E template 3:2 -> 3 cột x 2 hàng)
+                // 9 slide -> 3 hàng x 3 cột
+                // 12 slide -> 4 hàng x 3 cột (3:4 -> 3 cột x 4 hàng)
+                // 15 slide -> 5 hàng x 3 cột (3:5 -> 3 cột x 5 hàng)
+                let cols = 3;
+                let rows = 3;
+                if (cardCount === 6) {
+                    cols = 3; rows = 2;
+                } else if (cardCount === 9) {
+                    cols = 3; rows = 3;
+                } else if (cardCount === 12) {
+                    cols = 3; rows = 4;
+                } else if (cardCount === 15) {
+                    cols = 3; rows = 5;
+                }
+
+                inputCols.value = cols;
+                inputRows.value = rows;
+                resetGridToEven();
+                handleParamsChange();
+
+                // Đóng panel AI sau khi tạo xong
+                aiSection.classList.remove('active');
+                alert('Đã tạo thành công Carousel bằng AI và tải vào lưới cắt! Bạn có thể nhấn nút "Tự động căn lưới" hoặc điều chỉnh lưới tùy ý, sau đó nhấn "Cắt ảnh".');
+
+            } catch (error) {
+                console.error(error);
+                alert(`Lỗi khi tạo ảnh bằng AI: ${error.message || error}`);
+            } finally {
+                // Unlock UI
+                btnGenerateAi.disabled = false;
+                aiStatusContainer.style.display = 'none';
+            }
+        });
+    }
+
+    // Hàm gọi GPT-4o để viết Prompt DALL-E 3
+    async function callGPT4oToWritePrompt(apiKey, article, cardCount, isReferenceMode, faceBase64) {
+        const url = 'https://api.openai.com/v1/chat/completions';
+        
+        let systemPrompt = `TIKTOK CAROUSEL GENERATOR — DALL·E MASTER VERSION
+ROLE
+You are a professional TikTok Carousel Generator optimized specifically for DALL·E.
+Your task is to receive an article, analyze it, and write a single highly-detailed prompt for DALL·E 3 to draw a carousel grid image with exactly ${cardCount} invisible crop zones.
+
+CRITICAL RULES:
+1. Zero gaps between slides. Absolute edge-to-edge layout. Do not create visible cards, borders, tiles, gutters or separators.
+2. The image will contain exactly ${cardCount} zones:
+   - 6 cards -> 3 columns x 2 rows (Aspect Ratio 3:2)
+   - 9 cards -> 3 columns x 3 rows (Aspect Ratio 1:1)
+   - 12 cards -> 3 columns x 4 rows (Aspect Ratio 3:4)
+   - 15 cards -> 3 columns x 5 rows (Aspect Ratio 3:5)
+3. Ensure every zone contains: Headline (max 8 words in Vietnamese), an illustration, and a visual focus. Nothing may cross into neighboring zones.
+4. Maintain a single unified background system across the entire sheet. Background gradients or colors connect naturally.
+5. Character design: You must define one single character (gender, age, hairstyle, hair color, shirt color, illustration style) and use this EXACT character in all zones.
+
+OUTPUT FORMAT:
+Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other explanation, markdown formatting or introduction. Just output the prompt text directly.`;
+
+        let messages = [
+            { role: 'system', content: systemPrompt }
+        ];
+
+        if (isReferenceMode && faceBase64) {
+            // Tách phần đầu base64
+            const base64Data = faceBase64.split(',')[1];
+            messages.push({
+                role: 'user',
+                content: [
+                    { 
+                        type: 'text', 
+                        text: `Here is the user's face reference image. Write a DALL-E 3 prompt based on the following article. Important: Analyze the user's face appearance (gender, age, hairstyle, face shape, features) and write a detailed character description in the prompt to make DALL-E 3 draw a character matching this face identity consistently across all ${cardCount} panels.
+                        
+                        Article content:
+                        ${article}` 
+                    },
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: `data:image/png;base64,${base64Data}`
+                        }
+                    }
+                ]
+            });
+        } else {
+            messages.push({
+                role: 'user',
+                content: `Write a DALL-E 3 prompt based on the following article for ${cardCount} panels:
+                
+                ${article}`
+            });
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o',
+                messages: messages,
+                temperature: 0.7
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || 'Không thể gọi API GPT-4o.');
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content.trim();
+    }
+
+    // Hàm gọi DALL-E 3 để vẽ ảnh
+    async function callDALLE3ToDrawImage(apiKey, prompt, cardCount) {
+        const url = 'https://api.openai.com/v1/images/generations';
+        
+        // Ánh xạ kích thước DALL-E 3 tương ứng với số slide
+        // DALL-E 3 chỉ hỗ trợ: 1024x1024 (1:1), 1792x1024 (ngang), 1024x1792 (dọc)
+        let size = '1024x1024';
+        if (cardCount === 6) {
+            size = '1792x1024'; // Ảnh ngang (3:2 xấp xỉ)
+        } else if (cardCount === 9) {
+            size = '1024x1024'; // Ảnh vuông (1:1)
+        } else if (cardCount === 12 || cardCount === 15) {
+            size = '1024x1792'; // Ảnh dọc (3:4 hoặc 3:5 xấp xỉ)
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'dall-e-3',
+                prompt: prompt,
+                n: 1,
+                size: size,
+                quality: 'standard', // Để chạy nhanh và tiết kiệm, có thể để 'standard'. Muốn cực nét đổi thành 'hd'
+                style: 'vivid' // Giúp ảnh có chiều sâu nghệ thuật và màu sắc bắt mắt hơn
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || 'Không thể gọi API DALL-E 3.');
+        }
+
+        const data = await response.json();
+        return data.data[0].url;
+    }
 });
