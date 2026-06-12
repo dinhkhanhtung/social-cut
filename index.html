@@ -46,172 +46,13 @@
             <p class="subtitle">Cắt ảnh ghép thông minh thành lưới đa ô để đăng Instagram, Facebook, TikTok tiện lợi</p>
         </header>
 
-        <!-- Welcome Screen (Hiển thị khi chưa có ảnh) -->
-        <div class="welcome-screen" id="welcome-screen">
-            <div class="welcome-container">
-                <h2 class="welcome-title">🔮 Bắt đầu tạo Carousel của bạn</h2>
-                <p class="welcome-subtitle">Chọn một phương thức bên dưới để nạp ảnh vào công cụ cắt</p>
-                
-                <div class="source-cards-grid" id="source-cards-grid">
-                    <!-- Card 1: AI Generator -->
-                    <div class="source-card" id="card-source-ai">
-                        <div class="card-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                        <h3>Tạo ảnh bằng AI (OpenAI)</h3>
-                        <p>Nhập bài viết và để GPT-4o & DALL-E 3 tự động chuyển thể thành chuỗi slide Carousel đẹp mắt.</p>
-                        <button type="button" class="btn-card-action">Chọn chế độ AI</button>
-                    </div>
-                    
-                    <!-- Card 2: Upload local file -->
-                    <div class="source-card" id="card-source-upload">
-                        <div class="card-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
-                        <h3>Tải ảnh từ máy tính</h3>
-                        <p>Kéo thả hoặc chọn ảnh ghép đã có sẵn trên thiết bị của bạn để căn chỉnh lưới và cắt nhỏ.</p>
-                        <button type="button" class="btn-card-action">Chọn Tải ảnh</button>
-                    </div>
-                </div>
-                
-                <!-- AI Generator Form Panel (Mặc định ẩn) -->
-                <div class="ai-welcome-panel" id="ai-welcome-panel" style="display: none;">
-                    <button type="button" class="btn-back-to-source" id="btn-back-to-source">
-                        <i class="fa-solid fa-arrow-left"></i> Quay lại lựa chọn
-                    </button>
-                    
-                    <h3 class="ai-panel-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Thiết lập tạo ảnh bằng AI</h3>
-                    
-                    <div class="ai-form-grid">
-                        <div class="ai-form-left">
-                            <!-- AI Provider Selection -->
-                            <div class="control-item">
-                                <label for="ai-provider">
-                                    <i class="fa-solid fa-robot"></i> Nhà cung cấp AI
-                                </label>
-                                <select id="ai-provider" class="select-dropdown">
-                                    <option value="openai" selected>OpenAI (GPT-4o + DALL-E 3)</option>
-                                    <option value="gemini">Google Gemini (Gemini 2.5 + Imagen 3)</option>
-                                </select>
-                            </div>
-
-                            <!-- API Key -->
-                            <div class="control-item">
-                                <label for="ai-api-key" id="lbl-api-key">
-                                    <i class="fa-solid fa-key"></i> OpenAI API Key
-                                </label>
-                                <div class="input-with-action">
-                                    <input type="password" id="ai-api-key" placeholder="Nhập sk-proj-...">
-                                    <button type="button" class="btn-toggle-visibility" id="btn-toggle-key-visibility" title="Hiện/Ẩn Key">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Chế độ nhân vật -->
-                            <div class="control-item">
-                                <label for="ai-character-mode">
-                                    <i class="fa-solid fa-user-gear"></i> Chế độ nhân vật
-                                </label>
-                                <select id="ai-character-mode" class="select-dropdown">
-                                    <option value="auto">Tự động (Không cần nhân vật)</option>
-                                    <option value="reference">Có nhân vật tham chiếu (Upload mặt)</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Upload ảnh khuôn mặt -->
-                            <div class="control-item" id="ai-face-upload-group" style="display: none;">
-                                <label>
-                                    <i class="fa-solid fa-user-astronaut"></i> Ảnh khuôn mặt tham chiếu
-                                </label>
-                                <div class="face-upload-box" id="face-upload-box">
-                                    <input type="file" id="ai-face-input" accept="image/*" style="display: none;">
-                                    <div class="face-prompt" id="face-prompt">
-                                        <i class="fa-solid fa-plus"></i> Chọn ảnh khuôn mặt
-                                    </div>
-                                    <div class="face-preview-container" id="face-preview-container" style="display: none;">
-                                        <img id="face-preview" src="" alt="Face preview">
-                                        <button type="button" class="btn-remove-face" id="btn-remove-face" title="Xóa ảnh khuôn mặt">
-                                            <i class="fa-solid fa-xmark"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Số lượng Slide -->
-                            <div class="control-item">
-                                <label for="ai-slide-count">
-                                    <i class="fa-solid fa-layer-group"></i> Số lượng slide
-                                </label>
-                                <select id="ai-slide-count" class="select-dropdown">
-                                    <option value="9" selected>9 slide (Tỉ lệ 1:1)</option>
-                                    <option value="6">6 slide (Tỉ lệ 3:2)</option>
-                                    <option value="12">12 slide (Tỉ lệ 3:4)</option>
-                                    <option value="15">15 slide (Tỉ lệ 3:5)</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="ai-form-right">
-                            <!-- Bài viết / Nội dung -->
-                            <div class="control-item" style="height: 100%; display: flex; flex-direction: column;">
-                                <label for="ai-article">
-                                    <i class="fa-solid fa-file-lines"></i> Nội dung bài viết
-                                </label>
-                                <textarea id="ai-article" placeholder="Dán bài viết hoặc ý tưởng của bạn vào đây..." class="custom-textarea" style="flex-grow: 1; min-height: 160px;"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Nút Tạo Ảnh -->
-                    <button type="button" class="btn-action btn-primary" id="btn-generate-ai" style="width: 100%; margin-top: 16px; padding: 12px; font-size: 1rem;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Bắt đầu tạo Carousel bằng AI ⚡
-                    </button>
-                    
-                    <!-- Trạng thái Loading -->
-                    <div class="ai-status-container" id="ai-status-container" style="display: none; margin-top: 16px;">
-                        <div class="ai-spinner"></div>
-                        <span id="ai-status-text">Đang phân tích bài viết...</span>
-                    </div>
-                </div>
-                
-                <!-- Upload Box Panel (Mặc định ẩn) -->
-                <div class="upload-welcome-panel" id="upload-welcome-panel" style="display: none;">
-                    <button type="button" class="btn-back-to-source" id="btn-back-to-source-upload">
-                        <i class="fa-solid fa-arrow-left"></i> Quay lại lựa chọn
-                    </button>
-                    
-                    <h3 class="upload-panel-title"><i class="fa-solid fa-file-arrow-up"></i> Tải ảnh lên từ thiết bị</h3>
-                    
-                    <div class="dropzone" id="dropzone" style="margin-top: 16px; min-height: 250px;">
-                        <input type="file" id="file-input" accept="image/*" class="file-input">
-                        <div class="dropzone-prompt" id="dropzone-prompt">
-                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon" style="font-size: 3.5rem;"></i>
-                            <p class="dropzone-text-main" style="font-size: 1.2rem; margin-top: 12px;">Kéo thả ảnh của bạn vào đây</p>
-                            <p class="dropzone-text-sub" style="font-size: 0.9rem;">hoặc nhấp chuột để duyệt file từ máy tính</p>
-                            <span class="file-format-badge" style="margin-top: 16px;">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
-                        </div>
-                        <div class="dropzone-file-info" id="file-info" style="display: none;">
-                            <i class="fa-solid fa-image file-icon"></i>
-                            <span class="file-name" id="file-name">filename.jpg</span>
-                            <span class="file-size" id="file-size">(0 KB)</span>
-                            <button type="button" class="btn-remove-file" id="btn-remove-file" title="Xóa ảnh">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <main class="app-content" id="app-content" style="display: none;">
+        <main class="app-content" id="app-content">
             <!-- Left Side: Controls & Input -->
             <section class="panel control-panel" id="sidebar">
                 <div class="panel-header">
                     <i class="fa-solid fa-sliders"></i>
-                    <h2>Cấu hình cắt</h2>
+                    <h2>Cấu hình & Tải ảnh</h2>
                 </div>
-
-                <!-- Thay đổi ảnh / Quay lại welcome screen -->
-                <button type="button" class="btn-action btn-danger" id="btn-change-image" style="width: 100%; margin-bottom: 16px;">
-                    <i class="fa-solid fa-rotate-left"></i> Chọn nguồn ảnh khác
-                </button>
 
                 <!-- Mode Switcher -->
                 <div class="mode-switch-container">
@@ -221,6 +62,110 @@
                     <button type="button" class="mode-btn" id="mode-box" data-mode="box">
                         <i class="fa-solid fa-arrow-pointer"></i> Cắt tự do (Vẽ khung)
                     </button>
+                </div>
+
+                <!-- Panel: Tạo ảnh bằng AI (Collapsible) -->
+                <div class="collapsible-section" id="ai-section">
+                    <button type="button" class="collapsible-header" id="btn-collapsible-ai">
+                        <span><i class="fa-solid fa-wand-magic-sparkles"></i> Tạo ảnh bằng AI (OpenAI)</span>
+                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    </button>
+                    <div class="collapsible-content" id="ai-content">
+                        <!-- OpenAI API Key -->
+                        <div class="control-item">
+                            <label for="ai-api-key">
+                                <i class="fa-solid fa-key"></i> OpenAI API Key
+                            </label>
+                            <div class="input-with-action">
+                                <input type="password" id="ai-api-key" placeholder="Nhập sk-proj-...">
+                                <button type="button" class="btn-toggle-visibility" id="btn-toggle-key-visibility" title="Hiện/Ẩn Key">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Chế độ nhân vật -->
+                        <div class="control-item">
+                            <label for="ai-character-mode">
+                                <i class="fa-solid fa-user-gear"></i> Chế độ nhân vật
+                            </label>
+                            <select id="ai-character-mode" class="select-dropdown">
+                                <option value="auto">Tự động (Không cần nhân vật)</option>
+                                <option value="reference">Có nhân vật tham chiếu (Upload mặt)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Upload ảnh khuôn mặt (chỉ hiển thị khi chọn reference) -->
+                        <div class="control-item" id="ai-face-upload-group" style="display: none;">
+                            <label>
+                                <i class="fa-solid fa-user-astronaut"></i> Ảnh khuôn mặt tham chiếu
+                            </label>
+                            <div class="face-upload-box" id="face-upload-box">
+                                <input type="file" id="ai-face-input" accept="image/*" style="display: none;">
+                                <div class="face-prompt" id="face-prompt">
+                                    <i class="fa-solid fa-plus"></i> Chọn ảnh khuôn mặt
+                                </div>
+                                <div class="face-preview-container" id="face-preview-container" style="display: none;">
+                                    <img id="face-preview" src="" alt="Face preview">
+                                    <button type="button" class="btn-remove-face" id="btn-remove-face" title="Xóa ảnh khuôn mặt">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Số lượng Slide -->
+                        <div class="control-item">
+                            <label for="ai-slide-count">
+                                <i class="fa-solid fa-layer-group"></i> Số lượng slide
+                            </label>
+                            <select id="ai-slide-count" class="select-dropdown">
+                                <option value="9" selected>9 slide (Tỉ lệ 1:1)</option>
+                                <option value="6">6 slide (Tỉ lệ 3:2)</option>
+                                <option value="12">12 slide (Tỉ lệ 3:4)</option>
+                                <option value="15">15 slide (Tỉ lệ 3:5)</option>
+                            </select>
+                        </div>
+
+                        <!-- Bài viết / Nội dung -->
+                        <div class="control-item">
+                            <label for="ai-article">
+                                <i class="fa-solid fa-file-lines"></i> Nội dung bài viết
+                            </label>
+                            <textarea id="ai-article" placeholder="Dán bài viết hoặc ý tưởng của bạn vào đây..." rows="4" class="custom-textarea"></textarea>
+                        </div>
+
+                        <!-- Nút Tạo Ảnh -->
+                        <button type="button" class="btn-action btn-primary" id="btn-generate-ai" style="width: 100%; margin-top: 8px;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo Carousel bằng AI ⚡
+                        </button>
+                        
+                        <!-- Trạng thái Loading -->
+                        <div class="ai-status-container" id="ai-status-container" style="display: none;">
+                            <div class="ai-spinner"></div>
+                            <span id="ai-status-text">Đang phân tích bài viết...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Dropzone -->
+                <div class="dropzone" id="dropzone">
+                    <input type="file" id="file-input" accept="image/*" class="file-input">
+                    <div class="dropzone-prompt" id="dropzone-prompt">
+                        <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                        <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
+                        <p class="dropzone-text-sub">hoặc nhấp chuột để chọn từ máy tính</p>
+                        <span class="file-format-badge">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
+                    </div>
+                    <!-- Mini Preview when file selected -->
+                    <div class="dropzone-file-info" id="file-info" style="display: none;">
+                        <i class="fa-solid fa-image file-icon"></i>
+                        <span class="file-name" id="file-name">filename.jpg</span>
+                        <span class="file-size" id="file-size">(0 KB)</span>
+                        <button type="button" class="btn-remove-file" id="btn-remove-file" title="Xóa ảnh">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Parameters Box: Dynamic content based on Mode -->

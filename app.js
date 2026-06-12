@@ -1316,11 +1316,6 @@ document.addEventListener('DOMContentLoaded', () => {
             img.onload = () => {
                 currentImage = img;
                 
-                // Ẩn màn hình chào đón và hiển thị khu vực làm việc chính
-                const welcomeScreen = document.getElementById('welcome-screen');
-                if (welcomeScreen) welcomeScreen.style.display = 'none';
-                appContent.style.display = 'grid';
-                
                 // Reset zoom & pan for new image
                 zoomScale = 1.0;
                 panX = 0;
@@ -2431,7 +2426,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Reset Application State ---
-    // --- Reset Application State ---
     function resetApp() {
         fileInput.value = '';
         currentImage = null;
@@ -2500,77 +2494,41 @@ document.addEventListener('DOMContentLoaded', () => {
         
         switchTab('tab-live-grid');
         setSlicingMode('grid');
-
-        // Hiện lại màn hình chào đón Welcome Screen và ẩn khu vực làm việc
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const sourceCardsGrid = document.getElementById('source-cards-grid');
-        const aiWelcomePanel = document.getElementById('ai-welcome-panel');
-        const uploadWelcomePanel = document.getElementById('upload-welcome-panel');
-
-        if (welcomeScreen) welcomeScreen.style.display = 'flex';
-        appContent.style.display = 'none';
-        
-        // Đưa màn hình chào về giao diện chọn Card nguồn ban đầu
-        if (sourceCardsGrid) sourceCardsGrid.style.display = 'grid';
-        if (aiWelcomePanel) aiWelcomePanel.style.display = 'none';
-        if (uploadWelcomePanel) uploadWelcomePanel.style.display = 'none';
-        
-        // Reset input bài viết AI
-        const aiArticle = document.getElementById('ai-article');
-        if (aiArticle) aiArticle.value = '';
     }
+
+    // Shortcuts Helper UI Click Listeners
+    const btnShortcutsToggle = document.getElementById('btn-shortcuts-toggle');
+    const btnCloseShortcuts = document.getElementById('btn-close-shortcuts');
+    const shortcutsPopup = document.getElementById('shortcuts-popup');
+
+    if (btnShortcutsToggle && shortcutsPopup) {
+        btnShortcutsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            shortcutsPopup.classList.toggle('active');
+        });
+    }
+
+    if (btnCloseShortcuts && shortcutsPopup) {
+        btnCloseShortcuts.addEventListener('click', (e) => {
+            e.stopPropagation();
+            shortcutsPopup.classList.remove('active');
+        });
+    }
+
+    // Đóng popup khi click ra ngoài
+    document.addEventListener('click', (e) => {
+        if (shortcutsPopup && shortcutsPopup.classList.contains('active')) {
+            if (!shortcutsPopup.contains(e.target) && e.target !== btnShortcutsToggle && !btnShortcutsToggle.contains(e.target)) {
+                shortcutsPopup.classList.remove('active');
+            }
+        }
+    });
 
     // ==========================================
-    // Welcome Screen & AI Generator Logic
+    // AI Generator Panel Logic (GPT-4o + DALL-E 3)
     // ==========================================
-    const cardSourceAi = document.getElementById('card-source-ai');
-    const cardSourceUpload = document.getElementById('card-source-upload');
-    const sourceCardsGrid = document.getElementById('source-cards-grid');
-    const aiWelcomePanel = document.getElementById('ai-welcome-panel');
-    const uploadWelcomePanel = document.getElementById('upload-welcome-panel');
-    const btnBackToSource = document.getElementById('btn-back-to-source');
-    const btnBackToSourceUpload = document.getElementById('btn-back-to-source-upload');
-    const btnChangeImage = document.getElementById('btn-change-image');
-
-    // 1. Chuyển đổi màn hình chọn nguồn trên Welcome Screen
-    if (cardSourceAi && sourceCardsGrid && aiWelcomePanel) {
-        cardSourceAi.addEventListener('click', () => {
-            sourceCardsGrid.style.display = 'none';
-            aiWelcomePanel.style.display = 'block';
-        });
-    }
-
-    if (cardSourceUpload && sourceCardsGrid && uploadWelcomePanel) {
-        cardSourceUpload.addEventListener('click', () => {
-            sourceCardsGrid.style.display = 'none';
-            uploadWelcomePanel.style.display = 'block';
-        });
-    }
-
-    if (btnBackToSource && sourceCardsGrid && aiWelcomePanel) {
-        btnBackToSource.addEventListener('click', () => {
-            aiWelcomePanel.style.display = 'none';
-            sourceCardsGrid.style.display = 'grid';
-        });
-    }
-
-    if (btnBackToSourceUpload && sourceCardsGrid && uploadWelcomePanel) {
-        btnBackToSourceUpload.addEventListener('click', () => {
-            uploadWelcomePanel.style.display = 'none';
-            sourceCardsGrid.style.display = 'grid';
-        });
-    }
-
-    // Nút thay đổi ảnh trên Sidebar để quay lại welcome screen
-    if (btnChangeImage) {
-        btnChangeImage.addEventListener('click', () => {
-            resetApp();
-        });
-    }
-
-    // Các phần tử điều khiển AI
-    const aiProvider = document.getElementById('ai-provider');
-    const lblApiKey = document.getElementById('lbl-api-key');
+    const btnCollapsibleAi = document.getElementById('btn-collapsible-ai');
+    const aiSection = document.getElementById('ai-section');
     const aiApiKey = document.getElementById('ai-api-key');
     const btnToggleKeyVisibility = document.getElementById('btn-toggle-key-visibility');
     const aiCharacterMode = document.getElementById('ai-character-mode');
@@ -2588,38 +2546,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiStatusText = document.getElementById('ai-status-text');
 
     let referenceFaceBase64 = null;
-    let currentProvider = 'openai';
 
-    // Load API Key ban đầu từ localStorage
-    if (aiApiKey && aiProvider) {
-        currentProvider = aiProvider.value;
-        const savedKey = localStorage.getItem(currentProvider === 'openai' ? 'openai_api_key' : 'gemini_api_key');
-        if (savedKey) {
-            aiApiKey.value = savedKey;
-        }
-
-        // Lắng nghe sự kiện đổi AI Provider
-        aiProvider.addEventListener('change', () => {
-            currentProvider = aiProvider.value;
-            if (currentProvider === 'openai') {
-                if (lblApiKey) lblApiKey.innerHTML = '<i class="fa-solid fa-key"></i> OpenAI API Key';
-                aiApiKey.placeholder = 'Nhập sk-proj-...';
-                aiApiKey.value = localStorage.getItem('openai_api_key') || '';
-            } else {
-                if (lblApiKey) lblApiKey.innerHTML = '<i class="fa-solid fa-key"></i> Gemini API Key';
-                aiApiKey.placeholder = 'Nhập API Key từ Google AI Studio...';
-                aiApiKey.value = localStorage.getItem('gemini_api_key') || '';
-            }
-        });
-
-        // Lắng nghe người dùng gõ API Key
-        aiApiKey.addEventListener('input', () => {
-            const storageKey = currentProvider === 'openai' ? 'openai_api_key' : 'gemini_api_key';
-            localStorage.setItem(storageKey, aiApiKey.value.trim());
+    // 1. Toggle Collapsible Section
+    if (btnCollapsibleAi && aiSection) {
+        btnCollapsibleAi.addEventListener('click', () => {
+            aiSection.classList.toggle('active');
         });
     }
 
-    // Ẩn/Hiện API Key
+    // 2. Load API Key from localStorage
+    if (aiApiKey) {
+        const savedKey = localStorage.getItem('openai_api_key');
+        if (savedKey) {
+            aiApiKey.value = savedKey;
+        }
+        aiApiKey.addEventListener('input', () => {
+            localStorage.setItem('openai_api_key', aiApiKey.value.trim());
+        });
+    }
+
+    // 3. Toggle API Key Visibility
     if (btnToggleKeyVisibility && aiApiKey) {
         btnToggleKeyVisibility.addEventListener('click', () => {
             const icon = btnToggleKeyVisibility.querySelector('i');
@@ -2633,7 +2579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Thay đổi chế độ nhân vật (hiển thị upload ảnh chân dung)
+    // 4. Character Mode Change
     if (aiCharacterMode && aiFaceUploadGroup) {
         aiCharacterMode.addEventListener('change', () => {
             if (aiCharacterMode.value === 'reference') {
@@ -2644,9 +2590,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Chọn ảnh khuôn mặt tham chiếu
+    // 5. Face Image Upload Handlers
     if (faceUploadBox && aiFaceInput) {
         faceUploadBox.addEventListener('click', (e) => {
+            // Tránh click đúp nếu bấm vào nút remove
             if (e.target.id === 'btn-remove-face' || e.target.closest('#btn-remove-face')) {
                 return;
             }
@@ -2664,7 +2611,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    referenceFaceBase64 = e.target.result;
+                    referenceFaceBase64 = e.target.result; // Dạng data:image/png;base64,...
                     facePreview.src = referenceFaceBase64;
                     facePrompt.style.display = 'none';
                     facePreviewContainer.style.display = 'flex';
@@ -2685,13 +2632,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gọi API Tạo Carousel bằng AI
+    // 6. Generate AI Carousel Trigger
     if (btnGenerateAi) {
         btnGenerateAi.addEventListener('click', async () => {
             const apiKey = aiApiKey.value.trim();
             if (!apiKey) {
-                const providerName = currentProvider === 'openai' ? 'OpenAI' : 'Gemini';
-                alert(`Vui lòng nhập ${providerName} API Key của bạn để sử dụng tính năng này!`);
+                alert('Vui lòng nhập OpenAI API Key của bạn để sử dụng tính năng này!');
+                aiSection.classList.add('active');
                 aiApiKey.focus();
                 return;
             }
@@ -2714,40 +2661,31 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lock UI
             btnGenerateAi.disabled = true;
             aiStatusContainer.style.display = 'flex';
+            aiStatusText.textContent = 'Đang phân tích bài viết bằng GPT-4o...';
 
             try {
-                let imageUrl = '';
+                // Bước 1: Gọi GPT-4o để viết lại DALL-E Prompt
+                const dallEPrompt = await callGPT4oToWritePrompt(apiKey, articleText, cardCount, isReferenceMode, referenceFaceBase64);
                 
-                if (currentProvider === 'openai') {
-                    aiStatusText.textContent = 'Đang phân tích bài viết bằng GPT-4o...';
-                    // Bước 1: GPT-4o viết Prompt
-                    const dallEPrompt = await callGPT4oToWritePrompt(apiKey, articleText, cardCount, isReferenceMode, referenceFaceBase64);
-                    
-                    aiStatusText.textContent = 'Đang vẽ ảnh Carousel bằng DALL-E 3 (mất khoảng 20s)...';
-                    // Bước 2: DALL-E 3 vẽ ảnh
-                    imageUrl = await callDALLE3ToDrawImage(apiKey, dallEPrompt, cardCount);
-                } else {
-                    aiStatusText.textContent = 'Đang phân tích bài viết bằng Gemini 2.5 Flash...';
-                    // Bước 1: Gemini viết Prompt
-                    const geminiPrompt = await callGeminiToWritePrompt(apiKey, articleText, cardCount, isReferenceMode, referenceFaceBase64);
-                    
-                    aiStatusText.textContent = 'Đang vẽ ảnh Carousel bằng Imagen 3 (mất khoảng 15s)...';
-                    // Bước 2: Imagen 3 vẽ ảnh
-                    imageUrl = await callGeminiImagenToDrawImage(apiKey, geminiPrompt, cardCount);
-                }
+                aiStatusText.textContent = 'Đang vẽ ảnh Carousel bằng DALL-E 3 (mất khoảng 20s)...';
+                
+                // Bước 2: Gọi DALL-E 3 để vẽ ảnh
+                const imageUrl = await callDALLE3ToDrawImage(apiKey, dallEPrompt, cardCount);
                 
                 aiStatusText.textContent = 'Đang tải ảnh vào khung làm việc...';
 
                 // Tải ảnh trực tiếp vào ứng dụng
                 const response = await fetch(imageUrl);
                 const blob = await response.blob();
-                const fileExtension = currentProvider === 'openai' ? 'png' : 'jpg';
-                const fileMimeType = currentProvider === 'openai' ? 'image/png' : 'image/jpeg';
-                const file = new File([blob], `${currentProvider}_carousel_${cardCount}s.${fileExtension}`, { type: fileMimeType });
+                const file = new File([blob], `ai_carousel_${cardCount}s.png`, { type: 'image/png' });
                 
                 handleImageSelection(file);
 
                 // Khóa chế độ tự động căn lưới tương ứng với số slide
+                // 6 slide -> 3 hàng x 2 cột hoặc 2 hàng x 3 cột (theo DALL-E template 3:2 -> 3 cột x 2 hàng)
+                // 9 slide -> 3 hàng x 3 cột
+                // 12 slide -> 4 hàng x 3 cột (3:4 -> 3 cột x 4 hàng)
+                // 15 slide -> 5 hàng x 3 cột (3:5 -> 3 cột x 5 hàng)
                 let cols = 3;
                 let rows = 3;
                 if (cardCount === 6) {
@@ -2765,6 +2703,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetGridToEven();
                 handleParamsChange();
 
+                // Đóng panel AI sau khi tạo xong
+                aiSection.classList.remove('active');
                 alert('Đã tạo thành công Carousel bằng AI và tải vào lưới cắt! Bạn có thể nhấn nút "Tự động căn lưới" hoặc điều chỉnh lưới tùy ý, sau đó nhấn "Cắt ảnh".');
 
             } catch (error) {
@@ -2778,7 +2718,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Hàm gọi GPT-4o
+    // Hàm gọi GPT-4o để viết Prompt DALL-E 3
     async function callGPT4oToWritePrompt(apiKey, article, cardCount, isReferenceMode, faceBase64) {
         const url = 'https://api.openai.com/v1/chat/completions';
         
@@ -2806,6 +2746,7 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
         ];
 
         if (isReferenceMode && faceBase64) {
+            // Tách phần đầu base64
             const base64Data = faceBase64.split(',')[1];
             messages.push({
                 role: 'user',
@@ -2856,17 +2797,19 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
         return data.choices[0].message.content.trim();
     }
 
-    // Hàm gọi DALL-E 3
+    // Hàm gọi DALL-E 3 để vẽ ảnh
     async function callDALLE3ToDrawImage(apiKey, prompt, cardCount) {
         const url = 'https://api.openai.com/v1/images/generations';
         
+        // Ánh xạ kích thước DALL-E 3 tương ứng với số slide
+        // DALL-E 3 chỉ hỗ trợ: 1024x1024 (1:1), 1792x1024 (ngang), 1024x1792 (dọc)
         let size = '1024x1024';
         if (cardCount === 6) {
-            size = '1792x1024';
+            size = '1792x1024'; // Ảnh ngang (3:2 xấp xỉ)
         } else if (cardCount === 9) {
-            size = '1024x1024';
+            size = '1024x1024'; // Ảnh vuông (1:1)
         } else if (cardCount === 12 || cardCount === 15) {
-            size = '1024x1792';
+            size = '1024x1792'; // Ảnh dọc (3:4 hoặc 3:5 xấp xỉ)
         }
 
         const response = await fetch(url, {
@@ -2879,7 +2822,9 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
                 model: 'dall-e-3',
                 prompt: prompt,
                 n: 1,
-                size: size
+                size: size,
+                quality: 'standard', // Để chạy nhanh và tiết kiệm, có thể để 'standard'. Muốn cực nét đổi thành 'hd'
+                style: 'vivid' // Giúp ảnh có chiều sâu nghệ thuật và màu sắc bắt mắt hơn
             })
         });
 
@@ -2891,168 +2836,4 @@ Provide ONLY the final prompt for DALL-E 3 in English. Do not write any other ex
         const data = await response.json();
         return data.data[0].url;
     }
-
-    // Hàm gọi Gemini 2.5 Flash để phân tích và viết prompt tiếng Anh
-    async function callGeminiToWritePrompt(apiKey, article, cardCount, isReferenceMode, faceBase64) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-        
-        let systemPrompt = `TIKTOK CAROUSEL GENERATOR — IMAGEN MASTER VERSION
-ROLE
-You are a professional TikTok Carousel Generator optimized specifically for Google's Imagen 3.
-Your task is to receive an article, analyze it, and write a single highly-detailed prompt for Imagen 3 to draw a carousel grid image with exactly ${cardCount} invisible crop zones.
-
-CRITICAL RULES:
-1. Zero gaps between slides. Absolute edge-to-edge layout. Do not create visible cards, borders, tiles, gutters or separators.
-2. The image will contain exactly ${cardCount} zones:
-   - 6 cards -> 3 columns x 2 rows (Aspect Ratio 3:2)
-   - 9 cards -> 3 columns x 3 rows (Aspect Ratio 1:1)
-   - 12 cards -> 3 columns x 4 rows (Aspect Ratio 3:4)
-   - 15 cards -> 3 columns x 5 rows (Aspect Ratio 3:5)
-3. Ensure every zone contains: Headline (max 8 words in Vietnamese), an illustration, and a visual focus. Nothing may cross into neighboring zones.
-4. Maintain a single unified background system across the entire sheet. Background gradients or colors connect naturally.
-5. Character design: You must define one single character (gender, age, hairstyle, hair color, shirt color, illustration style) and use this EXACT character in all zones.
-
-OUTPUT FORMAT:
-Provide ONLY the final prompt for Imagen 3 in English. Do not write any other explanation, markdown formatting or introduction. Just output the prompt text directly.`;
-
-        let parts = [];
-        let promptText = `Write an Imagen 3 prompt based on the following article for ${cardCount} panels:
-        
-        ${article}`;
-
-        if (isReferenceMode && faceBase64) {
-            const base64Data = faceBase64.split(',')[1];
-            const mimeType = faceBase64.split(';')[0].split(':')[1];
-            promptText = `Here is the user's face reference image. Write an Imagen 3 prompt based on the following article. Important: Analyze the user's face appearance (gender, age, hairstyle, face shape, features) and write a detailed character description in the prompt to make Imagen 3 draw a character matching this face identity consistently across all ${cardCount} panels.
-            
-            Article content:
-            ${article}`;
-            
-            parts.push({
-                inlineData: {
-                    mimeType: mimeType,
-                    data: base64Data
-                }
-            });
-        }
-
-        parts.unshift({ text: systemPrompt + "\n\n" + promptText });
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                contents: [{ parts: parts }]
-            })
-        });
-
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error?.message || 'Không thể gọi API Gemini.');
-        }
-
-        const data = await response.json();
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-            throw new Error('Mô hình Gemini không phản hồi nội dung. Vui lòng kiểm tra lại API Key hoặc bài viết.');
-        }
-        return data.candidates[0].content.parts[0].text.trim();
-    }
-
-    // Hàm gọi Imagen 3.0 để sinh ảnh (tự động fallback sang mô hình Flux nếu lỗi)
-    async function callGeminiImagenToDrawImage(apiKey, prompt, cardCount) {
-        // Thử dùng Imagen 3.0 của Google trước (phiên bản imagen-3.0-generate-001)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
-        
-        let width = 1024;
-        let height = 1024;
-        let aspectRatio = '1:1';
-        
-        if (cardCount === 6) {
-            aspectRatio = '3:2';
-            width = 1200; height = 800;
-        } else if (cardCount === 9) {
-            aspectRatio = '1:1';
-            width = 1024; height = 1024;
-        } else if (cardCount === 12 || cardCount === 15) {
-            aspectRatio = '3:4';
-            width = 800; height = 1200;
-        }
-
-        try {
-            console.log("Thử tạo ảnh bằng Google Imagen 3.0 (v1beta)...");
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    instances: [
-                        {
-                            prompt: prompt
-                        }
-                    ],
-                    parameters: {
-                        sampleCount: 1,
-                        aspectRatio: aspectRatio,
-                        outputMimeType: 'image/jpeg'
-                    }
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.predictions && data.predictions.length > 0) {
-                    console.log("Tạo ảnh bằng Google Imagen 3.0 thành công!");
-                    const base64ImageBytes = data.predictions[0].bytesBase64Encoded;
-                    return `data:image/jpeg;base64,${base64ImageBytes}`;
-                }
-            }
-            console.warn("Imagen API trả về lỗi hoặc không có ảnh. Tự động chuyển sang mô hình Flux...");
-        } catch (e) {
-            console.warn("Không thể gọi Imagen 3.0, tự động chuyển đổi sang Flux:", e);
-        }
-
-        // Fallback sang mô hình Flux (Pollinations AI) - Miễn phí, không giới hạn quyền và chất lượng siêu cao
-        console.log("Bắt đầu tạo ảnh bằng mô hình Flux...");
-        const seed = Math.floor(Math.random() * 1000000);
-        const enhancedPrompt = `${prompt}, digital art style, ultra-detailed, 8k resolution, cinematic lighting`;
-        const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
-        
-        // Xác thực kết nối
-        const testRes = await fetch(fluxUrl);
-        if (!testRes.ok) {
-            throw new Error("Không thể tạo ảnh bằng cả Google Imagen 3 và mô hình Flux.");
-        }
-        return fluxUrl;
-    }
-
-    // Shortcuts Helper UI Click Listeners
-    const btnShortcutsToggle = document.getElementById('btn-shortcuts-toggle');
-    const btnCloseShortcuts = document.getElementById('btn-close-shortcuts');
-    const shortcutsPopup = document.getElementById('shortcuts-popup');
-
-    if (btnShortcutsToggle && shortcutsPopup) {
-        btnShortcutsToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            shortcutsPopup.classList.toggle('active');
-        });
-    }
-
-    if (btnCloseShortcuts && shortcutsPopup) {
-        btnCloseShortcuts.addEventListener('click', (e) => {
-            e.stopPropagation();
-            shortcutsPopup.classList.remove('active');
-        });
-    }
-
-    // Đóng popup khi click ra ngoài
-    document.addEventListener('click', (e) => {
-        if (shortcutsPopup && shortcutsPopup.classList.contains('active')) {
-            if (!shortcutsPopup.contains(e.target) && e.target !== btnShortcutsToggle && !btnShortcutsToggle.contains(e.target)) {
-                shortcutsPopup.classList.remove('active');
-            }
-        }
-    });
 });
