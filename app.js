@@ -1823,10 +1823,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnRenumberResults) btnRenumberResults.style.display = 'inline-flex';
         if (btnMobilePreview) btnMobilePreview.style.display = 'inline-flex';
         if (btnDownloadZip) btnDownloadZip.style.display = 'inline-flex';
-
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-
         if (slicingMode === 'grid') {
             const rows = parseInt(inputRows.value) || 1;
             const cols = parseInt(inputCols.value) || 1;
@@ -1867,7 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const resultId = resultIdCounter++;
                     const sliceName = `slide_${startIndex + count}.png`;
-                    processSlice(tempCanvas, tempCtx, sx, sy, cropW, cropH, sliceName, resultId, globalTargetW, globalTargetH);
+                    processSlice(sx, sy, cropW, cropH, sliceName, resultId, globalTargetW, globalTargetH);
                     count++;
                 }
             }
@@ -1898,7 +1894,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const resultId = resultIdCounter++;
                 const sliceName = `slide_${startIndex + idx + 1}.png`;
-                processSlice(tempCanvas, tempCtx, sx, sy, cropW, cropH, sliceName, resultId, globalTargetW, globalTargetH);
+                processSlice(sx, sy, cropW, cropH, sliceName, resultId, globalTargetW, globalTargetH);
             });
         }
 
@@ -1915,19 +1911,22 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab('tab-result-grid');
     });
 
-    function processSlice(tempCanvas, tempCtx, sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH) {
-        tempCanvas.width = targetW;
-        tempCanvas.height = targetH;
-        tempCtx.imageSmoothingEnabled = true;
-        tempCtx.imageSmoothingQuality = 'high';
-        tempCtx.clearRect(0, 0, targetW, targetH);
+    function processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH) {
+        const sliceCanvas = document.createElement('canvas');
+        const sliceCtx = sliceCanvas.getContext('2d');
+
+        sliceCanvas.width = targetW;
+        sliceCanvas.height = targetH;
+        sliceCtx.imageSmoothingEnabled = true;
+        sliceCtx.imageSmoothingQuality = 'high';
+        sliceCtx.clearRect(0, 0, targetW, targetH);
 
         // Vẽ toàn bộ vùng ảnh gốc trong ô lưới (cropW x cropH) lên Canvas con (targetW x targetH)
         // Trình duyệt sẽ tự động co giãn (nội suy phóng to/thu nhỏ) để lấp đầy vừa khít
         // mà hoàn toàn không cắt bớt bất kỳ pixel nào của ảnh gốc trong vùng lưới
-        tempCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
 
-        const dataUrl = tempCanvas.toDataURL('image/png');
+        const dataUrl = sliceCanvas.toDataURL('image/png');
         slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl });
 
         const resultItem = document.createElement('div');
@@ -2091,7 +2090,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultGrid.appendChild(resultItem);
 
-        tempCanvas.toBlob((blob) => {
+        sliceCanvas.toBlob((blob) => {
             slicedBlobs.push({ id: resultId, name: sliceName, blob: blob });
             
             if (slicedBlobs.length === slicedImages.length) {
