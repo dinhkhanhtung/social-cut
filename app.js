@@ -1874,13 +1874,10 @@ document.addEventListener('DOMContentLoaded', () => {
         tempCtx.imageSmoothingQuality = 'high';
         tempCtx.clearRect(0, 0, targetW, targetH);
 
-        const scale = Math.max(targetW / cropW, targetH / cropH);
-        const sourceW = targetW / scale;
-        const sourceH = targetH / scale;
-        const sourceX = sx + (cropW - sourceW) / 2;
-        const sourceY = sy + (cropH - sourceH) / 2;
-
-        tempCtx.drawImage(currentImage, sourceX, sourceY, sourceW, sourceH, 0, 0, targetW, targetH);
+        // Vẽ toàn bộ vùng ảnh gốc trong ô lưới (cropW x cropH) lên Canvas con (targetW x targetH)
+        // Trình duyệt sẽ tự động co giãn (nội suy phóng to/thu nhỏ) để lấp đầy vừa khít
+        // mà hoàn toàn không cắt bớt bất kỳ pixel nào của ảnh gốc trong vùng lưới
+        tempCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
 
         const dataUrl = tempCanvas.toDataURL('image/png');
         slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl });
@@ -1889,6 +1886,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultItem.classList.add('result-item');
         resultItem.dataset.id = resultId;
         resultItem.setAttribute('draggable', 'true');
+        resultItem.style.aspectRatio = `${targetW} / ${targetH}`;
 
         const grip = document.createElement('div');
         grip.classList.add('result-item-grip');

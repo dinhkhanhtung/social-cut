@@ -991,7 +991,7 @@ input[type="number"] {
     border-radius: var(--border-radius-sm);
     background: rgba(0,0,0,0.2);
     overflow: hidden;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: auto;
     display: flex;
     align-items: center;
     justify-content: center;
