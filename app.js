@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultCountBadge = document.getElementById('result-count-badge');
     const resultGrid = document.getElementById('result-grid');
     const btnClearResults = document.getElementById('btn-clear-results');
-    const btnSeamlessPreset = document.getElementById('btn-seamless-preset');
     const btnRenumberResults = document.getElementById('btn-renumber-results');
     const btnMobilePreview = document.getElementById('btn-mobile-preview');
     const mobilePreviewModal = document.getElementById('mobile-preview-modal');
@@ -180,59 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modeGridBtn.addEventListener('click', () => setSlicingMode('grid'));
     modeBoxBtn.addEventListener('click', () => setSlicingMode('box'));
-
-    if (btnSeamlessPreset) {
-        btnSeamlessPreset.addEventListener('click', () => {
-            if (!currentImage) {
-                alert('Vui lòng tải ảnh lên trước khi tạo Carousel nối liền!');
-                return;
-            }
-            
-            const numSlidesStr = prompt("Bạn muốn cắt bức ảnh này thành bao nhiêu slide nối liền? (Ví dụ: 3)", "3");
-            const numSlides = parseInt(numSlidesStr);
-            if (isNaN(numSlides) || numSlides < 1) {
-                alert("Số lượng slide nhập vào không hợp lệ!");
-                return;
-            }
-
-            // Chuyển sang Grid Mode
-            setSlicingMode('grid');
-
-            // Cấu hình lưới: 1 Hàng, N Cột
-            inputRows.value = 1;
-            inputCols.value = numSlides;
-            inputOffset.value = 0;
-            if (offsetNumberVal) {
-                offsetNumberVal.value = 0;
-            }
-
-            // Tính toán tỷ lệ lý tưởng cho mỗi slide
-            const imgW = currentImage.naturalWidth;
-            const imgH = currentImage.naturalHeight;
-            const slideAspect = (imgW / numSlides) / imgH;
-
-            // Tự chọn tỉ lệ khóa gần nhất
-            let chosenRatio = 'free';
-            if (Math.abs(slideAspect - 1.0) < 0.15) {
-                chosenRatio = '1:1';
-            } else if (Math.abs(slideAspect - 0.8) < 0.12) {
-                chosenRatio = '4:5';
-            } else if (Math.abs(slideAspect - 0.75) < 0.1) {
-                chosenRatio = '3:4';
-            } else if (Math.abs(slideAspect - 0.5625) < 0.1) {
-                chosenRatio = '9:16';
-            }
-
-            selectRatio.value = chosenRatio;
-            selectRatio.dispatchEvent(new Event('change'));
-
-            // Tự động phân chia lưới đều
-            resetGridToEven();
-            handleParamsChange();
-
-            alert(`Đã tự động chia lưới 1 hàng x ${numSlides} cột.\nTỷ lệ slide đề xuất: ${chosenRatio === 'free' ? 'Tự do' : chosenRatio}`);
-        });
-    }
 
     // --- Constraints Controls Listeners ---
     selectRatio.addEventListener('change', () => {
