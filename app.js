@@ -1693,6 +1693,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Tự động nhận diện độ rộng trung bình của các dải rãnh phân cách
+            let recommendedOffset = 0;
+            if (hasDetectedCols || hasDetectedRows) {
+                let totalWidth = 0;
+                let count = 0;
+                filteredCols.forEach(c => { totalWidth += c.width; count++; });
+                filteredRows.forEach(r => { totalWidth += r.width; count++; });
+                if (count > 0) {
+                    const avgWidth = totalWidth / count;
+                    // Lùi vào thêm 1px để sạch sẽ mép viền hoàn toàn
+                    recommendedOffset = Math.round(avgWidth / 2) + 1;
+                }
+            }
+
             // Cập nhật thông số lên ô nhập liệu trên giao diện
             inputCols.value = finalColsCount;
             inputRows.value = finalRowsCount;
@@ -1704,7 +1718,41 @@ document.addEventListener('DOMContentLoaded', () => {
             gridModeText.textContent = "Tự động căn (Auto-Detect)";
             gridModeText.style.color = "var(--success)";
 
+            // Gọi handleParamsChange lần đầu để vẽ lưới và tính toán maxAllowedOffset dựa trên minCellSize
             handleParamsChange();
+
+            // Áp dụng offset tự động
+            if (recommendedOffset > 0) {
+                let minCellSize = Infinity;
+                let prevX = 0;
+                for (let i = 0; i <= colsX.length; i++) {
+                    const curX = (i === colsX.length) ? width : colsX[i];
+                    minCellSize = Math.min(minCellSize, curX - prevX);
+                    prevX = curX;
+                }
+                let prevY = 0;
+                for (let j = 0; j <= rowsY.length; j++) {
+                    const curY = (j === rowsY.length) ? height : rowsY[j];
+                    minCellSize = Math.min(minCellSize, curY - prevY);
+                    prevY = curY;
+                }
+                const maxAllowedOffset = Math.max(0, Math.floor(minCellSize / 2) - 1);
+                
+                const finalOffset = Math.min(recommendedOffset, maxAllowedOffset);
+                inputOffset.value = finalOffset;
+                if (offsetNumberVal) {
+                    offsetNumberVal.value = finalOffset;
+                }
+                
+                // Gọi vẽ lại lần nữa để áp dụng Offset mới
+                handleParamsChange();
+            } else {
+                inputOffset.value = 0;
+                if (offsetNumberVal) {
+                    offsetNumberVal.value = 0;
+                }
+                handleParamsChange();
+            }
             
             previewCanvas.animate([
                 { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)' },
