@@ -1541,7 +1541,6 @@ input[type="number"] {
 @media (max-width: 768px) {
     /* Khóa cuộn dọc tuyệt đối trên mobile */
     html, body {
-        position: fixed !important;
         width: 100% !important;
         height: 100% !important;
         height: 100dvh !important;
@@ -1552,7 +1551,7 @@ input[type="number"] {
 
     /* Tối ưu container chính thành 100% viewport trừ đi Bottom Nav 60px và khóa cuộn */
     .app-container {
-        position: fixed !important;
+        position: absolute !important;
         top: 0 !important;
         left: 0 !important;
         right: 0 !important;
@@ -1587,13 +1586,13 @@ input[type="number"] {
         display: none !important; /* Ẩn subtitle trên di động để tiết kiệm tối đa diện tích */
     }
 
-    /* Quy trình làm việc linh hoạt bằng Flexbox, cố định chiều cao 100% không cho phình */
+    /* Quy trình làm việc linh hoạt bằng Flexbox, tự tính toán chiều cao không bị tràn */
     .app-content {
         display: flex !important;
         flex-direction: column !important;
         gap: 6px !important;
         flex: 1 !important;
-        height: 100% !important;
+        height: auto !important;
         min-height: 0 !important;
         overflow: hidden !important;
     }
@@ -1618,7 +1617,8 @@ input[type="number"] {
     .app-container.mobile-tab-upload #sidebar {
         display: flex !important;
         flex: 1 !important;
-        height: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
         margin-bottom: 0 !important;
         overflow: hidden !important; /* Khóa cuộn dọc sidebar khi tải ảnh */
         padding: 8px !important;
@@ -1628,8 +1628,8 @@ input[type="number"] {
         display: flex !important;
         flex-direction: column !important;
         flex: 1 !important;
-        height: 100% !important;
-        min-height: 200px !important;
+        height: auto !important;
+        min-height: 180px !important;
         align-items: center !important;
         justify-content: center !important;
     }
@@ -1793,7 +1793,8 @@ input[type="number"] {
     .app-container.mobile-tab-result .view-panel {
         display: flex !important;
         flex: 1 !important;
-        height: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
         order: 1 !important;
         overflow: hidden !important;
     }
