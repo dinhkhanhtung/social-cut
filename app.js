@@ -24,10 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gridEvenParameters = document.getElementById('grid-even-parameters');
     const switchUniform = document.getElementById('switch-uniform');
     const switchSnap = document.getElementById('switch-snap');
-    const inputCropBottom = document.getElementById('input-crop-bottom');
-    const inputCropBottomNumber = document.getElementById('input-crop-bottom-number');
-    const cropBottomValueText = document.getElementById('crop-bottom-value');
-    
+
     const btnSlice = document.getElementById('btn-slice');
     const btnAutoDetect = document.getElementById('btn-auto-detect');
     const btnGenBoxes = document.getElementById('btn-gen-boxes');
@@ -86,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let rowsY = [];        // Y coordinates of horizontal grid lines. Length: rows - 1
     let isCustomGrid = false; 
     let dragTarget = null;  // Current grid line being dragged 
-    let cropBottomPercent = 0; // Tỉ lệ phần trăm xén lề dưới (0% -> 50%)
 
     // --- Mode 2: Box Mode Variables ---
     let selectionBoxes = []; // Array of { id, x, y, w, h } in original image space
@@ -438,7 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const cols = parseInt(inputCols.value) || 1;
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
-        const effectiveHeight = height * (1 - cropBottomPercent / 100);
 
         colsX = [];
         for (let i = 1; i < cols; i++) {
@@ -447,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         rowsY = [];
         for (let j = 1; j < rows; j++) {
-            rowsY.push((effectiveHeight / rows) * j);
+            rowsY.push((height / rows) * j);
         }
 
         isCustomGrid = false;
@@ -475,9 +470,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     prevX = curX;
                 }
                 let prevY = 0;
-                const effectiveHeight = currentImage.naturalHeight * (1 - cropBottomPercent / 100);
                 for (let j = 0; j <= rowsY.length; j++) {
-                    const curY = (j === rowsY.length) ? effectiveHeight : rowsY[j];
+                    const curY = (j === rowsY.length) ? currentImage.naturalHeight : rowsY[j];
                     minCellSize = Math.min(minCellSize, curY - prevY);
                     prevY = curY;
                 }
@@ -516,62 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     inputCols.addEventListener('input', handleParamsChange);
     inputOffset.addEventListener('input', handleParamsChange);
 
-    if (inputCropBottom) {
-        inputCropBottom.addEventListener('input', () => {
-            cropBottomPercent = parseInt(inputCropBottom.value) || 0;
-            if (cropBottomValueText) {
-                cropBottomValueText.textContent = `${cropBottomPercent}%`;
-            }
-            if (inputCropBottomNumber && parseInt(inputCropBottomNumber.value) !== cropBottomPercent) {
-                inputCropBottomNumber.value = cropBottomPercent;
-            }
-            if (currentImage) {
-                if (slicingMode === 'grid' && gridType === 'even') {
-                    if (!isCustomGrid) {
-                        resetGridToEven();
-                    } else {
-                        const height = currentImage.naturalHeight;
-                        const effectiveHeight = height * (1 - cropBottomPercent / 100);
-                        rowsY = rowsY.map((y, idx) => {
-                            const minLimit = (idx === 0) ? 0 : rowsY[idx - 1];
-                            return Math.max(minLimit + 20, Math.min(effectiveHeight - 20, y));
-                        });
-                    }
-                }
-                drawLiveGrid();
-            }
-        });
-    }
 
-    if (inputCropBottomNumber) {
-        inputCropBottomNumber.addEventListener('input', () => {
-            let val = parseInt(inputCropBottomNumber.value) || 0;
-            val = Math.max(0, Math.min(50, val));
-            inputCropBottomNumber.value = val;
-            if (inputCropBottom && parseInt(inputCropBottom.value) !== val) {
-                inputCropBottom.value = val;
-            }
-            cropBottomPercent = val;
-            if (cropBottomValueText) {
-                cropBottomValueText.textContent = `${cropBottomPercent}%`;
-            }
-            if (currentImage) {
-                if (slicingMode === 'grid' && gridType === 'even') {
-                    if (!isCustomGrid) {
-                        resetGridToEven();
-                    } else {
-                        const height = currentImage.naturalHeight;
-                        const effectiveHeight = height * (1 - cropBottomPercent / 100);
-                        rowsY = rowsY.map((y, idx) => {
-                            const minLimit = (idx === 0) ? 0 : rowsY[idx - 1];
-                            return Math.max(minLimit + 20, Math.min(effectiveHeight - 20, y));
-                        });
-                    }
-                }
-                drawLiveGrid();
-            }
-        });
-    }
 
     if (selectGridType) {
         selectGridType.addEventListener('change', () => {
@@ -954,8 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (dragTarget.type === 'row') {
                     const idx = dragTarget.index;
                     const minLimit = (idx === 0) ? 0 : rowsY[idx - 1];
-                    const effectiveHeight = currentImage.naturalHeight * (1 - cropBottomPercent / 100);
-                    const maxLimit = (idx === rowsY.length - 1) ? effectiveHeight : rowsY[idx + 1];
+                    const maxLimit = (idx === rowsY.length - 1) ? currentImage.naturalHeight : rowsY[idx + 1];
                     rowsY[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, rowsY[idx] + deltaY));
                 }
 
@@ -1668,11 +1606,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnGenBoxes.disabled = false;
                 btnClearBoxes.disabled = false;
                 
-                cropBottomPercent = 0;
-                if (inputCropBottom) inputCropBottom.value = 0;
-                if (inputCropBottomNumber) inputCropBottomNumber.value = 0;
-                if (cropBottomValueText) cropBottomValueText.textContent = '0%';
-
                 resetGridToEven();
                 
                 selectionBoxes = [];
@@ -1715,7 +1648,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
-        const effectiveHeight = height * (1 - cropBottomPercent / 100);
         const offset = parseInt(inputOffset.value) || 0;
 
         if (slicingMode === 'grid') {
@@ -1723,7 +1655,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let cells = [];
             if (gridType === 'even') {
                 const boundariesX = [0, ...colsX, width];
-                const boundariesY = [0, ...rowsY, effectiveHeight];
+                const boundariesY = [0, ...rowsY, height];
                 const totalCols = boundariesX.length - 1;
                 const totalRows = boundariesY.length - 1;
                 
@@ -1750,19 +1682,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (gridType === 'fb-1d3v') {
                 const midX = width * 0.5;
-                const h1 = effectiveHeight * (1/3);
-                const h2 = effectiveHeight * (2/3);
+                const h1 = height * (1/3);
+                const h2 = height * (2/3);
                 
                 const smallCropW = (width - midX) - 3 * offset;
                 const smallCropH = h1 - 3 * offset;
                 
                 // Ô 1 (dọc trái)
                 cells.push({
-                    x1: 0, y1: 0, x2: midX, y2: effectiveHeight,
+                    x1: 0, y1: 0, x2: midX, y2: height,
                     sx: 2 * offset,
                     sy: 2 * offset,
                     sw: midX - 3 * offset,
-                    sh: effectiveHeight - 4 * offset
+                    sh: height - 4 * offset
                 });
                 // Ô 2 (nhỏ trên phải)
                 cells.push({
@@ -1782,19 +1714,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 // Ô 4 (nhỏ dưới phải)
                 cells.push({
-                    x1: midX, y1: h2, x2: width, y2: effectiveHeight,
+                    x1: midX, y1: h2, x2: width, y2: height,
                     sx: midX + offset,
                     sy: h2 + offset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
             } else if (gridType === 'fb-1n3v') {
-                const midY = effectiveHeight * 0.5;
+                const midY = height * 0.5;
                 const w1 = width * (1/3);
                 const w2 = width * (2/3);
                 
                 const smallCropW = w1 - 3 * offset;
-                const smallCropH = (effectiveHeight - midY) - 3 * offset;
+                const smallCropH = (height - midY) - 3 * offset;
                 
                 // Ô 1 (ngang trên)
                 cells.push({
@@ -1806,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 // Ô 2 (nhỏ trái dưới)
                 cells.push({
-                    x1: 0, y1: midY, x2: w1, y2: effectiveHeight,
+                    x1: 0, y1: midY, x2: w1, y2: height,
                     sx: 2 * offset,
                     sy: midY + offset,
                     sw: smallCropW,
@@ -1814,7 +1746,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 // Ô 3 (nhỏ giữa dưới) - Dịch chuyển thông minh chống méo
                 cells.push({
-                    x1: w1, y1: midY, x2: w2, y2: effectiveHeight,
+                    x1: w1, y1: midY, x2: w2, y2: height,
                     sx: w1 + offset + Math.floor(offset / 2),
                     sy: midY + offset,
                     sw: smallCropW,
@@ -1822,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 // Ô 4 (nhỏ phải dưới)
                 cells.push({
-                    x1: w2, y1: midY, x2: width, y2: effectiveHeight,
+                    x1: w2, y1: midY, x2: width, y2: height,
                     sx: w2 + offset,
                     sy: midY + offset,
                     sw: smallCropW,
@@ -1858,7 +1790,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 colsX.forEach(x => {
                     ctx.beginPath();
                     ctx.moveTo(x, 0);
-                    ctx.lineTo(x, effectiveHeight);
+                    ctx.lineTo(x, height);
                     ctx.stroke();
                 });
                 rowsY.forEach(y => {
@@ -1869,12 +1801,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else if (gridType === 'fb-1d3v') {
                 const midX = width * 0.5;
-                const h1 = effectiveHeight * (1/3);
-                const h2 = effectiveHeight * (2/3);
+                const h1 = height * (1/3);
+                const h2 = height * (2/3);
                 
                 ctx.beginPath();
                 ctx.moveTo(midX, 0);
-                ctx.lineTo(midX, effectiveHeight);
+                ctx.lineTo(midX, height);
                 ctx.stroke();
                 
                 ctx.beginPath();
@@ -1887,7 +1819,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.lineTo(width, h2);
                 ctx.stroke();
             } else if (gridType === 'fb-1n3v') {
-                const midY = effectiveHeight * 0.5;
+                const midY = height * 0.5;
                 const w1 = width * (1/3);
                 const w2 = width * (2/3);
                 
@@ -1898,12 +1830,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 ctx.beginPath();
                 ctx.moveTo(w1, midY);
-                ctx.lineTo(w1, effectiveHeight);
+                ctx.lineTo(w1, height);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(w2, midY);
-                ctx.lineTo(w2, effectiveHeight);
+                ctx.lineTo(w2, height);
                 ctx.stroke();
             }
 
@@ -2004,20 +1936,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 ctx.stroke();
             });
-        }
-
-        // Vẽ overlay xén lề dưới & đường cắt nét đứt đỏ
-        if (cropBottomPercent > 0) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(0, effectiveHeight, width, height - effectiveHeight);
-
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = Math.max(3, Math.floor(width / 400));
-            ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
-            ctx.beginPath();
-            ctx.moveTo(0, effectiveHeight);
-            ctx.lineTo(width, effectiveHeight);
-            ctx.stroke();
         }
 
         ctx.restore();
@@ -2331,7 +2249,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const offset = parseInt(inputOffset.value) || 0;
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
-        const effectiveHeight = height * (1 - cropBottomPercent / 100);
 
         // Hàm tính tỷ lệ scale xuất ảnh động
         const getExportScale = (w) => {
@@ -2361,7 +2278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rows = parseInt(inputRows.value) || 1;
                 const cols = parseInt(inputCols.value) || 1;
                 const boundariesX = [0, ...colsX, width];
-                const boundariesY = [0, ...rowsY, effectiveHeight];
+                const boundariesY = [0, ...rowsY, height];
 
                 // Xác định kích thước canvas đích chung từ ô đầu tiên
                 const firstCellW = boundariesX[1] - boundariesX[0];
@@ -2428,8 +2345,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let gridCells = [];
                 if (gridType === 'fb-1d3v') {
                     const midX = width * 0.5;
-                    const h1 = effectiveHeight * (1/3);
-                    const h2 = effectiveHeight * (2/3);
+                    const h1 = height * (1/3);
+                    const h2 = height * (2/3);
                     
                     const smallCropW = (width - midX) - 3 * offset;
                     const smallCropH = h1 - 3 * offset;
@@ -2439,7 +2356,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         sx: 2*offset, 
                         sy: 2*offset, 
                         cropW: midX - 3*offset, 
-                        cropH: effectiveHeight - 4*offset, 
+                        cropH: height - 4*offset, 
                         isLarge: true 
                     });
                     // Ô 2 (nhỏ trên)
@@ -2467,12 +2384,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         isLarge: false 
                     });
                 } else if (gridType === 'fb-1n3v') {
-                    const midY = effectiveHeight * 0.5;
+                    const midY = height * 0.5;
                     const w1 = width * (1/3);
                     const w2 = width * (2/3);
                     
                     const smallCropW = w1 - 3 * offset;
-                    const smallCropH = (effectiveHeight - midY) - 3 * offset;
+                    const smallCropH = (height - midY) - 3 * offset;
 
                     // Ô 1 (to)
                     gridCells.push({ 
@@ -3365,16 +3282,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (offsetNumberVal) {
             offsetNumberVal.value = 0;
         }
-        cropBottomPercent = 0;
-        if (inputCropBottom) {
-            inputCropBottom.value = 0;
-        }
-        if (inputCropBottomNumber) {
-            inputCropBottomNumber.value = 0;
-        }
-        if (cropBottomValueText) {
-            cropBottomValueText.textContent = '0%';
-        }
         selectRatio.value = 'free';
         lockedRatio = null;
         switchUniform.checked = false;
@@ -4075,12 +3982,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (inputOffset) {
                 inputOffset.value = proj.offset_val || 0;
                 if (offsetNumberVal) offsetNumberVal.value = proj.offset_val || 0;
-            }
-            if (inputCropBottom) {
-                inputCropBottom.value = 0;
-                cropBottomPercent = 0;
-                if (inputCropBottomNumber) inputCropBottomNumber.value = 0;
-                if (cropBottomValueText) cropBottomValueText.textContent = '0%';
             }
             if (switchUniform) {
                 switchUniform.checked = proj.switch_uniform;
