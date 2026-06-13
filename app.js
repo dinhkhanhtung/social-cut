@@ -1509,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 previewCanvas.style.display = 'block';
                 imageMeta.style.display = 'flex';
                 interactiveTip.style.display = 'flex';
-                imgDimOriginal.textContent = `${img.naturalWidth} x ${img.naturalHeight} px`;
+                imgDimOriginal.textContent = `${img.naturalWidth}×${img.naturalHeight}`;
                 
                 btnSlice.disabled = false;
                 if (btnAutoDetect) btnAutoDetect.disabled = false;
