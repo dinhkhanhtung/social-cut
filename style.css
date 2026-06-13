@@ -432,6 +432,13 @@ body {
     flex-shrink: 0;
 }
 
+/* Sidebar Scrollable Content for Mobile Layout */
+.sidebar-scroll-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
 .controls-pane {
     display: none;
     animation: fadeIn 0.25s ease-out;
@@ -512,6 +519,8 @@ input[type="number"] {
     overflow: hidden;
     transition: var(--transition-smooth);
     width: 100%;
+    height: 38px;
+    box-sizing: border-box;
 }
 
 .input-number-group:focus-within {
@@ -523,7 +532,8 @@ input[type="number"] {
     background: transparent;
     border: none;
     text-align: center;
-    padding: 8px 5px;
+    padding: 0 5px;
+    height: 100%;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -537,7 +547,7 @@ input[type="number"] {
     border: none;
     color: var(--text-secondary);
     width: 32px;
-    height: 36px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -585,6 +595,8 @@ input[type="number"] {
     outline: none;
     transition: var(--transition-smooth);
     cursor: pointer;
+    height: 38px;
+    box-sizing: border-box;
 }
 
 .control-item select:focus {
@@ -1137,8 +1149,8 @@ input[type="number"] {
     position: absolute;
     top: 6px;
     right: 6px;
-    background: rgba(239, 68, 68, 0.85);
-    border: none;
+    background: rgba(239, 68, 68, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     color: #fff;
     width: 26px;
     height: 26px;
@@ -1147,10 +1159,11 @@ input[type="number"] {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     transition: var(--transition-smooth);
-    opacity: 0;
+    opacity: 0; /* Ẩn mặc định trên PC, di chuột qua mới hiện */
     z-index: 10;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .result-item:hover .result-item-btn-del {
@@ -1158,8 +1171,116 @@ input[type="number"] {
 }
 
 .result-item-btn-del:hover {
-    background: #ff4d4d;
-    transform: scale(1.1);
+    background: #ff3333;
+    transform: scale(1.15);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Facebook Grid Layouts for Results Tab */
+.result-grid.layout-fb-1d3v {
+    display: grid !important;
+    grid-template-columns: 2fr 1fr !important;
+    grid-template-rows: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    aspect-ratio: 3 / 2 !important;
+    width: 100% !important;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.result-grid.layout-fb-1d3v > .result-item {
+    aspect-ratio: auto !important;
+    height: 100% !important;
+    width: 100% !important;
+    cursor: default !important;
+}
+
+.result-grid.layout-fb-1d3v > .result-item:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.result-grid.layout-fb-1d3v > .result-item .result-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.result-grid.layout-fb-1d3v > :nth-child(1) {
+    grid-column: 1 / 2 !important;
+    grid-row: 1 / 4 !important;
+}
+
+.result-grid.layout-fb-1d3v > :nth-child(2) {
+    grid-column: 2 / 3 !important;
+    grid-row: 1 / 2 !important;
+}
+
+.result-grid.layout-fb-1d3v > :nth-child(3) {
+    grid-column: 2 / 3 !important;
+    grid-row: 2 / 3 !important;
+}
+
+.result-grid.layout-fb-1d3v > :nth-child(4) {
+    grid-column: 2 / 3 !important;
+    grid-row: 3 / 4 !important;
+}
+
+.result-grid.layout-fb-1n3v {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-rows: 2fr 1fr !important;
+    gap: 8px !important;
+    aspect-ratio: 3 / 2 !important;
+    width: 100% !important;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.result-grid.layout-fb-1n3v > .result-item {
+    aspect-ratio: auto !important;
+    height: 100% !important;
+    width: 100% !important;
+    cursor: default !important;
+}
+
+.result-grid.layout-fb-1n3v > .result-item:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.result-grid.layout-fb-1n3v > .result-item .result-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.result-grid.layout-fb-1n3v > :nth-child(1) {
+    grid-column: 1 / 4 !important;
+    grid-row: 1 / 2 !important;
+}
+
+.result-grid.layout-fb-1n3v > :nth-child(2) {
+    grid-column: 1 / 2 !important;
+    grid-row: 2 / 3 !important;
+}
+
+.result-grid.layout-fb-1n3v > :nth-child(3) {
+    grid-column: 2 / 3 !important;
+    grid-row: 2 / 3 !important;
+}
+
+.result-grid.layout-fb-1n3v > :nth-child(4) {
+    grid-column: 3 / 4 !important;
+    grid-row: 2 / 3 !important;
+}
+
+/* Hide grip and file name on Facebook layout items for clean view */
+.result-grid.layout-fb-1d3v .result-item-grip,
+.result-grid.layout-fb-1d3v .result-item-name-container,
+.result-grid.layout-fb-1n3v .result-item-grip,
+.result-grid.layout-fb-1n3v .result-item-name-container {
+    display: none !important;
 }
 
 /* Scrollbars styling */
@@ -1237,30 +1358,36 @@ input[type="number"] {
     gap: 16px;
     max-width: 90%;
     max-height: 95vh;
+    padding-bottom: 50px;
+    box-sizing: border-box;
 }
 
 .mobile-preview-close-btn {
     position: absolute;
-    top: -46px;
-    right: 0;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--danger);
+    border: 1px solid var(--danger);
     color: #fff;
-    font-size: 1.2rem;
-    width: 38px;
-    height: 38px;
+    font-size: 1rem;
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: var(--transition-smooth);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+    z-index: 100;
 }
 
 .mobile-preview-close-btn:hover {
-    background: var(--danger);
-    border-color: var(--danger);
-    transform: rotate(90deg);
+    background: #dc2626;
+    border-color: #dc2626;
+    transform: translateX(-50%) scale(1.1) rotate(90deg);
 }
 
 /* Smartphone Mockup */
@@ -1529,6 +1656,204 @@ input[type="number"] {
     50% { transform: translateY(-3px); }
 }
 
+/* Fake Facebook UI for Smartphone Mockup */
+.fake-facebook-ui {
+    position: absolute;
+    top: 36px; /* Below notch */
+    left: 0;
+    width: 100%;
+    height: calc(100% - 36px - 46px); /* Minus notch and nav */
+    background: #18191a;
+    color: #e4e6eb;
+    font-family: 'Inter', -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    z-index: 15;
+    overflow-y: auto;
+}
+
+/* Hide scrollbar in mockup */
+.fake-facebook-ui::-webkit-scrollbar {
+    display: none;
+}
+
+.fb-post-header {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+}
+
+.fb-post-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #3a3b3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #b0b3b8;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.fb-post-meta {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.fb-post-author {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #e4e6eb;
+}
+
+.fb-post-time {
+    font-size: 0.65rem;
+    color: #b0b3b8;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fb-post-more {
+    color: #b0b3b8;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.fb-post-text {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    padding: 0 12px 10px 12px;
+    color: #e4e6eb;
+}
+
+/* FB Post Photo Grid */
+.fb-post-grid {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Cố định tỉ lệ 1:1 cho toàn bộ grid bài đăng */
+    background: #000;
+    display: grid;
+    gap: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.fb-post-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 1 Dọc + 3 Vuông phải */
+.fb-post-grid.fb-grid-fb-1d3v {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.fb-post-grid.fb-grid-fb-1d3v > :nth-child(1) {
+    grid-column: 1 / 2;
+    grid-row: 1 / 4;
+}
+
+.fb-post-grid.fb-grid-fb-1d3v > :nth-child(2) {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+}
+
+.fb-post-grid.fb-grid-fb-1d3v > :nth-child(3) {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+}
+
+.fb-post-grid.fb-grid-fb-1d3v > :nth-child(4) {
+    grid-column: 2 / 3;
+    grid-row: 3 / 4;
+}
+
+/* 1 Ngang + 3 Vuông dưới */
+.fb-post-grid.fb-grid-fb-1n3v {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 2fr 1fr;
+}
+
+.fb-post-grid.fb-grid-fb-1n3v > :nth-child(1) {
+    grid-column: 1 / 4;
+    grid-row: 1 / 2;
+}
+
+.fb-post-grid.fb-grid-fb-1n3v > :nth-child(2) {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+}
+
+.fb-post-grid.fb-grid-fb-1n3v > :nth-child(3) {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+}
+
+.fb-post-grid.fb-grid-fb-1n3v > :nth-child(4) {
+    grid-column: 3 / 4;
+    grid-row: 2 / 3;
+}
+
+.fb-post-actions {
+    display: flex;
+    border-top: 1px solid #2f3031;
+    border-bottom: 1px solid #2f3031;
+    padding: 8px 0;
+    margin: 8px 12px;
+    justify-content: space-between;
+}
+
+.fb-action {
+    flex: 1;
+    text-align: center;
+    font-size: 0.68rem;
+    color: #b0b3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.fb-action i {
+    font-size: 0.85rem;
+}
+
+/* Fake Facebook Bottom Nav Bar */
+.fake-facebook-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 46px;
+    background: #242526;
+    border-top: 1px solid #2f3031;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    color: #b0b3b8;
+    font-size: 1.05rem;
+    z-index: 20;
+}
+
+.fake-facebook-nav i {
+    cursor: pointer;
+    padding: 8px;
+    transition: var(--transition-smooth);
+}
+
+.fake-facebook-nav i:first-child {
+    color: #1877f2; /* Active Facebook Blue */
+}
+
 .btn-accent-hover:hover {
     background: var(--accent) !important;
     border-color: var(--accent) !important;
@@ -1539,7 +1864,7 @@ input[type="number"] {
    MOBILE RESPONSIVE & LAYOUT OPTIMIZATION (MOBILE-FIRST)
    ========================================== */
 @media (max-width: 768px) {
-    /* Khóa cuộn dọc tuyệt đối trên mobile */
+    /* Khóa cuộn dọc và ngang tuyệt đối trên mobile */
     html, body {
         width: 100% !important;
         height: 100% !important;
@@ -1547,11 +1872,12 @@ input[type="number"] {
         overflow: hidden !important;
         margin: 0 !important;
         padding: 0 !important;
+        position: fixed !important;
+        overscroll-behavior: none !important;
     }
 
-    /* Tối ưu container chính thành 100% viewport và khóa cuộn */
     .app-container {
-        position: absolute !important;
+        position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         right: 0 !important;
@@ -1560,12 +1886,13 @@ input[type="number"] {
         max-width: 100vw !important;
         height: 100% !important;
         height: 100dvh !important;
-        padding: 6px 6px 6px 6px !important;
+        padding: 6px 6px 66px 6px !important; /* Dành chỗ 60px cho bottom nav */
         gap: 6px !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
+        overscroll-behavior: none !important;
     }
 
     .app-header {
@@ -1657,6 +1984,7 @@ input[type="number"] {
         display: flex !important;
         flex-direction: column !important;
         height: 100% !important;
+        overflow: hidden !important;
     }
     .app-container.mobile-tab-edit .view-panel #tab-result-grid {
         display: none !important;
@@ -1673,11 +2001,13 @@ input[type="number"] {
         justify-content: center !important;
     }
 
-    /* Mặc định thu gọn chỉ cao 110px để phần xem trước Canvas siêu to */
+    /* Mặc định thu gọn, để sidebar giãn theo nội dung (auto) */
     .app-container.mobile-tab-edit #sidebar {
         display: flex !important;
-        flex: 0 0 110px !important;
-        height: 110px !important;
+        flex-direction: column !important;
+        flex: 0 0 auto !important;
+        height: auto !important;
+        max-height: 55vh !important;
         order: 2 !important;
         position: relative !important;
         overflow: hidden !important; /* Khóa cuộn khi thu gọn */
@@ -1686,22 +2016,33 @@ input[type="number"] {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; /* Trượt mở mượt mà */
     }
 
-    /* Khi ở trạng thái thu gọn, ẩn các control cài đặt bên trong */
-    .app-container.mobile-tab-edit #sidebar:not(.active-params) > *:not(.action-buttons) {
+    /* Khi ở trạng thái thu gọn, ẩn các control cài đặt bên trong ngoại trừ mode-switch và action-buttons */
+    .app-container.mobile-tab-edit #sidebar:not(.active-params) > *:not(.action-buttons):not(.mode-switch-container) {
         display: none !important;
     }
 
+    .app-container.mobile-tab-edit #sidebar:not(.active-params) {
+        gap: 8px !important;
+    }
+
+    .app-container.mobile-tab-edit #sidebar:not(.active-params) .mode-switch-container {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        align-items: stretch !important;
+        margin-bottom: 0 !important;
+    }
+
     .app-container.mobile-tab-edit #sidebar:not(.active-params) .action-buttons {
-        position: absolute !important;
-        top: 8px !important;
-        bottom: 8px !important;
-        left: 8px !important;
-        right: 8px !important;
+        position: relative !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         gap: 8px !important;
-        width: calc(100% - 16px) !important;
-        height: calc(100% - 16px) !important;
+        width: 100% !important;
+        height: auto !important;
         padding: 0 !important;
         background: transparent !important;
         border: none !important;
@@ -1709,42 +2050,66 @@ input[type="number"] {
     }
 
     .app-container.mobile-tab-edit #sidebar:not(.active-params) .action-buttons .btn {
-        flex: 1 !important;
-        height: auto !important;
+        flex: none !important;
+        height: 38px !important;
         width: 100% !important;
         margin: 0 !important;
         font-size: 0.85rem !important;
         font-weight: 700 !important;
     }
 
+    /* Ẩn nút "Tùy chỉnh thông số" khi đang thu gọn, vì người dùng có thể nhấn nút "Cắt theo lưới" để mở */
+    .app-container.mobile-tab-edit #sidebar:not(.active-params) #btn-mobile-toggle-params {
+        display: none !important;
+    }
+
     /* Khi nhấn nút Mở rộng bảng tùy chỉnh */
     .app-container.mobile-tab-edit #sidebar.active-params {
-        flex: 0 0 290px !important;
-        height: 290px !important;
+        flex: 0 0 50vh !important;
+        height: 50vh !important;
+        max-height: 50vh !important;
+        overflow: hidden !important; /* Khóa cuộn toàn bộ sidebar, chỉ cho phép phần thông số cuộn */
+        padding: 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Phần cuộn thông số di động */
+    .sidebar-scroll-content {
+        flex: 1 !important;
         overflow-y: auto !important;
-        padding: 8px 8px 110px 8px !important; /* Chừa 110px ở đáy để không bị .action-buttons đè lên khi cuộn */
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding-bottom: 8px !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     .app-container.mobile-tab-edit #sidebar.active-params .action-buttons {
-        position: absolute !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        height: 98px !important;
-        padding: 8px !important;
-        background: rgba(15, 23, 42, 0.96) !important;
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
+        position: relative !important; /* Chuyển thành relative để luôn nằm cố định ở đáy flexbox */
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 8px 0 0 0 !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         border-top: 1px solid var(--border-color) !important;
-        z-index: 20 !important;
+        z-index: 10 !important;
         margin: 0 !important;
+        margin-top: 4px !important;
         display: flex !important;
         flex-direction: column !important;
         gap: 6px !important;
         box-sizing: border-box !important;
+        width: 100% !important;
     }
 
     .app-container.mobile-tab-edit #sidebar.active-params .action-buttons .btn {
+        flex: none !important;
         height: 38px !important;
         width: 100% !important;
         margin: 0 !important;
@@ -1752,29 +2117,35 @@ input[type="number"] {
         font-weight: 700 !important;
     }
 
+    .app-container.mobile-tab-edit #sidebar.active-params .action-buttons #btn-slice {
+        display: none !important;
+    }
+
     .app-container.mobile-tab-edit #sidebar .panel-header {
-        display: none !important;
-    }
-    .app-container.mobile-tab-edit #sidebar .snap-control-group {
-        display: none !important;
-    }
-    .app-container.mobile-tab-edit #sidebar .scale-control-group {
         display: none !important;
     }
     .app-container.mobile-tab-edit #sidebar .help-text {
         display: none !important;
     }
     .app-container.mobile-tab-edit #sidebar .mode-switch-container {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        align-items: stretch !important;
         margin-bottom: 4px !important;
         gap: 4px !important;
     }
     .app-container.mobile-tab-edit #sidebar .mode-btn {
-        height: 30px !important;
-        font-size: 0.72rem !important;
-        padding: 4px 6px !important;
+        height: 38px !important;
+        font-size: 0.75rem !important;
+        padding: 6px 8px !important;
     }
     .app-container.mobile-tab-edit #sidebar .control-item {
         margin-bottom: 6px !important;
+    }
+    .app-container.mobile-tab-edit #sidebar .control-item select {
+        height: 38px !important;
+        padding: 6px 10px !important;
+        font-size: 0.82rem !important;
     }
     .app-container.mobile-tab-edit #sidebar .control-group-grid {
         gap: 6px !important;
@@ -1794,7 +2165,7 @@ input[type="number"] {
     .app-container.mobile-tab-result .view-panel {
         display: flex !important;
         flex: 1 !important;
-        height: auto !important;
+        height: 100% !important;
         min-height: 0 !important;
         order: 1 !important;
         overflow: hidden !important;
@@ -1831,6 +2202,9 @@ input[type="number"] {
 
     /* Mode Switcher nằm ngang gọn gàng */
     .mode-switch-container {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        align-items: stretch !important;
         gap: 6px !important;
         margin-bottom: 2px !important;
     }
@@ -1838,7 +2212,7 @@ input[type="number"] {
     .mode-btn {
         padding: 6px 10px !important;
         font-size: 0.75rem !important;
-        height: 34px !important;
+        height: 38px !important;
     }
 
     /* Dropzone kéo thả ảnh */
@@ -1987,7 +2361,7 @@ input[type="number"] {
     .result-actions {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important; /* 2 cột */
-        grid-template-rows: repeat(2, 34px) !important; /* 2 hàng */
+        grid-template-rows: repeat(2, 38px) !important; /* 2 hàng */
         gap: 6px !important;
         width: 100% !important;
     }
@@ -1996,7 +2370,16 @@ input[type="number"] {
         width: 100% !important;
         font-size: 0.72rem !important;
         padding: 4px 6px !important;
-        height: 34px !important;
+        height: 38px !important;
+    }
+
+    .result-grid-scroll {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        width: 100% !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     .result-grid {
@@ -2006,9 +2389,9 @@ input[type="number"] {
         padding: 8px 4px !important;
         width: 100% !important;
         height: auto !important;
-        overflow-y: auto !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
         flex-direction: unset !important;
-        overflow-x: unset !important;
         scroll-snap-type: unset !important;
         scroll-behavior: unset !important;
     }
@@ -2021,20 +2404,39 @@ input[type="number"] {
     .result-item {
         flex: unset !important;
         scroll-snap-align: unset !important;
-        height: auto !important;
-        max-height: unset !important;
         border-radius: 8px !important;
         background: rgba(0, 0, 0, 0.4) !important;
         width: 100% !important;
-        aspect-ratio: auto !important;
         cursor: pointer !important;
     }
     
     .result-item .result-img {
         width: 100% !important;
-        height: auto !important;
-        max-height: 180px !important;
-        object-fit: cover !important;
+        height: 100% !important;
+        object-fit: contain !important;
+    }
+
+    .result-item .result-item-btn-del {
+        opacity: 1 !important; /* Luôn hiển thị trên di động vì không có sự kiện hover */
+    }
+
+    .result-item .result-item-btn-dl {
+        opacity: 1 !important; /* Luôn hiển thị trên di động vì không có sự kiện hover */
+    }
+
+    .result-item .result-item-grip {
+        opacity: 0.95 !important; /* Hiện rõ nét trên di động */
+        color: #00f2fe !important; /* Màu xanh Cyan nổi bật */
+        font-size: 1rem !important; /* To hơn để dễ nhìn */
+        width: 32px !important; /* Tăng vùng chạm cho ngón tay */
+        height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(15, 23, 42, 0.7) !important; /* Nền tối mờ dễ nhìn */
+        border-radius: 6px !important;
+        top: 6px !important;
+        left: 6px !important;
     }
 
     .result-item-badge {
@@ -2043,14 +2445,16 @@ input[type="number"] {
     }
 
     /* Smartphone Preview Modal */
-    .mobile-mockup {
+    .smartphone-shell {
         width: 250px !important;
         height: 480px !important;
         border-width: 6px !important;
+        border-radius: 28px !important;
+        flex-shrink: 0 !important;
     }
 
-    .mobile-screen {
-        border-radius: 20px !important;
+    .smartphone-screen {
+        border-radius: 22px !important;
     }
 
     .tiktok-caption {
@@ -2239,8 +2643,12 @@ input[type="number"] {
         backdrop-filter: blur(12px) !important;
         -webkit-backdrop-filter: blur(12px) !important;
         border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-        margin: 0 -6px -6px -6px !important;
-        width: auto !important;
+        margin: 0 !important;
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
         z-index: 1000 !important;
         align-items: center !important;
         justify-items: center !important;
@@ -2264,6 +2672,16 @@ input[type="number"] {
         transition: all 0.2s ease;
         outline: none;
         -webkit-tap-highlight-color: transparent;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        padding: 4px !important;
+    }
+
+    .mobile-nav-item span {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
     }
 
     .mobile-nav-item i {
@@ -2299,11 +2717,29 @@ input[type="number"] {
         border: 1px solid var(--border-color) !important;
         color: var(--text-primary) !important;
         box-shadow: none !important;
+        height: 38px !important;
     }
 
     .app-container.mobile-tab-edit #sidebar .action-buttons #btn-mobile-toggle-params.active {
-        background: rgba(6, 182, 212, 0.15) !important;
-        border-color: var(--accent) !important;
+        background: var(--danger) !important; /* màu đỏ tương đồng */
+        border: 1px solid var(--danger) !important;
+        color: #fff !important;
+        width: 34px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        border-radius: 50% !important;
+        align-self: center !important;
+        padding: 0 !important;
+        margin-bottom: 4px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35) !important;
+    }
+
+    .app-container.mobile-tab-edit #sidebar .action-buttons #btn-mobile-toggle-params.active:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
         color: var(--accent) !important;
     }
 }

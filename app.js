@@ -206,8 +206,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    modeGridBtn.addEventListener('click', () => setSlicingMode('grid'));
-    modeBoxBtn.addEventListener('click', () => setSlicingMode('box'));
+    modeGridBtn.addEventListener('click', () => {
+        setSlicingMode('grid');
+        if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
+            document.getElementById('sidebar').classList.add('active-params');
+            const btnMobileToggleParams = document.getElementById('btn-mobile-toggle-params');
+            if (btnMobileToggleParams) {
+                btnMobileToggleParams.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                btnMobileToggleParams.classList.add('active');
+            }
+        }
+    });
+    
+    modeBoxBtn.addEventListener('click', () => {
+        setSlicingMode('box');
+        if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
+            document.getElementById('sidebar').classList.add('active-params');
+            const btnMobileToggleParams = document.getElementById('btn-mobile-toggle-params');
+            if (btnMobileToggleParams) {
+                btnMobileToggleParams.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                btnMobileToggleParams.classList.add('active');
+            }
+        }
+    });
 
     // --- Constraints Controls Listeners ---
     selectRatio.addEventListener('change', () => {
@@ -386,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnMobileToggleParams.addEventListener('click', () => {
             sidebar.classList.toggle('active-params');
             if (sidebar.classList.contains('active-params')) {
-                btnMobileToggleParams.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Đóng bảng tùy chỉnh';
+                btnMobileToggleParams.innerHTML = '<i class="fa-solid fa-xmark"></i>';
                 btnMobileToggleParams.classList.add('active');
             } else {
                 btnMobileToggleParams.innerHTML = '<i class="fa-solid fa-sliders"></i> Tùy chỉnh thông số';
@@ -787,8 +808,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Check Delete button
             const delX = box.x + box.w;
             const delY = box.y;
-            const delToleranceX = (deleteBtnSize / 2) * scaleX;
-            const delToleranceY = (deleteBtnSize / 2) * scaleY;
+            
+            // Tăng vùng nhạy chạm (hitbox tolerance) trên touch screen/di động để dễ thao tác bằng ngón tay
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const toleranceMultiplier = isTouch ? 2.5 : 1.5;
+
+            const delToleranceX = (deleteBtnSize / 2) * scaleX * toleranceMultiplier;
+            const delToleranceY = (deleteBtnSize / 2) * scaleY * toleranceMultiplier;
             if (Math.abs(imgX - delX) <= delToleranceX && Math.abs(imgY - delY) <= delToleranceY) {
                 return { boxIndex: i, actionType: 'delete' };
             }
@@ -796,8 +822,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Check Resize handle
             const handleX = box.x + box.w;
             const handleY = box.y + box.h;
-            const resToleranceX = boxHandleSize * scaleX;
-            const resToleranceY = boxHandleSize * scaleY;
+            const resToleranceX = boxHandleSize * scaleX * toleranceMultiplier;
+            const resToleranceY = boxHandleSize * scaleY * toleranceMultiplier;
             if (Math.abs(imgX - handleX) <= resToleranceX && Math.abs(imgY - handleY) <= resToleranceY) {
                 return { boxIndex: i, actionType: 'resize-br' };
             }
@@ -1517,6 +1543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         slicedImages = [];
         slicedBlobs = [];
         resultGrid.innerHTML = '';
+        resultGrid.className = 'result-grid';
         resultCount.textContent = '0';
         if (resultCountBadge) {
             resultCountBadge.textContent = '0';
@@ -2395,15 +2422,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert("Kích thước ô nhỏ sau khi xén viền nhỏ hơn 0. Hãy giảm Offset!");
                     return;
                 }
-                const targetW_small = Math.round(smallCropW * smallScale);
-                const targetH_small = Math.round(smallCropH * smallScale);
+                const smallScale = getExportScale(smallCell.cropW);
+                const targetW_small = Math.round(smallCell.cropW * smallScale);
+                const targetH_small = Math.round(smallCell.cropH * smallScale);
 
                 // Cắt 4 slide
                 gridCells.forEach((cell, idx) => {
-                    const sx = cell.x1 + cell.left;
-                    const sy = cell.y1 + cell.top;
-                    const cropW = (cell.x2 - cell.x1) - cell.left - cell.right;
-                    const cropH = (cell.y2 - cell.y1) - cell.top - cell.bottom;
+                    const sx = cell.sx;
+                    const sy = cell.sy;
+                    const cropW = cell.cropW;
+                    const cropH = cell.cropH;
 
                     const resultId = resultIdCounter++;
                     const sliceName = `slide_${startIndex + idx + 1}.png`;
@@ -2461,7 +2489,12 @@ document.addEventListener('DOMContentLoaded', () => {
             resultCountBadge.textContent = totalImages;
         }
 
-        // CSS Grid sẽ tự động điều chỉnh số cột cho nhỏ gọn và responsive đẹp mắt
+        // Cập nhật class layout cho Thư viện kết quả để CSS hiển thị dạng lưới bất đối xứng
+        if (gridType === 'fb-1d3v' || gridType === 'fb-1n3v') {
+            resultGrid.className = `result-grid layout-${gridType}`;
+        } else {
+            resultGrid.className = 'result-grid';
+        }
 
         tabBtnResult.disabled = false;
         switchTab('tab-result-grid');
@@ -2493,10 +2526,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataUrl = sliceCanvas.toDataURL('image/png');
         slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl });
 
+        const isFacebookMode = (gridType === 'fb-1d3v' || gridType === 'fb-1n3v');
+
         const resultItem = document.createElement('div');
         resultItem.classList.add('result-item');
         resultItem.dataset.id = resultId;
-        resultItem.setAttribute('draggable', 'true');
+        resultItem.setAttribute('draggable', isFacebookMode ? 'false' : 'true');
         resultItem.style.aspectRatio = `${targetW} / ${targetH}`;
 
         const grip = document.createElement('div');
@@ -2506,7 +2541,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btnDel = document.createElement('button');
         btnDel.classList.add('result-item-btn-del');
-        btnDel.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+        btnDel.innerHTML = '<i class="fa-solid fa-xmark"></i>';
         btnDel.title = `Xóa slide này`;
         btnDel.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -2601,55 +2636,32 @@ document.addEventListener('DOMContentLoaded', () => {
         resultItem.addEventListener('drop', handleDrop);
         resultItem.addEventListener('dragend', handleDragEnd);
 
-        // Touch Drag & Drop for mobile (Long Press on entire card)
-        resultItem.addEventListener('touchstart', (e) => {
-            // Tránh kích hoạt touch drag nếu chạm vào các nút xóa, tải xuống, hoặc ô đổi tên
-            if (e.target.closest('.result-item-btn-del') || e.target.closest('.result-item-btn-dl') || e.target.closest('.result-item-name-container')) {
-                return;
-            }
-            
+        // Touch Drag & Drop for mobile (Immediate drag on Grip icon)
+        grip.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
-            isTouchDragging = false;
+            isTouchDragging = true;
+            touchSourceEl = resultItem;
+            resultItem.classList.add('dragging');
             
-            // Đặt timer sau 250ms sẽ chuyển sang chế độ kéo thả
-            touchTimer = setTimeout(() => {
-                isTouchDragging = true;
-                touchSourceEl = resultItem;
-                resultItem.classList.add('dragging');
-                
-                // Rung nhẹ nếu thiết bị hỗ trợ
-                if (navigator.vibrate) {
-                    navigator.vibrate(40);
-                }
-            }, 250);
-        }, { passive: true });
-
-        resultItem.addEventListener('touchmove', (e) => {
-            const touch = e.touches[0];
-            const diffX = Math.abs(touch.clientX - touchStartX);
-            const diffY = Math.abs(touch.clientY - touchStartY);
-            
-            if (!isTouchDragging) {
-                // Nếu người dùng di chuyển tay quá 8px trước khi timer kích hoạt kéo thả,
-                // hủy timer kéo thả để cho phép họ cuộn danh sách bình thường
-                if (diffX > 8 || diffY > 8) {
-                    clearTimeout(touchTimer);
-                }
-                return;
+            if (navigator.vibrate) {
+                navigator.vibrate(40);
             }
+            e.preventDefault(); // Ngăn chặn các sự kiện mặc định ngay lập tức
+        }, { passive: false });
+
+        grip.addEventListener('touchmove', (e) => {
+            if (!isTouchDragging) return;
             
-            // Nếu đã ở chế độ kéo thả, ngăn cuộn màn hình
             if (e.cancelable) {
                 e.preventDefault();
             }
             
-            // Tìm card đích dưới ngón tay
+            const touch = e.touches[0];
             const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
             const targetItem = elementUnder ? elementUnder.closest('.result-item') : null;
             
-            // Xóa highlight trên các card khác
             document.querySelectorAll('.result-item').forEach(item => {
                 if (item !== targetItem) {
                     item.classList.remove('drag-over');
@@ -2659,7 +2671,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetItem && targetItem !== touchSourceEl) {
                 targetItem.classList.add('drag-over');
                 
-                // Thực hiện di chuyển DOM ngay trong lúc di chuyển ngón tay giống như PC!
                 const children = Array.from(resultGrid.children);
                 const idxSource = children.indexOf(touchSourceEl);
                 const idxTarget = children.indexOf(targetItem);
@@ -2672,9 +2683,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, { passive: false });
 
-        resultItem.addEventListener('touchend', (e) => {
-            clearTimeout(touchTimer);
-            
+        grip.addEventListener('touchend', (e) => {
             if (isTouchDragging && touchSourceEl) {
                 if (e.cancelable) {
                     e.preventDefault();
@@ -2684,7 +2693,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.classList.remove('drag-over');
                 });
                 
-                // Đồng bộ lại thứ tự mảng dữ liệu
                 syncArraysOrder();
                 
                 isTouchDragging = false;
@@ -2692,8 +2700,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        resultItem.addEventListener('touchcancel', () => {
-            clearTimeout(touchTimer);
+        grip.addEventListener('touchcancel', () => {
             if (isTouchDragging && touchSourceEl) {
                 touchSourceEl.classList.remove('dragging');
                 document.querySelectorAll('.result-item').forEach(item => {
@@ -2860,6 +2867,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 slicedImages = [];
                 slicedBlobs = [];
                 resultGrid.innerHTML = '';
+                resultGrid.className = 'result-grid';
                 resultCount.textContent = '0';
                 if (resultCountBadge) {
                     resultCountBadge.textContent = '0';
@@ -2928,54 +2936,103 @@ document.addEventListener('DOMContentLoaded', () => {
         btnMobilePreview.addEventListener('click', () => {
             if (slicedImages.length === 0) return;
 
-            // Xóa sạch nội dung slider và dots cũ
-            mobileCarouselSlider.innerHTML = '';
-            mobileCarouselDots.innerHTML = '';
+            const isFacebookMode = (gridType === 'fb-1d3v' || gridType === 'fb-1n3v');
+
+            // Lấy các element UI mô phỏng
+            const fakeTiktokUi = mobilePreviewModal.querySelector('.fake-tiktok-ui');
+            const fakeTiktokNav = mobilePreviewModal.querySelector('.fake-tiktok-nav');
+            const fakeFacebookUi = mobilePreviewModal.querySelector('.fake-facebook-ui');
+            const fakeFacebookNav = mobilePreviewModal.querySelector('.fake-facebook-nav');
+            const previewHint = mobilePreviewModal.querySelector('.mobile-preview-hint');
+            const fbPostGrid = mobilePreviewModal.querySelector('#fb-post-grid');
 
             // Lấy thứ tự thực tế trong DOM để hiển thị
             const orderedIds = Array.from(resultGrid.children).map(el => parseInt(el.dataset.id));
-            
-            orderedIds.forEach((id, index) => {
-                const imgData = slicedImages.find(item => item.id === id);
-                if (imgData) {
-                    // Tạo slide element
-                    const slide = document.createElement('div');
-                    slide.classList.add('mobile-carousel-slide');
-                    slide.dataset.index = index;
 
-                    const img = document.createElement('img');
-                    img.src = imgData.dataUrl;
-                    img.alt = imgData.name;
-                    slide.appendChild(img);
+            if (isFacebookMode) {
+                // 1. Ẩn TikTok UI, hiện Facebook UI
+                if (fakeTiktokUi) fakeTiktokUi.style.display = 'none';
+                if (fakeTiktokNav) fakeTiktokNav.style.display = 'none';
+                if (mobileCarouselSlider) mobileCarouselSlider.style.display = 'none';
+                if (mobileCarouselDots) mobileCarouselDots.style.display = 'none';
+                if (previewHint) previewHint.style.display = 'none';
 
-                    mobileCarouselSlider.appendChild(slide);
+                if (fakeFacebookUi) fakeFacebookUi.style.display = 'block';
+                if (fakeFacebookNav) fakeFacebookNav.style.display = 'flex';
 
-                    // Tạo dot element tương ứng
-                    const dot = document.createElement('div');
-                    dot.classList.add('mobile-carousel-dot');
-                    if (index === 0) dot.classList.add('active');
-                    dot.dataset.index = index;
+                // 2. Dựng lưới ảnh Facebook
+                if (fbPostGrid) {
+                    fbPostGrid.innerHTML = '';
+                    fbPostGrid.className = `fb-post-grid fb-grid-${gridType}`;
                     
-                    // Cho phép click dot để chuyển slide
-                    dot.addEventListener('click', () => {
-                        const sliderWidth = mobileCarouselSlider.clientWidth;
-                        mobileCarouselSlider.scrollTo({
-                            left: index * sliderWidth,
-                            behavior: 'smooth'
-                        });
+                    orderedIds.forEach((id) => {
+                        const imgData = slicedImages.find(item => item.id === id);
+                        if (imgData) {
+                            const img = document.createElement('img');
+                            img.src = imgData.dataUrl;
+                            img.alt = imgData.name;
+                            img.classList.add('fb-post-img');
+                            fbPostGrid.appendChild(img);
+                        }
                     });
-                    
-                    mobileCarouselDots.appendChild(dot);
                 }
-            });
+            } else {
+                // 1. Ẩn Facebook UI, hiện TikTok UI
+                if (fakeFacebookUi) fakeFacebookUi.style.display = 'none';
+                if (fakeFacebookNav) fakeFacebookNav.style.display = 'none';
+
+                if (fakeTiktokUi) fakeTiktokUi.style.display = 'block';
+                if (fakeTiktokNav) fakeTiktokNav.style.display = 'flex';
+                if (mobileCarouselSlider) mobileCarouselSlider.style.display = 'flex';
+                if (mobileCarouselDots) mobileCarouselDots.style.display = 'flex';
+                if (previewHint) previewHint.style.display = 'block';
+
+                // Xóa sạch nội dung slider và dots cũ
+                mobileCarouselSlider.innerHTML = '';
+                mobileCarouselDots.innerHTML = '';
+
+                orderedIds.forEach((id, index) => {
+                    const imgData = slicedImages.find(item => item.id === id);
+                    if (imgData) {
+                        // Tạo slide element
+                        const slide = document.createElement('div');
+                        slide.classList.add('mobile-carousel-slide');
+                        slide.dataset.index = index;
+
+                        const img = document.createElement('img');
+                        img.src = imgData.dataUrl;
+                        img.alt = imgData.name;
+                        slide.appendChild(img);
+
+                        mobileCarouselSlider.appendChild(slide);
+
+                        // Tạo dot element tương ứng
+                        const dot = document.createElement('div');
+                        dot.classList.add('mobile-carousel-dot');
+                        if (index === 0) dot.classList.add('active');
+                        dot.dataset.index = index;
+                        
+                        // Cho phép click dot để chuyển slide
+                        dot.addEventListener('click', () => {
+                            const sliderWidth = mobileCarouselSlider.clientWidth;
+                            mobileCarouselSlider.scrollTo({
+                                left: index * sliderWidth,
+                                behavior: 'smooth'
+                            });
+                        });
+                        
+                        mobileCarouselDots.appendChild(dot);
+                    }
+                });
+
+                // Focus vào slide đầu tiên
+                mobileCarouselSlider.scrollLeft = 0;
+                currentSlideIndex = 0;
+                updateActiveDot(0);
+            }
 
             // Mở modal
             mobilePreviewModal.style.display = 'flex';
-            
-            // Focus vào slide đầu tiên
-            mobileCarouselSlider.scrollLeft = 0;
-            currentSlideIndex = 0;
-            updateActiveDot(0);
         });
     }
 
@@ -3234,6 +3291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tabBtnResult.disabled = true;
         resultCount.textContent = '0';
         resultGrid.innerHTML = '';
+        resultGrid.className = 'result-grid';
         
         previewCanvas.style.display = 'none';
         imageMeta.style.display = 'none';

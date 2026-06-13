@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Carousel Cut - Cắt ảnh Slide TikTok Vô Cực</title>
     <meta name="description" content="Công cụ Mobile-First giúp bạn chia nhỏ ảnh dài (panorama) thành các slide nối liền hoàn hảo, không méo hình, hỗ trợ kéo thả sắp xếp, đổi tên và tải ZIP nhanh chóng để đăng TikTok.">
     
@@ -33,11 +33,10 @@
     <script src="app.js?v=2.0.1" defer></script>
 </head>
 <body>
-    <!-- Background Elements for Premium Glassmorphism Look -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
-
     <div class="app-container mobile-tab-upload">
+        <!-- Background Elements for Premium Glassmorphism Look -->
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
         <header class="app-header">
             <div class="logo">
                 <i class="fa-solid fa-scissors brand-icon"></i>
@@ -64,147 +63,150 @@
                     </button>
                 </div>
 
-                <!-- File Dropzone -->
-                <div class="dropzone" id="dropzone">
-                    <input type="file" id="file-input" accept="image/*" class="file-input">
-                    <div class="dropzone-prompt" id="dropzone-prompt">
-                        <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                        <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
-                        <p class="dropzone-text-sub">hoặc nhấp chuột để chọn từ máy tính</p>
-                        <span class="file-format-badge">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
+                <div class="sidebar-scroll-content">
+                    <!-- File Dropzone -->
+                    <div class="dropzone" id="dropzone">
+                        <input type="file" id="file-input" accept="image/*" class="file-input">
+                        <div class="dropzone-prompt" id="dropzone-prompt">
+                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                            <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
+                            <p class="dropzone-text-sub">hoặc nhấp chuột để chọn từ máy tính</p>
+                            <span class="file-format-badge">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
+                        </div>
+                        <!-- Mini Preview when file selected -->
+                        <div class="dropzone-file-info" id="file-info" style="display: none;">
+                            <i class="fa-solid fa-image file-icon"></i>
+                            <span class="file-name" id="file-name">filename.jpg</span>
+                            <span class="file-size" id="file-size">(0 KB)</span>
+                            <button type="button" class="btn-remove-file" id="btn-remove-file" title="Xóa ảnh">
+                                <i class="fa-solid fa-xmark"></i>
+                        </div>
                     </div>
-                    <!-- Mini Preview when file selected -->
-                    <div class="dropzone-file-info" id="file-info" style="display: none;">
-                        <i class="fa-solid fa-image file-icon"></i>
-                        <span class="file-name" id="file-name">filename.jpg</span>
-                        <span class="file-size" id="file-size">(0 KB)</span>
-                        <button type="button" class="btn-remove-file" id="btn-remove-file" title="Xóa ảnh">
-                            <i class="fa-solid fa-xmark"></i>
-                    </div>
-                </div>
 
-                <!-- Parameters Box: Dynamic content based on Mode -->
-                <div class="params-container">
-                    <!-- Grid Mode Controls -->
-                    <div id="controls-grid-mode" class="controls-pane active">
-                        <div class="control-item" style="margin-bottom: 12px;">
-                            <label for="select-grid-type">
-                                <i class="fa-solid fa-table-cells" style="color: #06b6d4;"></i> Bố cục lưới (Grid Layout)
+                    <!-- Parameters Box: Dynamic content based on Mode -->
+                    <div class="params-container">
+                        <!-- Grid Mode Controls -->
+                        <div id="controls-grid-mode" class="controls-pane active">
+                            <div class="control-item" style="margin-bottom: 12px;">
+                                <label for="select-grid-type">
+                                    <i class="fa-solid fa-table-cells" style="color: #06b6d4;"></i> Bố cục lưới (Grid Layout)
+                                </label>
+                                <select id="select-grid-type">
+                                    <option value="even" selected>Chia đều (Hàng x Cột)</option>
+                                    <option value="fb-1d3v">Facebook: 1 Dọc + 3 Vuông phải</option>
+                                    <option value="fb-1n3v">Facebook: 1 Ngang + 3 Vuông dưới</option>
+                                </select>
+                            </div>
+
+
+                            <div class="control-group-grid" id="grid-even-parameters">
+                                <div class="control-item">
+                                    <label for="input-rows">
+                                        <i class="fa-solid fa-arrows-up-down"></i> Số hàng (Rows)
+                                    </label>
+                                    <div class="input-number-group">
+                                        <button type="button" class="btn-spinner btn-minus" data-target="input-rows"><i class="fa-solid fa-minus"></i></button>
+                                        <input type="number" id="input-rows" min="1" max="20" value="3">
+                                        <button type="button" class="btn-spinner btn-plus" data-target="input-rows"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </div>
+                                <div class="control-item">
+                                    <label for="input-cols">
+                                        <i class="fa-solid fa-arrows-left-right"></i> Số cột (Columns)
+                                    </label>
+                                    <div class="input-number-group">
+                                        <button type="button" class="btn-spinner btn-minus" data-target="input-cols"><i class="fa-solid fa-minus"></i></button>
+                                        <input type="number" id="input-cols" min="1" max="20" value="3">
+                                        <button type="button" class="btn-spinner btn-plus" data-target="input-cols"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Box Mode Controls -->
+                        <div id="controls-box-mode" class="controls-pane">
+                            <div class="control-group-grid">
+                                <button id="btn-gen-boxes" class="btn btn-secondary" disabled>
+                                    <i class="fa-solid fa-cubes"></i> Tạo khung
+                                </button>
+                                <button id="btn-clear-boxes" class="btn btn-secondary btn-danger-hover" disabled>
+                                    <i class="fa-solid fa-trash-can"></i> Xóa hết
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ratio & Scale selectors in one row -->
+                    <div class="control-group-grid scale-ratio-group" style="margin-bottom: 12px;">
+                        <div class="control-item">
+                            <label for="select-ratio">
+                                <i class="fa-solid fa-crop"></i> Tỷ lệ cắt (Ratio)
                             </label>
-                            <select id="select-grid-type">
-                                <option value="even" selected>Chia đều (Hàng x Cột)</option>
-                                <option value="fb-1d3v">Facebook: 1 Dọc + 3 Vuông phải</option>
-                                <option value="fb-1n3v">Facebook: 1 Ngang + 3 Vuông dưới</option>
+                            <select id="select-ratio">
+                                <option value="free">Tự do (Free)</option>
+                                <option value="1:1">1:1 (Instagram/TikTok)</option>
+                                <option value="4:5">4:5 (Dọc TikTok/Insta)</option>
+                                <option value="3:4">3:4 (TikTok/FB)</option>
+                                <option value="9:16">9:16 (TikTok Full)</option>
                             </select>
                         </div>
-
-
-                        <div class="control-group-grid" id="grid-even-parameters">
-                            <div class="control-item">
-                                <label for="input-rows">
-                                    <i class="fa-solid fa-arrows-up-down"></i> Số hàng (Rows)
-                                </label>
-                                <div class="input-number-group">
-                                    <button type="button" class="btn-spinner btn-minus" data-target="input-rows"><i class="fa-solid fa-minus"></i></button>
-                                    <input type="number" id="input-rows" min="1" max="20" value="3">
-                                    <button type="button" class="btn-spinner btn-plus" data-target="input-rows"><i class="fa-solid fa-plus"></i></button>
-                                </div>
-                            </div>
-                            <div class="control-item">
-                                <label for="input-cols">
-                                    <i class="fa-solid fa-arrows-left-right"></i> Số cột (Columns)
-                                </label>
-                                <div class="input-number-group">
-                                    <button type="button" class="btn-spinner btn-minus" data-target="input-cols"><i class="fa-solid fa-minus"></i></button>
-                                    <input type="number" id="input-cols" min="1" max="20" value="3">
-                                    <button type="button" class="btn-spinner btn-plus" data-target="input-cols"><i class="fa-solid fa-plus"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Box Mode Controls -->
-                    <div id="controls-box-mode" class="controls-pane">
-                        <div class="control-group-vertical">
-                            <button id="btn-gen-boxes" class="btn btn-secondary" disabled>
-                                <i class="fa-solid fa-cubes"></i> Tạo nhanh khung lưới
-                            </button>
-                            <button id="btn-clear-boxes" class="btn btn-secondary btn-danger-hover" disabled>
-                                <i class="fa-solid fa-trash-can"></i> Xóa tất cả khung
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Uniform constraints for Aspect Ratio & Size Lock -->
-                <div class="control-group-grid">
-                    <div class="control-item">
-                        <label for="select-ratio">
-                            <i class="fa-solid fa-crop"></i> Tỷ lệ cắt (Ratio)
-                        </label>
-                        <select id="select-ratio">
-                            <option value="free">Tự do (Free)</option>
-                            <option value="1:1">1:1 (Instagram/TikTok)</option>
-                            <option value="4:5">4:5 (Dọc TikTok/Insta)</option>
-                            <option value="3:4">3:4 (TikTok/FB)</option>
-                            <option value="9:16">9:16 (TikTok Full)</option>
-                        </select>
-                    </div>
-                    <div class="control-item">
-                        <label for="switch-uniform" class="label-switch">
-                            <i class="fa-solid fa-shapes"></i> Đồng dạng cỡ
-                        </label>
-                        <div class="switch-wrapper">
-                            <input type="checkbox" id="switch-uniform" class="switch-checkbox">
-                            <label for="switch-uniform" class="switch-label-btn"></label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="control-group-grid snap-control-group" style="margin-top: -5px; margin-bottom: 5px;">
-                    <div class="control-item" style="grid-column: span 2;">
-                        <div class="switch-inline-container" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
-                            <label for="switch-snap" class="label-switch" style="margin-bottom: 0; cursor: pointer;">
-                                <i class="fa-solid fa-magnet" style="color: #ec4899;"></i> Bắt dính thông minh (Snap)
+                        <div class="control-item scale-control-group">
+                            <label for="select-export-scale">
+                                <i class="fa-solid fa-up-right-and-down-left-from-center" style="color: #06b6d4;"></i> Độ nét (Scale)
                             </label>
-                            <div class="switch-wrapper">
-                                <input type="checkbox" id="switch-snap" class="switch-checkbox" checked>
-                                <label for="switch-snap" class="switch-label-btn"></label>
+                            <select id="select-export-scale">
+                                <option value="auto">Tự động tối ưu HD</option>
+                                <option value="1">1x (Gốc)</option>
+                                <option value="1.5">1.5x (Sắc nét)</option>
+                                <option value="2">2x (Siêu nét)</option>
+                                <option value="3" selected>3x (Cực nét)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Uniform constraints & Snap switchers in one row -->
+                    <div class="control-group-grid snap-uniform-group" style="margin-top: 4px; margin-bottom: 12px;">
+                        <div class="control-item">
+                            <div class="switch-inline-container" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); height: 38px;">
+                                <label for="switch-uniform" class="label-switch" style="margin-bottom: 0; cursor: pointer; font-size: 0.78rem;">
+                                    <i class="fa-solid fa-shapes" style="color: #00f2fe;"></i> Đồng dạng
+                                </label>
+                                <div class="switch-wrapper">
+                                    <input type="checkbox" id="switch-uniform" class="switch-checkbox">
+                                    <label for="switch-uniform" class="switch-label-btn"></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="control-item snap-control-group">
+                            <div class="switch-inline-container" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); height: 38px;">
+                                <label for="switch-snap" class="label-switch" style="margin-bottom: 0; cursor: pointer; font-size: 0.78rem;">
+                                    <i class="fa-solid fa-magnet" style="color: #ec4899;"></i> Snap
+                                </label>
+                                <div class="switch-wrapper">
+                                    <input type="checkbox" id="switch-snap" class="switch-checkbox" checked>
+                                    <label for="switch-snap" class="switch-label-btn"></label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Global Slider (Applies to both modes) -->
-                <div class="control-item">
-                    <div class="label-with-value">
-                        <label for="input-offset">
-                            <i class="fa-solid fa-border-none"></i> Xén viền ô (Offset Padding)
-                        </label>
-                    </div>
-                    <div class="offset-control-group">
-                        <input type="range" id="input-offset" min="0" max="50" value="0" step="1" class="slider">
-                        <div class="input-number-group offset-spinner">
-                            <button type="button" class="btn-spinner btn-minus" data-target="input-offset-number"><i class="fa-solid fa-minus"></i></button>
-                            <input type="number" id="input-offset-number" min="0" max="50" value="0">
-                            <button type="button" class="btn-spinner btn-plus" data-target="input-offset-number"><i class="fa-solid fa-plus"></i></button>
+                    <!-- Global Slider (Applies to both modes) -->
+                    <div class="control-item">
+                        <div class="label-with-value">
+                            <label for="input-offset">
+                                <i class="fa-solid fa-border-none"></i> Xén viền ô (Offset Padding)
+                            </label>
                         </div>
+                        <div class="offset-control-group">
+                            <input type="range" id="input-offset" min="0" max="50" value="0" step="1" class="slider">
+                            <div class="input-number-group offset-spinner">
+                                <button type="button" class="btn-spinner btn-minus" data-target="input-offset-number"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="input-offset-number" min="0" max="50" value="0">
+                                <button type="button" class="btn-spinner btn-plus" data-target="input-offset-number"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <p class="help-text">Giúp loại bỏ khoảng trắng hoặc viền phân cách đen ở giữa các ô ghép.</p>
                     </div>
-                    <p class="help-text">Giúp loại bỏ khoảng trắng hoặc viền phân cách đen ở giữa các ô ghép.</p>
-                </div>
-
-                <!-- Export Scale Selection -->
-                <div class="control-item scale-control-group" style="margin-top: 10px; margin-bottom: 12px;">
-                    <label for="select-export-scale">
-                        <i class="fa-solid fa-up-right-and-down-left-from-center" style="color: #06b6d4;"></i> Độ phân giải xuất (Scale)
-                    </label>
-                    <select id="select-export-scale">
-                        <option value="auto">Tự động tối ưu HD (Khuyên dùng)</option>
-                        <option value="1">1x (Chất lượng gốc)</option>
-                        <option value="1.5">1.5x (Sắc nét hơn)</option>
-                        <option value="2">2x (Siêu nét)</option>
-                        <option value="3" selected>3x (Cực nét)</option>
-                    </select>
                 </div>
 
                 <!-- Action Buttons -->
@@ -314,11 +316,6 @@
     <div id="mobile-preview-modal" class="mobile-preview-modal" style="display: none;">
         <div class="mobile-preview-backdrop"></div>
         <div class="mobile-preview-container">
-            <!-- Close Button -->
-            <button id="btn-close-mobile-preview" class="mobile-preview-close-btn" title="Đóng xem trước">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            
             <!-- Smartphone Shell Mockup -->
             <div class="smartphone-shell">
                 <div class="smartphone-screen">
@@ -365,8 +362,45 @@
                         <i class="fa-solid fa-message"></i>
                         <i class="fa-solid fa-user"></i>
                     </div>
+
+                    <!-- Fake Facebook Post UI (Chỉ hiển thị khi cắt kiểu Facebook) -->
+                    <div class="fake-facebook-ui" style="display: none;">
+                        <div class="fb-post-header">
+                            <div class="fb-post-avatar">
+                                <i class="fa-solid fa-circle-user"></i>
+                            </div>
+                            <div class="fb-post-meta">
+                                <div class="fb-post-author">Carousel Cut</div>
+                                <div class="fb-post-time">1 phút &middot; <i class="fa-solid fa-earth-americas"></i></div>
+                            </div>
+                            <div class="fb-post-more"><i class="fa-solid fa-ellipsis"></i></div>
+                        </div>
+                        <div class="fb-post-text">Tác phẩm cắt ảnh ghép bất đối xứng của tôi trên Facebook! #facebook #grid #carousel</div>
+                        <div class="fb-post-grid" id="fb-post-grid">
+                            <!-- Dynamic images will be inserted here based on fb-1d3v or fb-1n3v -->
+                        </div>
+                        <div class="fb-post-actions">
+                            <div class="fb-action"><i class="fa-regular fa-thumbs-up"></i> Thích</div>
+                            <div class="fb-action"><i class="fa-regular fa-comment"></i> Bình luận</div>
+                            <div class="fb-action"><i class="fa-regular fa-share-from-square"></i> Chia sẻ</div>
+                        </div>
+                    </div>
+
+                    <!-- Fake Facebook Bottom Nav Bar -->
+                    <div class="fake-facebook-nav" style="display: none;">
+                        <i class="fa-solid fa-house"></i>
+                        <i class="fa-solid fa-users"></i>
+                        <i class="fa-solid fa-tv"></i>
+                        <i class="fa-solid fa-bell"></i>
+                        <i class="fa-solid fa-bars"></i>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Close Button (Bố trí bên dưới mockup, căn giữa đồng bộ với tắt bảng cấu hình) -->
+            <button id="btn-close-mobile-preview" class="mobile-preview-close-btn" title="Đóng xem trước">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
             
             <!-- Hint to user -->
             <div class="mobile-preview-hint">
