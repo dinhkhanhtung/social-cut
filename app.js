@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const offsetNumberVal = document.getElementById('input-offset-number');
     
     const selectRatio = document.getElementById('select-ratio');
+    const ratioControlItem = document.getElementById('ratio-control-item');
+    const ratioHelpText = document.getElementById('ratio-help-text');
     const selectExportScale = document.getElementById('select-export-scale');
     const selectGridType = document.getElementById('select-grid-type');
     const gridEvenParameters = document.getElementById('grid-even-parameters');
@@ -191,6 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
             controlsGridMode.classList.add('active');
             controlsBoxMode.classList.remove('active');
             
+            if (selectRatio) selectRatio.disabled = true;
+            if (ratioControlItem) ratioControlItem.classList.add('disabled');
+            if (ratioHelpText) ratioHelpText.style.display = 'block';
+
             if (currentImage) {
                 if (btnAutoDetect) btnAutoDetect.style.display = 'flex';
                 tipText.innerHTML = "Mẹo: Bạn có thể kéo thả các đường lưới màu xanh để thay đổi kích thước các ô.";
@@ -203,6 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
             controlsGridMode.classList.remove('active');
             controlsBoxMode.classList.add('active');
             
+            if (selectRatio) selectRatio.disabled = false;
+            if (ratioControlItem) ratioControlItem.classList.remove('disabled');
+            if (ratioHelpText) ratioHelpText.style.display = 'none';
+
             if (currentImage) {
                 if (btnAutoDetect) btnAutoDetect.style.display = 'none';
                 tipText.innerHTML = "Mẹo: Nhấp kéo chuột trên ảnh để vẽ khung tự do.";
@@ -4345,4 +4355,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Features ---
     loadHistoryFromDB();
     checkPasswordLock();
+    setSlicingMode('grid');
 });

@@ -468,6 +468,15 @@ body {
     gap: 6px;
 }
 
+.control-item.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.control-item.disabled select {
+    cursor: not-allowed;
+}
+
 .control-item label {
     font-size: 0.85rem;
     font-weight: 500;

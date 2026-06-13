@@ -174,7 +174,7 @@
 
                     <!-- Ratio & Scale selectors in one row -->
                     <div class="control-group-grid scale-ratio-group" style="margin-bottom: 12px;">
-                        <div class="control-item">
+                        <div class="control-item" id="ratio-control-item">
                             <label for="select-ratio">
                                 <i class="fa-solid fa-crop"></i> Tỷ lệ cắt (Ratio)
                             </label>
@@ -185,6 +185,9 @@
                                 <option value="3:4">3:4 (TikTok/FB)</option>
                                 <option value="9:16">9:16 (TikTok Full)</option>
                             </select>
+                            <div class="control-help-text" id="ratio-help-text" style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 4px; display: none; opacity: 0.8;">
+                                <i class="fa-solid fa-circle-info"></i> Chỉ áp dụng cho chế độ Tự do
+                            </div>
                         </div>
                         <div class="control-item scale-control-group">
                             <label for="select-export-scale">
