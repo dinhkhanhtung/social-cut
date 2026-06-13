@@ -3392,6 +3392,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const sidebarAccountName = document.getElementById('sidebar-account-name');
         const sidebarAccountStatus = document.getElementById('sidebar-account-status');
+        const pcAuthPopup = document.getElementById('pc-auth-popup');
 
         if (syncKey) {
             // Đã đăng nhập
@@ -3411,6 +3412,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sidebarAccountStatus) {
                 sidebarAccountStatus.innerHTML = '<i class="fa-solid fa-cloud" style="color: #06b6d4; font-size: 0.72rem;"></i> Đang đồng bộ';
             }
+            if (pcAuthPopup) pcAuthPopup.classList.add('user-logged-in');
         } else {
             // Chưa đăng nhập, reset các mode về mặc định (login)
             pcAuthMode = 'login';
@@ -3446,6 +3448,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (sidebarAccountName) sidebarAccountName.textContent = 'Chưa đăng nhập';
             if (sidebarAccountStatus) sidebarAccountStatus.textContent = 'Đồng bộ đám mây';
+            if (pcAuthPopup) pcAuthPopup.classList.remove('user-logged-in');
             
             // Xóa giá trị trong input
             const pcUserIn = document.getElementById('pc-username-input');

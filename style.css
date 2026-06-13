@@ -3775,8 +3775,61 @@ input[type="number"] {
     -webkit-overflow-scrolling: touch;
 }
 
+
 @media (min-width: 769px) {
     .mobile-drawer {
         display: none !important;
     }
+}
+
+/* PC Account Popup: Minimal logout view when logged in */
+.auth-popup.user-logged-in {
+    width: 160px !important;
+    padding: 8px !important;
+}
+
+.auth-popup.user-logged-in .auth-popup-header {
+    display: none !important;
+}
+
+.auth-popup.user-logged-in .auth-section {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+.auth-popup.user-logged-in .auth-logged-in {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+}
+
+.auth-popup.user-logged-in .auth-user-info {
+    display: none !important; /* Ẩn thông tin username trùng lặp */
+}
+
+.auth-popup.user-logged-in .btn-auth-logout {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 8px 10px !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    color: #ef4444 !important;
+    border-radius: var(--border-radius-sm) !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+
+.auth-popup.user-logged-in .btn-auth-logout:hover {
+    background: #ef4444 !important;
+    color: #fff !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
 }
