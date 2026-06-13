@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let slicingMode = 'grid'; // 'grid' or 'box'
     let gridType = 'even';    // 'even' | 'fb-1d3v' | 'fb-1n3v'
+    let currentSlideIndex = 0; // Chỉ số slide hiện tại cho Mobile Preview
 
     // --- Mode 1: Grid Mode Variables ---
     let colsX = [];        // X coordinates of vertical grid lines. Length: cols - 1
@@ -1327,6 +1328,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global Key Shortcuts Listener
     window.addEventListener('keydown', (e) => {
+        // Xử lý phím tắt cho Modal xem thử điện thoại (Mobile Preview)
+        if (mobilePreviewModal && mobilePreviewModal.style.display === 'flex') {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                mobilePreviewModal.style.display = 'none';
+                return;
+            }
+            if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                navigateMobileSlide('prev');
+                return;
+            }
+            if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+                e.preventDefault();
+                navigateMobileSlide('next');
+                return;
+            }
+            // Khóa các phím tắt khác khi đang mở xem trước di động
+            return;
+        }
+
         if (!currentImage) return;
 
         // Ignore shortcuts if user is typing in inputs or select options
@@ -2864,12 +2886,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Theo dõi scroll của slider để cập nhật active dot
+    // Theo dõi scroll của slider để cập nhật active dot và slide hiện tại
     if (mobileCarouselSlider) {
         mobileCarouselSlider.addEventListener('scroll', () => {
             const sliderWidth = mobileCarouselSlider.clientWidth;
             const scrollLeft = mobileCarouselSlider.scrollLeft;
             const activeIndex = Math.round(scrollLeft / sliderWidth);
+            currentSlideIndex = activeIndex;
             updateActiveDot(activeIndex);
         });
     }
@@ -2887,12 +2910,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const navigateMobileSlide = (direction) => {
+        if (!mobileCarouselSlider) return;
+        const dots = mobileCarouselDots.querySelectorAll('.mobile-carousel-dot');
+        const totalSlides = dots.length;
+        if (totalSlides === 0) return;
+        
+        let newIndex = currentSlideIndex;
+        if (direction === 'prev') {
+            newIndex = Math.max(0, currentSlideIndex - 1);
+        } else if (direction === 'next') {
+            newIndex = Math.min(totalSlides - 1, currentSlideIndex + 1);
+        }
+        
+        if (newIndex !== currentSlideIndex) {
+            const sliderWidth = mobileCarouselSlider.clientWidth;
+            mobileCarouselSlider.style.scrollBehavior = 'smooth';
+            mobileCarouselSlider.style.scrollSnapType = 'x mandatory';
+            mobileCarouselSlider.scrollTo({
+                left: newIndex * sliderWidth,
+                behavior: 'smooth'
+            });
+            currentSlideIndex = newIndex;
+            updateActiveDot(newIndex);
+        }
+    };
+
     // Hỗ trợ vuốt chuyển slide nhạy bén (Touch & Mouse swipe)
     let isDragging = false;
     let dragStartX = 0;
     let dragStartScrollLeft = 0;
     let dragStartTime = 0;
-    let currentSlideIndex = 0;
 
     const getClientX = (e) => {
         return e.touches ? e.touches[0].clientX : e.clientX;
