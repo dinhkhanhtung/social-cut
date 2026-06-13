@@ -3390,6 +3390,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const mobileLoggedIn = document.getElementById('mobile-auth-logged-in');
         const mobileUsername = document.getElementById('mobile-auth-username');
 
+        const sidebarAccountName = document.getElementById('sidebar-account-name');
+        const sidebarAccountStatus = document.getElementById('sidebar-account-status');
+
         if (syncKey) {
             // Đã đăng nhập
             if (pcLoggedOut) pcLoggedOut.style.display = 'none';
@@ -3402,6 +3405,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mobileLoggedIn) {
                 mobileLoggedIn.style.display = 'flex';
                 if (mobileUsername) mobileUsername.textContent = syncKey;
+            }
+
+            if (sidebarAccountName) sidebarAccountName.textContent = syncKey;
+            if (sidebarAccountStatus) {
+                sidebarAccountStatus.innerHTML = '<i class="fa-solid fa-cloud" style="color: #06b6d4; font-size: 0.72rem;"></i> Đang đồng bộ';
             }
         } else {
             // Chưa đăng nhập, reset các mode về mặc định (login)
@@ -3432,7 +3440,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pcLoggedIn) pcLoggedIn.style.display = 'none';
 
             if (mobileLoggedOut) mobileLoggedOut.style.display = 'flex';
-            if (mobileLoggedIn) mobileLoggedIn.style.display = 'none';
+            if (mobileLoggedIn) {
+                mobileLoggedIn.style.display = 'none';
+            }
+            
+            if (sidebarAccountName) sidebarAccountName.textContent = 'Chưa đăng nhập';
+            if (sidebarAccountStatus) sidebarAccountStatus.textContent = 'Đồng bộ đám mây';
             
             // Xóa giá trị trong input
             const pcUserIn = document.getElementById('pc-username-input');
@@ -4264,6 +4277,63 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Mobile Drawer (Tài khoản di động) Toggle ---
+    const mobileDrawer = document.getElementById('mobile-drawer');
+    const btnMobileMenu = document.getElementById('btn-mobile-menu');
+    const btnCloseDrawer = document.getElementById('btn-close-drawer');
+    const mobileDrawerBackdrop = document.getElementById('mobile-drawer-backdrop');
+
+    if (mobileDrawer && btnMobileMenu) {
+        btnMobileMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileDrawer.classList.add('active');
+        });
+    }
+
+    const closeMobileDrawer = () => {
+        if (mobileDrawer) mobileDrawer.classList.remove('active');
+    };
+
+    if (btnCloseDrawer) {
+        btnCloseDrawer.addEventListener('click', closeMobileDrawer);
+    }
+    if (mobileDrawerBackdrop) {
+        mobileDrawerBackdrop.addEventListener('click', closeMobileDrawer);
+    }
+
+    // --- PC Account Auth Popup Toggle ---
+    const sidebarAccountPanel = document.getElementById('sidebar-account-panel');
+    const pcAuthPopup = document.getElementById('pc-auth-popup');
+    const btnCloseAuthPopup = document.getElementById('btn-close-auth-popup');
+
+    if (sidebarAccountPanel && pcAuthPopup) {
+        sidebarAccountPanel.addEventListener('click', (e) => {
+            if (pcAuthPopup.contains(e.target)) return;
+            e.stopPropagation();
+            pcAuthPopup.classList.toggle('active');
+        });
+
+        pcAuthPopup.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    if (btnCloseAuthPopup && pcAuthPopup) {
+        btnCloseAuthPopup.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pcAuthPopup.classList.remove('active');
+        });
+    }
+
+    // Đóng popup tài khoản PC khi click ra ngoài
+    document.addEventListener('click', (e) => {
+        if (pcAuthPopup && pcAuthPopup.classList.contains('active')) {
+            if (!pcAuthPopup.contains(e.target) && e.target !== sidebarAccountPanel && !sidebarAccountPanel.contains(e.target)) {
+                pcAuthPopup.classList.remove('active');
+            }
+        }
+    });
 
     // --- Initialize Features ---
     loadHistoryFromDB();

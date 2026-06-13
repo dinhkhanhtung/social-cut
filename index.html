@@ -50,6 +50,10 @@
                 <span class="brand-text">Carousel <span class="accent-text">Cut</span></span>
             </div>
             <p class="subtitle">Cắt ảnh ghép thông minh thành lưới đa ô để đăng Instagram, Facebook, TikTok tiện lợi</p>
+            <!-- Hamburger menu button for mobile -->
+            <button type="button" id="btn-mobile-menu" class="btn-mobile-menu" title="Tài khoản">
+                <i class="fa-solid fa-bars"></i>
+            </button>
         </header>
 
         <main class="app-content" id="app-content">
@@ -93,38 +97,6 @@
 
                     <!-- Project History Section (Mobile Only in Sidebar) -->
                     <div class="history-section" id="history-section">
-                        <!-- Account Section for Mobile -->
-                        <div class="auth-section mobile-auth-section" id="mobile-auth-section">
-                            <!-- Logged out view -->
-                            <div class="auth-logged-out" id="mobile-auth-logged-out">
-                                <div class="auth-title" id="mobile-auth-title">Đăng Nhập Hệ Thống</div>
-                                <div class="auth-input-wrapper">
-                                    <i class="fa-solid fa-user auth-input-icon"></i>
-                                    <input type="text" id="mobile-username-input" placeholder="Tên đăng nhập" maxlength="30">
-                                </div>
-                                <div class="auth-input-wrapper">
-                                    <i class="fa-solid fa-lock auth-input-icon"></i>
-                                    <input type="password" id="mobile-password-input" placeholder="Mật khẩu">
-                                </div>
-                                <div class="auth-buttons-container">
-                                    <button type="button" class="btn btn-primary btn-auth-submit" id="btn-mobile-auth-submit">Đăng nhập</button>
-                                </div>
-                                <div class="auth-switch-mode">
-                                    <span id="mobile-auth-switch-text">Chưa có tài khoản?</span> 
-                                    <a href="#" id="link-mobile-auth-switch">Đăng ký ngay</a>
-                                </div>
-                            </div>
-                            <!-- Logged in view -->
-                            <div class="auth-logged-in" id="mobile-auth-logged-in" style="display: none;">
-                                <div class="auth-user-info">
-                                    <i class="fa-solid fa-circle-user"></i>
-                                    <span class="auth-username" id="mobile-auth-username">username</span>
-                                </div>
-                                <button type="button" class="btn-auth-logout" id="btn-mobile-logout" title="Đăng xuất">
-                                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                                </button>
-                            </div>
-                        </div>
 
                         <div class="history-header">
                             <div class="history-header-left">
@@ -281,6 +253,62 @@
                     <button id="btn-slice" class="btn btn-primary" disabled>
                         <i class="fa-solid fa-crop-simple"></i> Cắt ảnh ngay
                     </button>
+                </div>
+
+                <!-- Sidebar Account Panel (PC Only) -->
+                <div class="sidebar-account-panel" id="sidebar-account-panel" title="Tài khoản & Đồng bộ">
+                    <div class="account-avatar">
+                        <i class="fa-solid fa-circle-user"></i>
+                    </div>
+                    <div class="account-info">
+                        <span class="account-name" id="sidebar-account-name">Chưa đăng nhập</span>
+                        <span class="account-status" id="sidebar-account-status">Đồng bộ đám mây</span>
+                    </div>
+                    <div class="account-action-icon">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+
+                    <!-- PC Account Auth Popup -->
+                    <div class="auth-popup" id="pc-auth-popup">
+                        <div class="auth-popup-header">
+                            <h3><i class="fa-solid fa-circle-user"></i> Tài Khoản Hệ Thống</h3>
+                            <button type="button" class="btn-close-auth-popup" id="btn-close-auth-popup">&times;</button>
+                        </div>
+                        <div class="auth-popup-content">
+                            <!-- Account Section for PC -->
+                            <div class="auth-section" id="pc-auth-section">
+                                <!-- Logged out view -->
+                                <div class="auth-logged-out" id="pc-auth-logged-out">
+                                    <div class="auth-title" id="pc-auth-title">Đăng Nhập Hệ Thống</div>
+                                    <div class="auth-input-wrapper">
+                                        <i class="fa-solid fa-user auth-input-icon"></i>
+                                        <input type="text" id="pc-username-input" placeholder="Tên đăng nhập" maxlength="30">
+                                    </div>
+                                    <div class="auth-input-wrapper">
+                                        <i class="fa-solid fa-lock auth-input-icon"></i>
+                                        <input type="password" id="pc-password-input" placeholder="Mật khẩu">
+                                    </div>
+                                    <div class="auth-buttons-container">
+                                        <button type="button" class="btn btn-primary btn-auth-submit" id="btn-pc-auth-submit">Đăng nhập</button>
+                                    </div>
+                                    <div class="auth-switch-mode">
+                                        <span id="pc-auth-switch-text">Chưa có tài khoản?</span> 
+                                        <a href="#" id="link-pc-auth-switch">Đăng ký ngay</a>
+                                    </div>
+                                </div>
+                                <!-- Logged in view -->
+                                <div class="auth-logged-in" id="pc-auth-logged-in" style="display: none;">
+                                    <div class="auth-user-info">
+                                        <i class="fa-solid fa-circle-user"></i>
+                                        <span class="auth-username" id="pc-auth-username">username</span>
+                                    </div>
+                                    <button type="button" class="btn-auth-logout" id="btn-pc-logout">
+                                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -480,40 +508,6 @@
                 <button class="btn-close-history" id="btn-close-history">&times;</button>
             </div>
             <div class="history-popup-content">
-                <!-- Account Section for PC -->
-                <div class="auth-section" id="pc-auth-section">
-                    <!-- Logged out view -->
-                    <div class="auth-logged-out" id="pc-auth-logged-out">
-                        <div class="auth-title" id="pc-auth-title">Đăng Nhập Hệ Thống</div>
-                        <div class="auth-input-wrapper">
-                            <i class="fa-solid fa-user auth-input-icon"></i>
-                            <input type="text" id="pc-username-input" placeholder="Tên đăng nhập" maxlength="30">
-                        </div>
-                        <div class="auth-input-wrapper">
-                            <i class="fa-solid fa-lock auth-input-icon"></i>
-                            <input type="password" id="pc-password-input" placeholder="Mật khẩu">
-                        </div>
-                        <div class="auth-buttons-container">
-                            <button type="button" class="btn btn-primary btn-auth-submit" id="btn-pc-auth-submit">Đăng nhập</button>
-                        </div>
-                        <div class="auth-switch-mode">
-                            <span id="pc-auth-switch-text">Chưa có tài khoản?</span> 
-                            <a href="#" id="link-pc-auth-switch">Đăng ký ngay</a>
-                        </div>
-                    </div>
-                    <!-- Logged in view -->
-                    <div class="auth-logged-in" id="pc-auth-logged-in" style="display: none;">
-                        <div class="auth-user-info">
-                            <i class="fa-solid fa-circle-user"></i>
-                            <span class="auth-username" id="pc-auth-username">username</span>
-                        </div>
-                        <button type="button" class="btn-auth-logout" id="btn-pc-logout">
-                            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="history-divider"></div>
                 
                 <!-- History list inside popup -->
                 <div class="history-list-header-popup">
@@ -563,6 +557,51 @@
                 <div class="shortcut-item"><span class="key">?</span><span class="desc">Mở / Đóng bảng phím tắt này</span></div>
                 <div class="shortcut-item"><span class="key">←</span> / <span class="key">→</span> (Xem thử)<span class="desc">Chuyển slide trước/sau khi xem thử ĐT</span></div>
                 <div class="shortcut-item"><span class="key">Esc</span> (Xem thử)<span class="desc">Đóng khung xem thử điện thoại</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Drawer (Tài khoản trên di động) -->
+    <div class="mobile-drawer" id="mobile-drawer">
+        <div class="mobile-drawer-backdrop" id="mobile-drawer-backdrop"></div>
+        <div class="mobile-drawer-content">
+            <div class="mobile-drawer-header">
+                <h3><i class="fa-solid fa-circle-user"></i> Tài Khoản</h3>
+                <button type="button" class="btn-close-drawer" id="btn-close-drawer">&times;</button>
+            </div>
+            <div class="mobile-drawer-body">
+                <!-- Account Section for Mobile -->
+                <div class="auth-section mobile-auth-section" id="mobile-auth-section">
+                    <!-- Logged out view -->
+                    <div class="auth-logged-out" id="mobile-auth-logged-out">
+                        <div class="auth-title" id="mobile-auth-title">Đăng Nhập Hệ Thống</div>
+                        <div class="auth-input-wrapper">
+                            <i class="fa-solid fa-user auth-input-icon"></i>
+                            <input type="text" id="mobile-username-input" placeholder="Tên đăng nhập" maxlength="30">
+                        </div>
+                        <div class="auth-input-wrapper">
+                            <i class="fa-solid fa-lock auth-input-icon"></i>
+                            <input type="password" id="mobile-password-input" placeholder="Mật khẩu">
+                        </div>
+                        <div class="auth-buttons-container">
+                            <button type="button" class="btn btn-primary btn-auth-submit" id="btn-mobile-auth-submit">Đăng nhập</button>
+                        </div>
+                        <div class="auth-switch-mode">
+                            <span id="mobile-auth-switch-text">Chưa có tài khoản?</span> 
+                            <a href="#" id="link-mobile-auth-switch">Đăng ký ngay</a>
+                        </div>
+                    </div>
+                    <!-- Logged in view -->
+                    <div class="auth-logged-in" id="mobile-auth-logged-in" style="display: none;">
+                        <div class="auth-user-info">
+                            <i class="fa-solid fa-circle-user"></i>
+                            <span class="auth-username" id="mobile-auth-username">username</span>
+                        </div>
+                        <button type="button" class="btn-auth-logout" id="btn-mobile-logout" title="Đăng xuất">
+                            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
