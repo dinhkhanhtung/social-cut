@@ -171,8 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    }
-
     // --- New Features State Variables ---
     let currentFilter = 'none';
     let isWatermarkEnabled = false;
