@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const selectRatio = document.getElementById('select-ratio');
     const ratioControlItem = document.getElementById('ratio-control-item');
-    const selectExportScale = document.getElementById('select-export-scale');
     const selectGridType = document.getElementById('select-grid-type');
     const gridTypeControlItem = document.getElementById('grid-type-control-item');
     const gridEvenParameters = document.getElementById('grid-even-parameters');
@@ -2266,12 +2265,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Hàm tính tỷ lệ scale xuất ảnh động
         const getExportScale = (w) => {
-            const val = selectExportScale ? selectExportScale.value : 'auto';
-            if (val === 'auto') {
-                // Đảm bảo chiều rộng mỗi slide sau khi cắt tối thiểu đạt 1080px để hiển thị sắc nét trên TikTok/Instagram
-                return w < 1080 ? (1080 / w) : 1.0;
-            }
-            return parseFloat(val) || 1.0;
+            // Đảm bảo chiều rộng mỗi slide sau khi cắt tối thiểu đạt 1080px để hiển thị sắc nét trên TikTok/Instagram
+            return w < 1080 ? (1080 / w) : 1.0;
         };
 
         // Bắt đầu từ vị trí tiếp nối (số ảnh kết quả hiện tại)
@@ -3795,7 +3790,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: parseInt(inputRows.value) || 1,
                 cols: parseInt(inputCols.value) || 1,
                 ratio: selectRatio.value,
-                scale: selectExportScale ? selectExportScale.value : 'auto',
+                scale: 'auto',
                 offset_val: parseInt(inputOffset.value) || 0,
                 selection_boxes: selectionBoxes,
                 switch_uniform: switchUniform.checked,
@@ -3992,7 +3987,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (inputRows) inputRows.value = proj.rows;
             if (inputCols) inputCols.value = proj.cols;
             if (selectRatio) selectRatio.value = proj.ratio;
-            if (selectExportScale) selectExportScale.value = proj.scale;
             if (inputOffset) {
                 inputOffset.value = proj.offset_val || 0;
                 if (offsetNumberVal) offsetNumberVal.value = proj.offset_val || 0;
