@@ -3570,6 +3570,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // Khởi tạo Auth UI ban đầu
     updateAuthUI();
 
+    // Sự kiện mở/đóng popup Lịch sử trên PC
+    const btnHistoryToggle = document.getElementById('btn-history-toggle');
+    const btnCloseHistory = document.getElementById('btn-close-history');
+    const historyPopup = document.getElementById('history-popup');
+
+    if (btnHistoryToggle && historyPopup) {
+        btnHistoryToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            historyPopup.classList.toggle('active');
+            if (historyPopup.classList.contains('active')) {
+                loadHistoryFromDB();
+            }
+        });
+    }
+
+    if (btnCloseHistory && historyPopup) {
+        btnCloseHistory.addEventListener('click', (e) => {
+            e.stopPropagation();
+            historyPopup.classList.remove('active');
+        });
+    }
+
+    // Đóng popup lịch sử khi click ra ngoài
+    document.addEventListener('click', (e) => {
+        if (historyPopup && historyPopup.classList.contains('active')) {
+            if (!historyPopup.contains(e.target) && e.target !== btnHistoryToggle && !btnHistoryToggle.contains(e.target)) {
+                historyPopup.classList.remove('active');
+            }
+        }
+    });
+
     async function saveProjectToDB() {
         if (!supabase || !currentOriginalFile) return;
         if (!syncKey) {
