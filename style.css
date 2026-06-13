@@ -3541,7 +3541,7 @@ input[type="number"] {
 }
 
 .sidebar-account-panel:hover .account-action-icon {
-    transform: translateX(3px);
+    transform: translateY(-2px);
     color: #fff;
 }
 
