@@ -451,7 +451,7 @@ body {
 /* Controls Grid styling */
 .control-group-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
 }
 
@@ -568,7 +568,7 @@ input[type="number"] {
 /* Offset Slider and Spinner layout */
 .offset-control-group {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     width: 100%;
     align-items: center;
@@ -2284,7 +2284,7 @@ input[type="number"] {
     /* Cấu hình Số hàng & Số cột nằm song song */
     #controls-grid-mode .control-group-grid {
         display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: 8px !important;
     }
 
@@ -2309,7 +2309,7 @@ input[type="number"] {
     /* Tỉ lệ cắt, độ rộng viền */
     .control-group-grid {
         display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: 8px !important;
     }
 
