@@ -34,6 +34,8 @@
     <link rel="stylesheet" href="style.css?v=2.0.2">
     <!-- JSZip Library (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- App Logic -->
     <script src="app.js?v=2.0.1" defer></script>
 </head>
@@ -89,12 +91,31 @@
                         </div>
                     </div>
 
-                    <!-- Project History Section -->
+                    <!-- Project History Section (Mobile Only in Sidebar) -->
                     <div class="history-section" id="history-section">
+                        <!-- Sync settings panel for mobile -->
+                        <div class="sync-settings-section mobile-sync-settings">
+                            <div class="sync-key-display">
+                                <span class="sync-label">Mã đồng bộ:</span>
+                                <div class="sync-key-badge-container">
+                                    <span class="sync-key-badge" id="mobile-sync-key-val">CC-XXXX-XXXX</span>
+                                    <button type="button" class="btn-copy-sync-key" id="btn-copy-mobile-sync-key" title="Sao chép mã đồng bộ">
+                                        <i class="fa-solid fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="sync-connect-form">
+                                <input type="text" id="mobile-sync-connect-input" placeholder="Nhập mã thiết bị..." maxlength="12">
+                                <button type="button" class="btn btn-primary btn-sync-connect" id="btn-mobile-sync-connect" title="Liên kết đồng bộ">
+                                    <i class="fa-solid fa-link"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="history-header">
                             <div class="history-header-left">
                                 <i class="fa-solid fa-clock-rotate-left"></i>
-                                <span>Lịch sử dự án đã lưu</span>
+                                <span>Lịch sử dự án</span>
                             </div>
                             <div class="history-header-actions">
                                 <button type="button" id="btn-import-project" class="btn-history-action" title="Nhập dự án từ file (.ccut)">
@@ -105,7 +126,7 @@
                         </div>
                         <div class="history-list" id="history-list">
                             <!-- Dynamic history items will be inserted here -->
-                            <div class="history-empty">Chưa có dự án nào được lưu cục bộ.</div>
+                            <div class="history-empty">Chưa có dự án nào được lưu đám mây.</div>
                         </div>
                     </div>
 
@@ -193,8 +214,8 @@
                     <!-- Uniform constraints & Snap switchers in one row -->
                     <div class="control-group-grid snap-uniform-group" style="margin-top: 4px; margin-bottom: 12px;">
                         <div class="control-item">
-                            <div class="switch-inline-container" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); height: 38px;">
-                                <label for="switch-uniform" class="label-switch" style="margin-bottom: 0; cursor: pointer; font-size: 0.78rem;">
+                            <div class="switch-inline-container">
+                                <label for="switch-uniform" class="label-switch">
                                     <i class="fa-solid fa-shapes" style="color: #00f2fe;"></i> Đồng dạng
                                 </label>
                                 <div class="switch-wrapper">
@@ -204,8 +225,8 @@
                             </div>
                         </div>
                         <div class="control-item snap-control-group">
-                            <div class="switch-inline-container" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); height: 38px;">
-                                <label for="switch-snap" class="label-switch" style="margin-bottom: 0; cursor: pointer; font-size: 0.78rem;">
+                            <div class="switch-inline-container">
+                                <label for="switch-snap" class="label-switch">
                                     <i class="fa-solid fa-magnet" style="color: #ec4899;"></i> Snap
                                 </label>
                                 <div class="switch-wrapper">
@@ -428,6 +449,58 @@
                 <i class="fa-solid fa-xmark"></i>
             </button>
             
+        </div>
+    </div>
+
+    <!-- Project History Floating Helper and Popup (PC Only) -->
+    <div class="history-helper" id="history-helper">
+        <button class="btn-history-toggle" id="btn-history-toggle" title="Lịch sử dự án đã lưu & Đồng bộ">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </button>
+        <div class="history-popup" id="history-popup">
+            <div class="history-popup-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử & Đồng Bộ</h3>
+                <button class="btn-close-history" id="btn-close-history">&times;</button>
+            </div>
+            <div class="history-popup-content">
+                <!-- Sync settings panel inside popup -->
+                <div class="sync-settings-section">
+                    <div class="sync-key-display">
+                        <span class="sync-label">Mã đồng bộ của bạn:</span>
+                        <div class="sync-key-badge-container">
+                            <span class="sync-key-badge" id="pc-sync-key-val">CC-XXXX-XXXX</span>
+                            <button type="button" class="btn-copy-sync-key" id="btn-copy-sync-key" title="Sao chép mã đồng bộ">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="sync-connect-form">
+                        <input type="text" id="pc-sync-connect-input" placeholder="Nhập mã thiết bị khác..." maxlength="12">
+                        <button type="button" class="btn btn-primary btn-sync-connect" id="btn-pc-sync-connect" title="Liên kết đồng bộ">
+                            <i class="fa-solid fa-link"></i> Đồng bộ
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="history-divider"></div>
+                
+                <!-- History list inside popup -->
+                <div class="history-list-header-popup">
+                    <span>Dự án đám mây</span>
+                    <div class="history-header-actions">
+                        <button type="button" id="btn-pc-import-project" class="btn-history-action" title="Nhập dự án từ file (.ccut)">
+                            <i class="fa-solid fa-file-import"></i> <span>Nhập file</span>
+                        </button>
+                        <input type="file" id="pc-import-project-input" accept=".ccut" style="display: none;">
+                    </div>
+                </div>
+                
+                <div class="history-list-container">
+                    <div class="history-list" id="pc-history-list">
+                        <div class="history-empty">Chưa có dự án nào được lưu đám mây.</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

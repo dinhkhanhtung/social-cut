@@ -3353,168 +3353,340 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- IndexedDB Management ---
-    const DB_NAME = 'CarouselCutDB';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'projects';
-    let db = null;
+    // --- Supabase Cloud Storage & Database Management ---
+    const SUPABASE_URL = 'https://awqqnvloeckdxtdcjako.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_aSHG8chYnIlz6R3PkhJqgw_YICNImU6';
+    let supabase = null;
 
-    function initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onerror = (e) => {
-                console.error("IndexedDB error:", e);
-                reject(e);
-            };
-            request.onsuccess = (e) => {
-                db = e.target.result;
-                resolve(db);
+    if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+        console.error("Supabase SDK is not loaded!");
+    }
+
+    // Sync Key Generation
+    function generateSyncKey() {
+        const chars = '0123456789ABCDEF';
+        let part1 = '';
+        let part2 = '';
+        for (let i = 0; i < 4; i++) {
+            part1 += chars[Math.floor(Math.random() * chars.length)];
+            part2 += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return `CC-${part1}-${part2}`;
+    }
+
+    let syncKey = localStorage.getItem('carousel_sync_key');
+    if (!syncKey || !syncKey.startsWith('CC-')) {
+        syncKey = generateSyncKey();
+        localStorage.setItem('carousel_sync_key', syncKey);
+    }
+
+    // Cập nhật Sync Key lên UI
+    const pcSyncKeyVal = document.getElementById('pc-sync-key-val');
+    const mobileSyncKeyVal = document.getElementById('mobile-sync-key-val');
+    if (pcSyncKeyVal) pcSyncKeyVal.textContent = syncKey;
+    if (mobileSyncKeyVal) mobileSyncKeyVal.textContent = syncKey;
+
+    // PC History Floating helper events
+    const btnHistoryToggle = document.getElementById('btn-history-toggle');
+    const btnCloseHistory = document.getElementById('btn-close-history');
+    const historyPopup = document.getElementById('history-popup');
+
+    if (btnHistoryToggle && historyPopup) {
+        btnHistoryToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            historyPopup.classList.toggle('active');
+            if (historyPopup.classList.contains('active')) {
                 loadHistoryFromDB();
-            };
-            request.onupgradeneeded = (e) => {
-                const database = e.target.result;
-                if (!database.objectStoreNames.contains(STORE_NAME)) {
-                    database.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                }
-            };
+            }
         });
     }
 
-    function saveProjectToDB() {
-        if (!db || !currentOriginalFile) return;
+    if (btnCloseHistory && historyPopup) {
+        btnCloseHistory.addEventListener('click', (e) => {
+            e.stopPropagation();
+            historyPopup.classList.remove('active');
+        });
+    }
 
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        
-        // Lấy tất cả dự án hiện tại để giới hạn tối đa 10 dự án
-        const getAllRequest = store.getAll();
-        getAllRequest.onsuccess = (e) => {
-            const projects = e.target.result;
-            projects.sort((a, b) => a.id - b.id); // Sắp xếp cũ nhất ở đầu
-            
-            if (projects.length >= 10) {
-                // Xóa bớt dự án cũ nhất
-                const oldestProject = projects[0];
-                store.delete(oldestProject.id);
+    // Đóng popup khi click ra ngoài
+    document.addEventListener('click', (e) => {
+        if (historyPopup && historyPopup.classList.contains('active')) {
+            if (!historyPopup.contains(e.target) && e.target !== btnHistoryToggle && !btnHistoryToggle.contains(e.target)) {
+                historyPopup.classList.remove('active');
+            }
+        }
+    });
+
+    // Sao chép mã Sync Key
+    const copySyncKey = (btnId) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(syncKey).then(() => {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fa-solid fa-check';
+                    icon.style.color = 'var(--success)';
+                    setTimeout(() => {
+                        icon.className = 'fa-solid fa-copy';
+                        icon.style.color = '';
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error("Failed to copy text: ", err);
+            });
+        });
+    };
+    copySyncKey('btn-copy-sync-key');
+    copySyncKey('btn-copy-mobile-sync-key');
+
+    // Liên kết đồng bộ thiết bị (Sync Connect)
+    const connectDevice = async (inputId, btnId) => {
+        const input = document.getElementById(inputId);
+        const btn = document.getElementById(btnId);
+        if (!input || !btn) return;
+
+        btn.addEventListener('click', async () => {
+            let key = input.value.trim().toUpperCase();
+            if (!key) return;
+
+            const regex = /^CC-[0-9A-F]{4}-[0-9A-F]{4}$/;
+            if (!regex.test(key)) {
+                if (key.length === 10 && key.startsWith('CC')) {
+                    key = `${key.substring(0, 2)}-${key.substring(2, 6)}-${key.substring(6, 10)}`;
+                } else if (key.length === 8) {
+                    key = `CC-${key.substring(0, 4)}-${key.substring(4, 8)}`;
+                }
             }
 
-            // Lưu dự án mới
+            if (!regex.test(key)) {
+                alert("Mã đồng bộ không hợp lệ! Vui lòng nhập đúng định dạng CC-XXXX-XXXX");
+                return;
+            }
+
+            if (confirm(`Bạn có chắc chắn muốn đồng bộ với thiết bị này? Lịch sử dự án hiện tại sẽ được chuyển đổi sang mã đồng bộ mới.`)) {
+                syncKey = key;
+                localStorage.setItem('carousel_sync_key', syncKey);
+                if (pcSyncKeyVal) pcSyncKeyVal.textContent = syncKey;
+                if (mobileSyncKeyVal) mobileSyncKeyVal.textContent = syncKey;
+                input.value = '';
+                
+                alert("Liên kết thiết bị thành công! Đang tải lịch sử...");
+                loadHistoryFromDB();
+            }
+        });
+    };
+    connectDevice('pc-sync-connect-input', 'btn-pc-sync-connect');
+    connectDevice('mobile-sync-connect-input', 'btn-mobile-sync-connect');
+
+    async function saveProjectToDB() {
+        if (!supabase || !currentOriginalFile) return;
+
+        console.log("Đang tải ảnh gốc lên Supabase Storage...");
+        
+        try {
+            const fileExt = currentOriginalFile.name.split('.').pop() || 'png';
+            const fileName = `${syncKey}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('project-images')
+                .upload(fileName, currentOriginalFile, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('project-images')
+                .getPublicUrl(fileName);
+
             const newProject = {
+                sync_key: syncKey,
                 name: currentOriginalFile.name || 'du_an_khong_ten.png',
                 date: new Date().toLocaleString('vi-VN'),
-                imageBlob: currentOriginalFile,
-                slicingMode: slicingMode,
-                gridType: gridType,
+                slicing_mode: slicingMode,
+                grid_type: gridType,
                 rows: parseInt(inputRows.value) || 1,
                 cols: parseInt(inputCols.value) || 1,
                 ratio: selectRatio.value,
                 scale: selectExportScale.value,
                 offset: parseInt(inputOffset.value) || 0,
-                selectionBoxes: JSON.parse(JSON.stringify(selectionBoxes)),
-                switchUniform: switchUniform.checked,
-                switchSnap: switchSnap ? switchSnap.checked : true,
-                colsX: JSON.parse(JSON.stringify(colsX)),
-                rowsY: JSON.parse(JSON.stringify(rowsY))
+                selection_boxes: selectionBoxes,
+                switch_uniform: switchUniform.checked,
+                switch_snap: switchSnap ? switchSnap.checked : true,
+                cols_x: colsX,
+                rows_y: rowsY,
+                image_url: publicUrl
             };
 
-            const addRequest = store.add(newProject);
-            addRequest.onsuccess = () => {
-                console.log("Tự động lưu lịch sử dự án thành công!");
-                loadHistoryFromDB();
-            };
-        };
+            const { data: dbData, error: dbError } = await supabase
+                .from('projects')
+                .insert([newProject])
+                .select();
+
+            if (dbError) throw dbError;
+
+            console.log("Lưu lịch sử dự án trực tuyến thành công!");
+            cleanOldProjects();
+            loadHistoryFromDB();
+        } catch (err) {
+            console.error("Lỗi khi đồng bộ lên Supabase:", err);
+            alert("Lưu lịch sử đám mây thất bại! Vui lòng kiểm tra lại kết nối mạng.");
+        }
     }
 
-    function loadHistoryFromDB() {
-        if (!db || !historyList) return;
+    async function cleanOldProjects() {
+        if (!supabase) return;
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .select('id, created_at')
+                .eq('sync_key', syncKey)
+                .order('created_at', { ascending: true });
 
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.getAll();
+            if (error) throw error;
 
-        request.onsuccess = (e) => {
-            const projects = e.target.result;
-            
-            if (projects.length === 0) {
-                historyList.innerHTML = '<div class="history-empty">Chưa có dự án nào được lưu cục bộ.</div>';
-                return;
+            if (data && data.length > 10) {
+                const projectsToDelete = data.slice(0, data.length - 10);
+                for (const proj of projectsToDelete) {
+                    await deleteProjectStorageFile(proj.id);
+                    await supabase.from('projects').delete().eq('id', proj.id);
+                }
             }
-
-            // Sắp xếp dự án mới nhất lên đầu
-            projects.sort((a, b) => b.id - a.id);
-
-            historyList.innerHTML = '';
-            projects.forEach((proj) => {
-                const item = document.createElement('div');
-                item.classList.add('history-item');
-                item.dataset.id = proj.id;
-
-                // Tạo URL tạm thời cho thumbnail ảnh gốc
-                const thumbUrl = URL.createObjectURL(proj.imageBlob);
-
-                item.innerHTML = `
-                    <img class="history-thumb" src="${thumbUrl}" alt="Thumbnail">
-                    <div class="history-info">
-                        <div class="history-name" title="${proj.name}">${proj.name}</div>
-                        <div class="history-date">${proj.date}</div>
-                    </div>
-                    <div class="history-actions">
-                        <button class="history-btn history-btn-load" title="Nạp lại dự án này">
-                            <i class="fa-solid fa-folder-open"></i>
-                        </button>
-                        <button class="history-btn history-btn-export" title="Xuất dự án thành file (.ccut)">
-                            <i class="fa-solid fa-file-export"></i>
-                        </button>
-                        <button class="history-btn history-btn-del" title="Xóa dự án này">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
-
-                // Nạp dự án
-                item.querySelector('.history-btn-load').addEventListener('click', (ev) => {
-                    ev.stopPropagation();
-                    loadProject(proj.id);
-                });
-
-                // Xuất dự án ra file
-                item.querySelector('.history-btn-export').addEventListener('click', (ev) => {
-                    ev.stopPropagation();
-                    exportProject(proj.id);
-                });
-
-                // Xóa dự án khỏi lịch sử
-                item.querySelector('.history-btn-del').addEventListener('click', (ev) => {
-                    ev.stopPropagation();
-                    if (confirm(`Bạn có chắc chắn muốn xóa dự án "${proj.name}" khỏi lịch sử?`)) {
-                        deleteProject(proj.id);
-                    }
-                });
-
-                historyList.appendChild(item);
-            });
-        };
+        } catch (err) {
+            console.error("Lỗi khi dọn dẹp dự án cũ:", err);
+        }
     }
 
-    function loadProject(id) {
-        if (!db) return;
+    async function deleteProjectStorageFile(projectId) {
+        if (!supabase) return;
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .select('image_url')
+                .eq('id', projectId)
+                .single();
+            
+            if (error || !data) return;
 
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(id);
+            const bucketPart = 'project-images/';
+            const index = data.image_url.indexOf(bucketPart);
+            if (index !== -1) {
+                const filePath = decodeURIComponent(data.image_url.substring(index + bucketPart.length));
+                await supabase.storage.from('project-images').remove([filePath]);
+            }
+        } catch (e) {
+            console.error("Lỗi khi xóa file storage:", e);
+        }
+    }
 
-        request.onsuccess = (e) => {
-            const proj = e.target.result;
+    async function loadHistoryFromDB() {
+        if (!supabase) return;
+
+        const pcList = document.getElementById('pc-history-list');
+        const mobileList = document.getElementById('history-list');
+
+        try {
+            const { data: projects, error } = await supabase
+                .from('projects')
+                .select('*')
+                .eq('sync_key', syncKey)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const renderList = (container) => {
+                if (!container) return;
+                
+                if (!projects || projects.length === 0) {
+                    container.innerHTML = '<div class="history-empty">Chưa có dự án nào được lưu đám mây.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                projects.forEach((proj) => {
+                    const item = document.createElement('div');
+                    item.classList.add('history-item');
+                    item.dataset.id = proj.id;
+
+                    item.innerHTML = `
+                        <img class="history-thumb" src="${proj.image_url}" alt="Thumbnail" crossOrigin="anonymous">
+                        <div class="history-info">
+                            <div class="history-name" title="${proj.name}">${proj.name}</div>
+                            <div class="history-date">${proj.date}</div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="history-btn history-btn-load" title="Nạp lại dự án này">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </button>
+                            <button class="history-btn history-btn-export" title="Xuất dự án thành file (.ccut)">
+                                <i class="fa-solid fa-file-export"></i>
+                            </button>
+                            <button class="history-btn history-btn-del" title="Xóa dự án này">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    item.querySelector('.history-btn-load').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        loadProject(proj.id);
+                        if (historyPopup) historyPopup.classList.remove('active');
+                    });
+
+                    item.querySelector('.history-btn-export').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        exportProject(proj.id);
+                    });
+
+                    item.querySelector('.history-btn-del').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        if (confirm(`Bạn có chắc chắn muốn xóa dự án "${proj.name}" khỏi lịch sử đám mây?`)) {
+                            deleteProject(proj.id);
+                        }
+                    });
+
+                    container.appendChild(item);
+                });
+            };
+
+            renderList(pcList);
+            renderList(mobileList);
+
+        } catch (err) {
+            console.error("Lỗi khi load danh sách lịch sử:", err);
+            const errMsg = '<div class="history-empty" style="color: var(--danger);">Không thể kết nối đám mây!</div>';
+            if (pcList) pcList.innerHTML = errMsg;
+            if (mobileList) mobileList.innerHTML = errMsg;
+        }
+    }
+
+    async function loadProject(id) {
+        if (!supabase) return;
+
+        try {
+            const { data: proj, error } = await supabase
+                .from('projects')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
             if (!proj) return;
 
-            // Khôi phục file ảnh gốc
-            currentOriginalFile = proj.imageBlob;
-
-            // Thiết lập các thông số giao diện
-            slicingMode = proj.slicingMode;
-            gridType = proj.gridType;
+            console.log("Đang tải ảnh gốc từ Supabase...");
             
-            // Cập nhật Mode Switcher UI
+            const response = await fetch(proj.image_url);
+            const blob = await response.blob();
+            currentOriginalFile = new File([blob], proj.name, { type: blob.type });
+
+            slicingMode = proj.slicing_mode;
+            gridType = proj.grid_type;
+            
             if (slicingMode === 'grid') {
                 if (modeGridBtn) modeGridBtn.classList.add('active');
                 if (modeBoxBtn) modeBoxBtn.classList.remove('active');
@@ -3527,7 +3699,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (controlsBoxMode) controlsBoxMode.classList.add('active');
             }
 
-            // Phục hồi giá trị các ô nhập liệu
             if (selectGridType) selectGridType.value = gridType;
             if (inputRows) inputRows.value = proj.rows;
             if (inputCols) inputCols.value = proj.cols;
@@ -3538,38 +3709,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (offsetNumberVal) offsetNumberVal.value = proj.offset;
             }
             if (switchUniform) {
-                switchUniform.checked = proj.switchUniform;
-                isUniformSize = proj.switchUniform;
+                switchUniform.checked = proj.switch_uniform;
+                isUniformSize = proj.switch_uniform;
             }
             if (switchSnap) {
-                switchSnap.checked = proj.switchSnap;
-                isSnapEnabled = proj.switchSnap;
+                switchSnap.checked = proj.switch_snap;
+                isSnapEnabled = proj.switch_snap;
             }
 
-            // Phục hồi lưới / khung vẽ tự do
-            colsX = proj.colsX || [];
-            rowsY = proj.rowsY || [];
-            selectionBoxes = proj.selectionBoxes || [];
+            colsX = proj.cols_x || [];
+            rowsY = proj.rows_y || [];
+            selectionBoxes = proj.selection_boxes || [];
             if (selectionBoxes.length > 0) {
                 nextBoxId = Math.max(...selectionBoxes.map(b => b.id)) + 1;
             } else {
                 nextBoxId = 1;
             }
 
-            // Bật tắt hiển thị tham số lưới đều
             if (gridEvenParameters) {
                 gridEvenParameters.style.display = (gridType === 'even') ? 'flex' : 'none';
             }
 
-            // Nạp ảnh gốc lên giao diện
             fileName.textContent = proj.name;
-            fileSize.textContent = proj.imageBlob.size ? `(${(proj.imageBlob.size / 1024).toFixed(1)} KB)` : '';
+            fileSize.textContent = `(${(blob.size / 1024).toFixed(1)} KB)`;
             dropzonePrompt.style.display = 'none';
             fileInfo.style.display = 'flex';
             dropzone.classList.add('has-image');
             appContent.classList.add('has-image');
 
-            // Xóa kết quả cũ
             slicedImages = [];
             slicedBlobs = [];
             resultGrid.innerHTML = '';
@@ -3588,8 +3755,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const img = new Image();
                 img.onload = () => {
                     currentImage = img;
-                    
-                    // Reset zoom & pan
                     zoomScale = 1.0;
                     panX = 0;
                     panY = 0;
@@ -3613,41 +3778,48 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawLiveGrid();
                     alert(`Đã nạp lại dự án "${proj.name}" thành công!`);
 
-                    // Chuyển tab xem lưới cắt
                     switchTab('tab-live-grid');
                     switchMobileTab('edit');
                 };
                 img.src = event.target.result;
             };
-            reader.readAsDataURL(proj.imageBlob);
-        };
+            reader.readAsDataURL(blob);
+        } catch (err) {
+            console.error("Lỗi khi nạp dự án:", err);
+            alert("Nạp dự án thất bại! Không thể tải dữ liệu ảnh từ đám mây.");
+        }
     }
 
-    function deleteProject(id) {
-        if (!db) return;
+    async function deleteProject(id) {
+        if (!supabase) return;
+        try {
+            await deleteProjectStorageFile(id);
+            const { error } = await supabase.from('projects').delete().eq('id', id);
+            if (error) throw error;
 
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.delete(id);
-
-        request.onsuccess = () => {
-            console.log("Đã xóa dự án khỏi IndexedDB.");
+            console.log("Đã xóa dự án khỏi Supabase.");
             loadHistoryFromDB();
-        };
+        } catch (err) {
+            console.error("Lỗi khi xóa dự án:", err);
+            alert("Xóa dự án thất bại! Vui lòng thử lại.");
+        }
     }
 
-    function exportProject(id) {
-        if (!db) return;
+    async function exportProject(id) {
+        if (!supabase) return;
+        try {
+            const { data: proj, error } = await supabase
+                .from('projects')
+                .select('*')
+                .eq('id', id)
+                .single();
 
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(id);
-
-        request.onsuccess = (e) => {
-            const proj = e.target.result;
+            if (error) throw error;
             if (!proj) return;
 
-            // Chuyển đổi imageBlob thành base64
+            const response = await fetch(proj.image_url);
+            const blob = await response.blob();
+            
             const reader = new FileReader();
             reader.onload = (ev) => {
                 const base64Data = ev.target.result;
@@ -3655,24 +3827,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const exportData = {
                     version: "1.0",
                     name: proj.name,
-                    slicingMode: proj.slicingMode,
-                    gridType: proj.gridType,
+                    slicingMode: proj.slicing_mode,
+                    gridType: proj.grid_type,
                     rows: proj.rows,
                     cols: proj.cols,
                     ratio: proj.ratio,
                     scale: proj.scale,
                     offset: proj.offset,
-                    selectionBoxes: proj.selectionBoxes,
-                    switchUniform: proj.switchUniform,
-                    switchSnap: proj.switchSnap,
-                    colsX: proj.colsX,
-                    rowsY: proj.rowsY,
+                    selectionBoxes: proj.selection_boxes,
+                    switchUniform: proj.switch_uniform,
+                    switchSnap: proj.switch_snap,
+                    colsX: proj.cols_x,
+                    rowsY: proj.rows_y,
                     imageBase64: base64Data
                 };
 
                 const jsonStr = JSON.stringify(exportData, null, 2);
-                const blob = new Blob([jsonStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
+                const exportBlob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(exportBlob);
                 
                 const a = document.createElement('a');
                 a.href = url;
@@ -3683,103 +3855,95 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             };
-            reader.readAsDataURL(proj.imageBlob);
-        };
+            reader.readAsDataURL(blob);
+        } catch (err) {
+            console.error("Lỗi khi xuất file dự án:", err);
+            alert("Xuất file dự án thất bại!");
+        }
     }
 
-    // Logic Nhập dự án từ file .ccut
+    const handleImportFile = (file) => {
+        if (!file || !supabase) return;
+
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                
+                if (!data.imageBase64 || !data.slicingMode || !data.name) {
+                    alert("File dự án không hợp lệ. Vui lòng chọn đúng file .ccut!");
+                    return;
+                }
+
+                const res = await fetch(data.imageBase64);
+                const imageBlob = await res.blob();
+
+                console.log("Đang nhập dự án lên đám mây...");
+                const fileExt = data.name.split('.').pop() || 'png';
+                const fileName = `${syncKey}/${Date.now()}_import.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('project-images')
+                    .upload(fileName, imageBlob);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('project-images')
+                    .getPublicUrl(fileName);
+
+                const newProject = {
+                    sync_key: syncKey,
+                    name: data.name,
+                    date: new Date().toLocaleString('vi-VN') + " (Nhập file)",
+                    slicing_mode: data.slicingMode,
+                    grid_type: data.gridType || 'even',
+                    rows: parseInt(data.rows) || 1,
+                    cols: parseInt(data.cols) || 1,
+                    ratio: data.ratio || 'free',
+                    scale: data.scale || '3',
+                    offset: parseInt(data.offset) || 0,
+                    selection_boxes: data.selectionBoxes || [],
+                    switch_uniform: data.switchUniform !== undefined ? data.switchUniform : false,
+                    switch_snap: data.switchSnap !== undefined ? data.switchSnap : true,
+                    cols_x: data.colsX || [],
+                    rows_y: data.rowsY || [],
+                    image_url: publicUrl
+                };
+
+                const { data: insertedProj, error: dbError } = await supabase
+                    .from('projects')
+                    .insert([newProject])
+                    .select()
+                    .single();
+
+                if (dbError) throw dbError;
+
+                console.log("Nhập file dự án thành công!");
+                cleanOldProjects();
+                loadHistoryFromDB();
+                loadProject(insertedProj.id);
+            } catch (err) {
+                console.error("Lỗi khi nhập file dự án:", err);
+                alert("Nhập file dự án thất bại! File có thể bị hỏng hoặc lỗi kết nối.");
+            }
+        };
+        reader.readAsText(file);
+    };
+
     const btnImportProject = document.getElementById('btn-import-project');
     const importProjectInput = document.getElementById('import-project-input');
+    const btnPcImportProject = document.getElementById('btn-pc-import-project');
+    const pcImportProjectInput = document.getElementById('pc-import-project-input');
 
     if (btnImportProject && importProjectInput) {
-        btnImportProject.addEventListener('click', () => {
-            importProjectInput.click();
-        });
+        btnImportProject.addEventListener('click', () => importProjectInput.click());
+        importProjectInput.addEventListener('change', (e) => handleImportFile(e.target.files[0]));
+    }
 
-        importProjectInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    
-                    // Validate cấu trúc file ccut
-                    if (!data.imageBase64 || !data.slicingMode || !data.name) {
-                        alert("File dự án không hợp lệ. Vui lòng chọn đúng file .ccut của Carousel Cut!");
-                        return;
-                    }
-
-                    // Chuyển đổi base64 trở lại thành Blob
-                    const fetchBlobFromBase64 = async (base64) => {
-                        const res = await fetch(base64);
-                        return await res.blob();
-                    };
-
-                    fetchBlobFromBase64(data.imageBase64).then((imageBlob) => {
-                        if (!db) {
-                            alert("Database chưa được khởi tạo!");
-                            return;
-                        }
-
-                        const transaction = db.transaction([STORE_NAME], 'readwrite');
-                        const store = transaction.objectStore(STORE_NAME);
-
-                        // Giới hạn số lượng dự án tối đa là 10
-                        const getAllRequest = store.getAll();
-                        getAllRequest.onsuccess = (event) => {
-                            const projects = event.target.result;
-                            projects.sort((a, b) => a.id - b.id);
-                            
-                            if (projects.length >= 10) {
-                                const oldestProject = projects[0];
-                                store.delete(oldestProject.id);
-                            }
-
-                            const newProject = {
-                                name: data.name,
-                                date: new Date().toLocaleString('vi-VN') + " (Nhập file)",
-                                imageBlob: imageBlob,
-                                slicingMode: data.slicingMode,
-                                gridType: data.gridType || 'even',
-                                rows: parseInt(data.rows) || 1,
-                                cols: parseInt(data.cols) || 1,
-                                ratio: data.ratio || 'free',
-                                scale: data.scale || '3',
-                                offset: parseInt(data.offset) || 0,
-                                selectionBoxes: data.selectionBoxes || [],
-                                switchUniform: data.switchUniform !== undefined ? data.switchUniform : false,
-                                switchSnap: data.switchSnap !== undefined ? data.switchSnap : true,
-                                colsX: data.colsX || [],
-                                rowsY: data.rowsY || []
-                            };
-
-                            const addRequest = store.add(newProject);
-                            addRequest.onsuccess = (addEvent) => {
-                                const newId = addEvent.target.result;
-                                console.log("Nhập dự án thành công!");
-                                loadHistoryFromDB();
-                                
-                                // Tự động load dự án vừa nhập
-                                loadProject(newId);
-                            };
-                        };
-                    }).catch(err => {
-                        console.error(err);
-                        alert("Lỗi khi chuyển đổi dữ liệu ảnh. Vui lòng thử lại!");
-                    });
-
-                } catch (err) {
-                    console.error(err);
-                    alert("Không thể đọc file. File có thể bị hỏng!");
-                }
-                
-                // Reset input file để có thể chọn lại cùng file
-                importProjectInput.value = '';
-            };
-            reader.readAsText(file);
-        });
+    if (btnPcImportProject && pcImportProjectInput) {
+        btnPcImportProject.addEventListener('click', () => pcImportProjectInput.click());
+        pcImportProjectInput.addEventListener('change', (e) => handleImportFile(e.target.files[0]));
     }
 
     // --- Password Gate Security ---
@@ -3841,6 +4005,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Initialize Features ---
-    initDB();
+    loadHistoryFromDB();
     checkPasswordLock();
 });
