@@ -3875,3 +3875,341 @@ input[type="number"] {
         gap: 8px !important;
     }
 }
+
+/* --- Custom Toast Notification --- */
+.toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    width: calc(100% - 48px);
+    pointer-events: none;
+}
+
+.toast-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    color: #f8fafc;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    pointer-events: auto;
+    animation: toast-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--accent, #06b6d4);
+}
+
+.toast-box.toast-success {
+    border-left-color: #10b981;
+}
+
+.toast-box.toast-error {
+    border-left-color: #ef4444;
+}
+
+.toast-box.toast-warning {
+    border-left-color: #f59e0b;
+}
+
+.toast-box.toast-info {
+    border-left-color: #3b82f6;
+}
+
+.toast-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+    color: #10b981;
+}
+
+.toast-error .toast-icon {
+    color: #ef4444;
+}
+
+.toast-warning .toast-icon {
+    color: #f59e0b;
+}
+
+.toast-info .toast-icon {
+    color: #3b82f6;
+}
+
+.toast-message {
+    flex: 1;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 2px;
+    margin-left: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.toast-close:hover {
+    color: #fff;
+}
+
+.toast-box.toast-fade-out {
+    animation: toast-fade-out 0.3s ease forwards;
+}
+
+@keyframes toast-slide-in {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-fade-out {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+}
+
+/* Mobile responsive for Toast */
+@media (max-width: 768px) {
+    .toast-container {
+        top: 24px;
+        right: 24px;
+        left: 24px;
+        width: auto;
+        max-width: none;
+    }
+    
+    @keyframes toast-slide-in {
+        from {
+            transform: translateY(-120%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes toast-fade-out {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+    }
+}
+
+/* --- Quick Presets Styling --- */
+.preset-buttons-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.btn-preset {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary, #94a3b8);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-preset:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-preset.active {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: var(--accent, #06b6d4);
+    color: var(--accent, #06b6d4);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.2);
+}
+
+/* --- Collapsible Accordion Panels --- */
+.collapsible-group {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 6px;
+    padding-top: 6px;
+}
+
+.collapsible-header {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 4px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    font-family: inherit;
+}
+
+.collapsible-header:hover {
+    color: var(--accent, #06b6d4);
+}
+
+.collapsible-header .arrow-icon {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collapsible-group.open .collapsible-header .arrow-icon {
+    transform: rotate(180deg);
+    color: var(--accent, #06b6d4);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+}
+
+.collapsible-group.open .collapsible-content {
+    max-height: 500px;
+    padding-bottom: 12px;
+}
+
+/* --- Filter Grid & Previews --- */
+.filter-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 4px;
+}
+
+.btn-filter {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-filter:hover .filter-preview {
+    transform: scale(1.08);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-filter.active .filter-preview {
+    border-color: var(--accent, #06b6d4);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+.btn-filter.active .filter-label {
+    color: var(--accent, #06b6d4);
+    font-weight: 600;
+}
+
+.filter-preview {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background-size: cover;
+    background-position: center;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+}
+
+.filter-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #94a3b8);
+    font-family: inherit;
+    text-align: center;
+}
+
+/* Các bộ lọc màu cụ thể (gradient cho preview) */
+.filter-preview.filter-none {
+    background: linear-gradient(135deg, #64748b, #cbd5e1);
+}
+.filter-preview.filter-vintage {
+    background: linear-gradient(135deg, #b45309, #f59e0b);
+}
+.filter-preview.filter-bw {
+    background: linear-gradient(135deg, #1e293b, #94a3b8);
+}
+.filter-preview.filter-cinema {
+    background: linear-gradient(135deg, #0f172a, #06b6d4);
+}
+.filter-preview.filter-warm {
+    background: linear-gradient(135deg, #e11d48, #fb7185);
+}
+.filter-preview.filter-cool {
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+}
+
+/* --- Watermark Config Pane Styling --- */
+.watermark-config-pane, .export-config-pane {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 4px;
+}
+
+/* Tiện ích slider mờ nhẹ */
+.watermark-config-pane input[type="range"].slider {
+    background: rgba(255, 255, 255, 0.1);
+}
+.watermark-config-pane input[type="range"].slider::-webkit-slider-runnable-track {
+    height: 4px;
+}
+.watermark-config-pane input[type="range"].slider::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    margin-top: -4px;
+}
+
+

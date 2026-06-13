@@ -121,6 +121,277 @@ document.addEventListener('DOMContentLoaded', () => {
     const boxHandleSize = 10;    // Size of the resize handle at bottom-right of selection boxes
     const deleteBtnSize = 18;   // Size of the close (delete) button at top-right of selection boxes
 
+    // --- Custom Toast System ---
+    function showToast(message, type = 'info', duration = 3000) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast-box toast-${type}`;
+
+        // Select icon based on type
+        let iconClass = 'fa-circle-info';
+        if (type === 'success') iconClass = 'fa-circle-check';
+        else if (type === 'error') iconClass = 'fa-circle-exclamation';
+        else if (type === 'warning') iconClass = 'fa-triangle-exclamation';
+
+        toast.innerHTML = `
+            <i class="fa-solid ${iconClass} toast-icon"></i>
+            <div class="toast-message">${message}</div>
+            <button class="toast-close" title="Đóng">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        // Function to dismiss toast
+        const dismissToast = () => {
+            if (toast.classList.contains('toast-fade-out')) return;
+            toast.classList.add('toast-fade-out');
+            toast.addEventListener('animationend', () => {
+                toast.remove();
+                if (container.children.length === 0) {
+                    container.remove();
+                }
+            });
+        };
+
+        // Close button event
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', dismissToast);
+
+        // Auto dismiss after duration
+        if (duration > 0) {
+            setTimeout(dismissToast, duration);
+        }
+    }
+
+    }
+
+    // --- New Features State Variables ---
+    let currentFilter = 'none';
+    let isWatermarkEnabled = false;
+    let watermarkType = 'text';
+    let watermarkText = '@carousel_cut';
+    let watermarkImage = null; // Store loaded image object
+    let watermarkPosition = 'bottom-right';
+    let watermarkOpacity = 40; // Percentage
+    let watermarkSize = 5; // Percentage of slice width/height
+    let exportFormat = 'image/png';
+    let exportScale = 2; // Default to 2x for HD quality
+
+    // --- Collapsible Panels Handler ---
+    const collapsibles = document.querySelectorAll('.collapsible-header');
+    collapsibles.forEach(header => {
+        header.addEventListener('click', () => {
+            const group = header.parentElement;
+            const content = group.querySelector('.collapsible-content');
+            
+            group.classList.toggle('open');
+            
+            if (group.classList.contains('open')) {
+                content.style.maxHeight = (content.scrollHeight + 50) + "px"; // padding buffer
+            } else {
+                content.style.maxHeight = null;
+            }
+        });
+    });
+
+    // --- Quick Presets Handler ---
+    const presetButtons = document.querySelectorAll('.btn-preset');
+    presetButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            presetButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const preset = btn.dataset.preset;
+            
+            // Chuyển về chế độ cắt lưới
+            slicingMode = 'grid';
+            modeGridBtn.classList.add('active');
+            modeBoxBtn.classList.remove('active');
+            controlsGridMode.classList.add('active');
+            controlsBoxMode.classList.remove('active');
+            btnGenBoxes.disabled = true;
+            btnClearBoxes.disabled = true;
+
+            isCustomGrid = false;
+            colsX = [];
+            rowsY = [];
+            
+            if (preset === 'ig-1-1') {
+                selectGridType.value = 'even';
+                gridType = 'even';
+                selectRatio.value = '1:1';
+                lockedRatio = 1.0;
+                inputRows.value = 1;
+                inputCols.value = 3;
+            } else if (preset === 'ig-4-5') {
+                selectGridType.value = 'even';
+                gridType = 'even';
+                selectRatio.value = '4:5';
+                lockedRatio = 4 / 5;
+                inputRows.value = 1;
+                inputCols.value = 3;
+            } else if (preset === 'tt-9-16') {
+                selectGridType.value = 'even';
+                gridType = 'even';
+                selectRatio.value = '9:16';
+                lockedRatio = 9 / 16;
+                inputRows.value = 1;
+                inputCols.value = 3;
+            } else if (preset === 'fb-asym') {
+                selectGridType.value = 'fb-1d3v';
+                gridType = 'fb-1d3v';
+                selectRatio.value = 'free';
+                lockedRatio = null;
+            }
+
+            // Đồng bộ UI lưới
+            if (gridType === 'even') {
+                if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
+                resetGridToEven();
+            } else {
+                if (gridEvenParameters) gridEvenParameters.style.display = 'none';
+            }
+
+            handleParamsChange();
+            showToast("Đã áp dụng preset thành công!", "success");
+        });
+    });
+
+    // --- Filters Handler ---
+    const filterButtons = document.querySelectorAll('.btn-filter');
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            
+            // Áp dụng filter CSS lên preview canvas
+            applyFilterToPreviewCanvas();
+        });
+    });
+
+    function applyFilterToPreviewCanvas() {
+        if (!previewCanvas) return;
+        
+        let filterCSS = 'none';
+        if (currentFilter === 'vintage') {
+            filterCSS = 'sepia(0.5) contrast(1.1) saturate(1.1)';
+        } else if (currentFilter === 'bw') {
+            filterCSS = 'grayscale(1) contrast(1.2)';
+        } else if (currentFilter === 'cinema') {
+            filterCSS = 'contrast(1.25) saturate(0.85) hue-rotate(-10deg)';
+        } else if (currentFilter === 'warm') {
+            filterCSS = 'sepia(0.15) saturate(1.3) contrast(1.05) hue-rotate(5deg)';
+        } else if (currentFilter === 'cool') {
+            filterCSS = 'saturate(1.2) hue-rotate(-15deg) contrast(1.05)';
+        }
+        
+        previewCanvas.style.filter = filterCSS;
+    }
+
+    // --- Watermark UI Handler ---
+    const switchWatermark = document.getElementById('switch-watermark');
+    const watermarkInputsPanel = document.getElementById('watermark-inputs-panel');
+    const watermarkTypeSelect = document.getElementById('watermark-type');
+    const watermarkTextGroup = document.getElementById('watermark-text-group');
+    const watermarkImageGroup = document.getElementById('watermark-image-group');
+    const watermarkTextVal = document.getElementById('watermark-text-val');
+    const watermarkImageFile = document.getElementById('watermark-image-file');
+    const watermarkPositionSelect = document.getElementById('watermark-position');
+    const watermarkOpacityRange = document.getElementById('watermark-opacity');
+    const watermarkOpacityLabel = document.getElementById('watermark-opacity-label');
+    const watermarkSizeRange = document.getElementById('watermark-size');
+    const watermarkSizeLabel = document.getElementById('watermark-size-label');
+
+    if (switchWatermark) {
+        switchWatermark.addEventListener('change', () => {
+            isWatermarkEnabled = switchWatermark.checked;
+            watermarkInputsPanel.style.display = isWatermarkEnabled ? 'block' : 'none';
+            // Cập nhật lại chiều cao của collapsible container
+            const content = switchWatermark.closest('.collapsible-content');
+            if (content) content.style.maxHeight = (content.scrollHeight + 50) + "px";
+        });
+    }
+
+    if (watermarkTypeSelect) {
+        watermarkTypeSelect.addEventListener('change', () => {
+            watermarkType = watermarkTypeSelect.value;
+            watermarkTextGroup.style.display = (watermarkType === 'text') ? 'block' : 'none';
+            watermarkImageGroup.style.display = (watermarkType === 'image') ? 'block' : 'none';
+            // Cập nhật lại chiều cao collapsible
+            const content = watermarkTypeSelect.closest('.collapsible-content');
+            if (content) content.style.maxHeight = (content.scrollHeight + 50) + "px";
+        });
+    }
+
+    if (watermarkTextVal) {
+        watermarkTextVal.addEventListener('input', () => {
+            watermarkText = watermarkTextVal.value;
+        });
+    }
+
+    if (watermarkImageFile) {
+        watermarkImageFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        watermarkImage = img;
+                        showToast("Đã tải logo watermark thành công!", "success");
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (watermarkPositionSelect) {
+        watermarkPositionSelect.addEventListener('change', () => {
+            watermarkPosition = watermarkPositionSelect.value;
+        });
+    }
+
+    if (watermarkOpacityRange && watermarkOpacityLabel) {
+        watermarkOpacityRange.addEventListener('input', () => {
+            watermarkOpacity = parseInt(watermarkOpacityRange.value);
+            watermarkOpacityLabel.textContent = watermarkOpacity + "%";
+        });
+    }
+
+    if (watermarkSizeRange && watermarkSizeLabel) {
+        watermarkSizeRange.addEventListener('input', () => {
+            watermarkSize = parseInt(watermarkSizeRange.value);
+            watermarkSizeLabel.textContent = watermarkSize + "%";
+        });
+    }
+
+    // --- Export Options UI Handler ---
+    const exportFormatSelect = document.getElementById('export-format');
+    const exportScaleSelect = document.getElementById('export-scale-val');
+
+    if (exportFormatSelect) {
+        exportFormatSelect.addEventListener('change', () => {
+            exportFormat = exportFormatSelect.value;
+        });
+    }
+
+    if (exportScaleSelect) {
+        exportScaleSelect.addEventListener('change', () => {
+            exportScale = parseInt(exportScaleSelect.value);
+        });
+    }
+
     // --- Drag and Drop Events for Upload ---
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, (e) => {
@@ -1565,7 +1836,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Handle Image Selection & Load ---
     function handleImageSelection(file) {
         if (!file.type.startsWith('image/')) {
-            alert('Vui lòng chọn file hình ảnh hợp lệ (PNG, JPG, JPEG, WEBP,...)');
+            showToast('File ảnh không hợp lệ!', 'warning');
             return;
         }
         currentOriginalFile = file;
@@ -2204,7 +2475,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Auto detect failed: ", error);
-            alert("Không thể quét ảnh tự động. Bạn vẫn có thể dùng chuột kéo thả trực tiếp các đường lưới màu xanh để căn chỉnh thủ công!");
+            showToast("Không thể quét ảnh tự động!", "warning");
         }
     });
     }
@@ -2303,7 +2574,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const firstCropH = firstCellH - firstTopOffset - firstBottomOffset;
 
                 if (firstCropW <= 0 || firstCropH <= 0) {
-                    alert("Kích thước ô lưới đầu tiên sau khi xén viền nhỏ hơn 0. Hãy giảm Offset!");
+                    showToast("Kích thước ô quá nhỏ. Giảm Offset!", "error");
                     return;
                 }
 
@@ -2339,7 +2610,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const cropH = cellH - topOffset - bottomOffset;
 
                         if (cropW <= 0 || cropH <= 0) {
-                            alert(`Kích thước ô [Hàng ${r+1}, Cột ${c+1}] sau khi xén viền nhỏ hơn 0. Hãy giảm Offset hoặc điều chỉnh đường lưới rộng hơn!`);
+                            showToast(`Ô [H${r+1}, C${c+1}] quá nhỏ. Giảm Offset!`, "error");
                             return;
                         }
 
@@ -2438,7 +2709,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 1. Nhóm 1: Ảnh to
                 const largeCell = gridCells[0];
                 if (largeCell.cropW <= 0 || largeCell.cropH <= 0) {
-                    alert("Kích thước ô to sau khi xén viền nhỏ hơn 0. Hãy giảm Offset!");
+                    showToast("Ô to quá nhỏ. Giảm Offset!", "error");
                     return;
                 }
                 const largeScale = getExportScale(largeCell.cropW);
@@ -2448,7 +2719,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 2. Nhóm 2: 3 Ảnh nhỏ
                 const smallCell = gridCells[1];
                 if (smallCell.cropW <= 0 || smallCell.cropH <= 0) {
-                    alert("Kích thước ô nhỏ sau khi xén viền nhỏ hơn 0. Hãy giảm Offset!");
+                    showToast("Ô nhỏ quá nhỏ. Giảm Offset!", "error");
                     return;
                 }
                 const smallScale = getExportScale(smallCell.cropW);
@@ -2473,7 +2744,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             if (selectionBoxes.length === 0) {
-                alert('Vui lòng vẽ ít nhất 1 khung cắt tự do trên ảnh!');
+                showToast('Hãy vẽ ít nhất 1 khung cắt!', 'warning');
                 return;
             }
 
@@ -2483,7 +2754,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const firstCropH = firstBox.h - (2 * offset);
 
             if (firstCropW <= 0 || firstCropH <= 0) {
-                alert("Kích thước khung vẽ đầu tiên sau khi xén viền nhỏ hơn 0. Hãy giảm Offset!");
+                showToast("Khung vẽ quá nhỏ. Giảm Offset!", "error");
                 return;
             }
 
@@ -2502,7 +2773,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cropH = box.h - (2 * offset);
 
                 if (cropW <= 0 || cropH <= 0) {
-                    alert(`Kích thước Khung ${box.id} sau khi xén viền nhỏ hơn 0. Hãy giảm Offset hoặc co dãn khung lớn hơn!`);
+                    showToast(`Khung ${box.id} quá nhỏ. Giảm Offset!`, "error");
                     return;
                 }
 
@@ -2540,23 +2811,128 @@ document.addEventListener('DOMContentLoaded', () => {
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
 
-        sliceCanvas.width = targetW;
-        sliceCanvas.height = targetH;
-        if (targetW === cropW && targetH === cropH) {
+        // Định dạng file và đuôi file tương ứng
+        let formatExt = exportFormat === 'image/jpeg' ? 'jpg' : 'png';
+        const cleanName = sliceName.replace(/\.png$/, `.${formatExt}`).replace(/\.jpg$/, `.${formatExt}`).replace(/\.jpeg$/, `.${formatExt}`);
+
+        // Áp dụng Export Scale vào kích thước thật của slide canvas
+        const finalW = Math.round(targetW * exportScale);
+        const finalH = Math.round(targetH * exportScale);
+
+        sliceCanvas.width = finalW;
+        sliceCanvas.height = finalH;
+        
+        if (finalW === cropW && finalH === cropH) {
             sliceCtx.imageSmoothingEnabled = false;
         } else {
             sliceCtx.imageSmoothingEnabled = true;
             sliceCtx.imageSmoothingQuality = 'high';
         }
-        sliceCtx.clearRect(0, 0, targetW, targetH);
+        sliceCtx.clearRect(0, 0, finalW, finalH);
 
-        // Vẽ toàn bộ vùng ảnh gốc trong ô lưới (cropW x cropH) lên Canvas con (targetW x targetH)
-        // Trình duyệt sẽ tự động co giãn (nội suy phóng to/thu nhỏ) để lấp đầy vừa khít
-        // mà hoàn toàn không cắt bớt bất kỳ pixel nào của ảnh gốc trong vùng lưới
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+        // 1. Áp dụng bộ lọc màu (Filters)
+        let filterCSS = 'none';
+        if (currentFilter === 'vintage') {
+            filterCSS = 'sepia(0.5) contrast(1.1) saturate(1.1)';
+        } else if (currentFilter === 'bw') {
+            filterCSS = 'grayscale(1) contrast(1.2)';
+        } else if (currentFilter === 'cinema') {
+            filterCSS = 'contrast(1.25) saturate(0.85) hue-rotate(-10deg)';
+        } else if (currentFilter === 'warm') {
+            filterCSS = 'sepia(0.15) saturate(1.3) contrast(1.05) hue-rotate(5deg)';
+        } else if (currentFilter === 'cool') {
+            filterCSS = 'saturate(1.2) hue-rotate(-15deg) contrast(1.05)';
+        }
+        sliceCtx.filter = filterCSS;
 
-        const dataUrl = sliceCanvas.toDataURL('image/png');
-        slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl });
+        // Vẽ ảnh gốc lên canvas
+        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, finalW, finalH);
+
+        // Tắt filter để vẽ Watermark không bị lệch màu
+        sliceCtx.filter = 'none';
+
+        // 2. Vẽ Watermark nếu được bật
+        if (isWatermarkEnabled) {
+            const baseSize = Math.min(finalW, finalH);
+            const wmSize = baseSize * (watermarkSize / 100);
+            
+            // Thiết lập độ mờ
+            sliceCtx.globalAlpha = watermarkOpacity / 100;
+
+            if (watermarkType === 'text' && watermarkText) {
+                // Font size tương đương kích thước watermark
+                const fontSize = Math.max(12, Math.round(wmSize * 0.8));
+                sliceCtx.font = `bold ${fontSize}px 'Inter', sans-serif`;
+                sliceCtx.textBaseline = 'middle';
+                
+                const textWidth = sliceCtx.measureText(watermarkText).width;
+                const textHeight = fontSize;
+                
+                let x = 0, y = 0;
+                const padding = 20 * exportScale; // padding tỷ lệ với scale để không bị quá nhỏ trên ảnh lớn
+                
+                if (watermarkPosition === 'bottom-right') {
+                    x = finalW - textWidth - padding;
+                    y = finalH - textHeight / 2 - padding;
+                } else if (watermarkPosition === 'bottom-left') {
+                    x = padding;
+                    y = finalH - textHeight / 2 - padding;
+                } else if (watermarkPosition === 'top-right') {
+                    x = finalW - textWidth - padding;
+                    y = textHeight / 2 + padding;
+                } else if (watermarkPosition === 'center') {
+                    x = (finalW - textWidth) / 2;
+                    y = finalH / 2;
+                }
+
+                // Vẽ viền đen cho chữ nổi bật
+                sliceCtx.strokeStyle = '#000000';
+                sliceCtx.lineWidth = Math.max(2, Math.round(fontSize * 0.15));
+                sliceCtx.strokeText(watermarkText, x, y);
+                
+                // Vẽ chữ trắng
+                sliceCtx.fillStyle = '#ffffff';
+                sliceCtx.fillText(watermarkText, x, y);
+
+            } else if (watermarkType === 'image' && watermarkImage) {
+                const imgRatio = watermarkImage.width / watermarkImage.height;
+                let w = 0, h = 0;
+                
+                // Kích thước logo
+                if (imgRatio > 1) {
+                    w = wmSize * 2.5;
+                    h = w / imgRatio;
+                } else {
+                    h = wmSize * 2.5;
+                    w = h * imgRatio;
+                }
+                
+                let x = 0, y = 0;
+                const padding = 20 * exportScale;
+                
+                if (watermarkPosition === 'bottom-right') {
+                    x = finalW - w - padding;
+                    y = finalH - h - padding;
+                } else if (watermarkPosition === 'bottom-left') {
+                    x = padding;
+                    y = finalH - h - padding;
+                } else if (watermarkPosition === 'top-right') {
+                    x = finalW - w - padding;
+                    y = padding;
+                } else if (watermarkPosition === 'center') {
+                    x = (finalW - w) / 2;
+                    y = (finalH - h) / 2;
+                }
+                
+                sliceCtx.drawImage(watermarkImage, x, y, w, h);
+            }
+            
+            // Khôi phục độ mờ ban đầu
+            sliceCtx.globalAlpha = 1.0;
+        }
+
+        const dataUrl = sliceCanvas.toDataURL(exportFormat, exportFormat === 'image/jpeg' ? 0.95 : undefined);
+        slicedImages.push({ id: resultId, name: cleanName, dataUrl: dataUrl });
 
         const isFacebookMode = (gridType === 'fb-1d3v' || gridType === 'fb-1n3v');
 
@@ -2564,7 +2940,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultItem.classList.add('result-item');
         resultItem.dataset.id = resultId;
         resultItem.setAttribute('draggable', isFacebookMode ? 'false' : 'true');
-        resultItem.style.aspectRatio = `${targetW} / ${targetH}`;
+        resultItem.style.aspectRatio = `${finalW} / ${finalH}`;
 
         const grip = document.createElement('div');
         grip.classList.add('result-item-grip');
@@ -2596,8 +2972,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnMobilePreview) btnMobilePreview.style.display = 'none';
                 globalTargetW = null;
                 globalTargetH = null;
-            } else {
-                // CSS Grid sẽ tự động điều chỉnh số cột cho nhỏ gọn
             }
         });
         resultItem.appendChild(btnDel);
@@ -2605,7 +2979,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgEl = document.createElement('img');
         imgEl.src = dataUrl;
         imgEl.classList.add('result-img');
-        imgEl.alt = sliceName;
+        imgEl.alt = cleanName;
         resultItem.appendChild(imgEl);
 
         const nameContainer = document.createElement('div');
@@ -2614,7 +2988,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.classList.add('result-item-name-input');
-        const baseName = sliceName.replace('.png', '');
+        const baseName = cleanName.substring(0, cleanName.lastIndexOf('.'));
         nameInput.value = baseName;
         nameInput.title = "Nhấp chuột hoặc nhấn Enter để đổi tên";
         
@@ -2624,7 +2998,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nameInput.addEventListener('blur', () => {
             resultItem.setAttribute('draggable', 'true');
             const newBaseName = nameInput.value.trim().replace(/[\\/:*?"<>|]/g, '');
-            const newFullName = newBaseName ? `${newBaseName}.png` : sliceName;
+            const newFullName = newBaseName ? `${newBaseName}.${formatExt}` : cleanName;
             nameInput.value = newBaseName || baseName;
             
             const imgObj = slicedImages.find(item => item.id === resultId);
@@ -2641,7 +3015,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const extSpan = document.createElement('span');
         extSpan.classList.add('result-item-ext');
-        extSpan.textContent = '.png';
+        extSpan.textContent = '.' + formatExt;
 
         nameContainer.appendChild(nameInput);
         nameContainer.appendChild(extSpan);
@@ -2654,7 +3028,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnDl.addEventListener('click', () => {
             const a = document.createElement('a');
             const currentImgObj = slicedImages.find(item => item.id === resultId);
-            const downloadName = currentImgObj ? currentImgObj.name : sliceName;
+            const downloadName = currentImgObj ? currentImgObj.name : cleanName;
             a.href = dataUrl;
             a.download = downloadName;
             a.click();
@@ -2680,7 +3054,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (navigator.vibrate) {
                 navigator.vibrate(40);
             }
-            e.preventDefault(); // Ngăn chặn các sự kiện mặc định ngay lập tức
+            e.preventDefault();
         }, { passive: false });
 
         grip.addEventListener('touchmove', (e) => {
@@ -2743,18 +3117,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Bổ sung sự kiện click xem ảnh full cho di động (Mobile Lightbox dùng chính modal Mobile Preview)
+        // Click xem ảnh full cho di động
         resultItem.addEventListener('click', (e) => {
-            // Tránh kích hoạt khi click vào các nút hành động con của card
             if (e.target.closest('.result-item-btn-del') || e.target.closest('.result-item-btn-dl') || e.target.closest('.result-item-name-container')) {
                 return;
             }
             
-            // Nếu có chức năng xem trước trên di động
             if (btnMobilePreview) {
-                btnMobilePreview.click(); // Kích hoạt mở modal xem thử
+                btnMobilePreview.click();
                 
-                // Đợi modal render xong slide, scroll tới slide tương ứng với card được click
                 setTimeout(() => {
                     if (mobileCarouselSlider) {
                         const targetSlideIndex = slicedImages.findIndex(item => item.id === resultId);
@@ -2772,12 +3143,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resultGrid.appendChild(resultItem);
 
         sliceCanvas.toBlob((blob) => {
-            slicedBlobs.push({ id: resultId, name: sliceName, blob: blob });
+            slicedBlobs.push({ id: resultId, name: cleanName, blob: blob });
             
             if (slicedBlobs.length === slicedImages.length) {
                 btnDownloadZip.disabled = false;
             }
-        }, 'image/png');
+        }, exportFormat, exportFormat === 'image/jpeg' ? 0.95 : undefined);
     }
 
     // --- Drag & Drop for Result Items ---
@@ -2885,7 +3256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnDownloadZip.disabled = false;
         }).catch(err => {
             console.error('Lỗi khi nén ZIP:', err);
-            alert('Không thể tạo file ZIP. Hãy tải về từng file ảnh thủ công.');
+            showToast('Lỗi tạo ZIP. Hãy tải thủ công!', 'error');
             btnDownloadZip.innerHTML = originalBtnHtml;
             btnDownloadZip.disabled = false;
         });
@@ -2926,10 +3297,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Đọc thứ tự thực tế trong DOM
             const orderedItems = Array.from(resultGrid.children);
             
+            let formatExt = exportFormat === 'image/jpeg' ? 'jpg' : 'png';
+            
             orderedItems.forEach((resultItem, index) => {
                 const resultId = parseInt(resultItem.dataset.id);
                 const newIndex = index + 1;
-                const newName = `slide_${newIndex}.png`;
+                const newName = `slide_${newIndex}.${formatExt}`;
                 const newBaseName = `slide_${newIndex}`;
 
                 // Cập nhật giá trị hiển thị trong input
@@ -2959,7 +3332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Đồng bộ lại thứ tự mảng tương ứng
             syncArraysOrder();
 
-            alert("Đã tự động đánh số lại toàn bộ slide kết quả!");
+            showToast("Đã đánh số lại các slide!", "success");
         });
     }
 
@@ -3486,18 +3859,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = passIn.value;
 
         if (!username || !password) {
-            alert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu!");
+            showToast("Thiếu tài khoản hoặc mật khẩu!", "warning");
             return;
         }
 
         const usernameRegex = /^[a-z0-9_]{3,20}$/;
         if (!usernameRegex.test(username)) {
-            alert("Tên đăng nhập chỉ gồm chữ thường, số và dấu gạch dưới, từ 3 đến 20 ký tự!");
+            showToast("Tên đăng nhập không hợp lệ!", "warning");
             return;
         }
 
         if (password.length < 6) {
-            alert("Mật khẩu phải dài từ 6 ký tự trở lên!");
+            showToast("Mật khẩu phải từ 6 ký tự!", "warning");
             return;
         }
 
@@ -3512,7 +3885,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (checkError) throw checkError;
 
             if (existingUser) {
-                alert("Tên đăng nhập đã tồn tại! Vui lòng chọn tên khác.");
+                showToast("Tên đăng nhập đã tồn tại!", "error");
                 return;
             }
 
@@ -3524,14 +3897,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (insertError) throw insertError;
 
-            alert("Đăng ký tài khoản thành công! Tự động đăng nhập...");
+            showToast("Đăng ký tài khoản thành công!", "success");
             syncKey = username;
             localStorage.setItem('carousel_logged_user', syncKey);
             updateAuthUI();
             loadHistoryFromDB();
         } catch (err) {
             console.error("Lỗi đăng ký:", err);
-            alert("Đăng ký tài khoản thất bại! Vui lòng kiểm tra kết nối mạng.");
+            showToast("Đăng ký tài khoản thất bại!", "error");
         }
     }
 
@@ -3546,7 +3919,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = passIn.value;
 
         if (!username || !password) {
-            alert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu!");
+            showToast("Thiếu tài khoản hoặc mật khẩu!", "warning");
             return;
         }
 
@@ -3563,7 +3936,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loginError) throw loginError;
 
             if (!user) {
-                alert("Tên đăng nhập hoặc mật khẩu không chính xác!");
+                showToast("Sai tài khoản hoặc mật khẩu!", "error");
                 return;
             }
 
@@ -3571,10 +3944,10 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('carousel_logged_user', syncKey);
             updateAuthUI();
             loadHistoryFromDB();
-            alert(`Chào mừng quay trở lại, ${syncKey}!`);
+            showToast(`Xin chào, ${syncKey}!`, "success");
         } catch (err) {
             console.error("Lỗi đăng nhập:", err);
-            alert("Đăng nhập thất bại! Vui lòng kiểm tra kết nối mạng.");
+            showToast("Đăng nhập thất bại!", "error");
         }
     }
 
@@ -3812,7 +4185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadHistoryFromDB();
         } catch (err) {
             console.error("Lỗi khi đồng bộ lên Supabase:", err);
-            alert("Lưu lịch sử đám mây thất bại! Vui lòng kiểm tra lại kết nối mạng.");
+            showToast("Không thể lưu lịch sử lên mây!", "error");
         }
     }
 
@@ -4059,7 +4432,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     drawLiveGrid();
-                    alert(`Đã nạp lại dự án "${proj.name}" thành công!`);
+                    showToast(`Đã nạp dự án: ${proj.name}`, "success");
 
                     if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
                     if (mobileNavResult) mobileNavResult.classList.add('disabled');
@@ -4071,7 +4444,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(blob);
         } catch (err) {
             console.error("Lỗi khi nạp dự án:", err);
-            alert("Nạp dự án thất bại! Không thể tải dữ liệu ảnh từ đám mây.");
+            showToast("Không thể tải ảnh dự án!", "error");
         }
     }
 
@@ -4086,7 +4459,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadHistoryFromDB();
         } catch (err) {
             console.error("Lỗi khi xóa dự án:", err);
-            alert("Xóa dự án thất bại! Vui lòng thử lại.");
+            showToast("Xóa dự án thất bại!", "error");
         }
     }
 
@@ -4143,14 +4516,14 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(blob);
         } catch (err) {
             console.error("Lỗi khi xuất file dự án:", err);
-            alert("Xuất file dự án thất bại!");
+            showToast("Xuất file dự án thất bại!", "error");
         }
     }
 
     const handleImportFile = (file) => {
         if (!file || !supabase) return;
         if (!syncKey) {
-            alert("Vui lòng đăng nhập tài khoản trước khi nhập file dự án đám mây!");
+            showToast("Hãy đăng nhập trước khi nhập file!", "warning");
             return;
         }
 
@@ -4160,7 +4533,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = JSON.parse(ev.target.result);
                 
                 if (!data.imageBase64 || !data.slicingMode || !data.name) {
-                    alert("File dự án không hợp lệ. Vui lòng chọn đúng file .ccut!");
+                    showToast("File dự án không hợp lệ (.ccut)!", "warning");
                     return;
                 }
 
@@ -4214,7 +4587,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadProject(insertedProj.id);
             } catch (err) {
                 console.error("Lỗi khi nhập file dự án:", err);
-                alert("Nhập file dự án thất bại! File có thể bị hỏng hoặc lỗi kết nối.");
+                showToast("Nhập file dự án thất bại!", "error");
             }
         };
         reader.readAsText(file);
