@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ratioHelpText = document.getElementById('ratio-help-text');
     const selectExportScale = document.getElementById('select-export-scale');
     const selectGridType = document.getElementById('select-grid-type');
+    const gridTypeControlItem = document.getElementById('grid-type-control-item');
+    const gridTypeHelpText = document.getElementById('grid-type-help-text');
     const gridEvenParameters = document.getElementById('grid-even-parameters');
     const switchUniform = document.getElementById('switch-uniform');
     const switchSnap = document.getElementById('switch-snap');
@@ -197,6 +199,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ratioControlItem) ratioControlItem.classList.add('disabled');
             if (ratioHelpText) ratioHelpText.style.display = 'block';
 
+            if (selectGridType) selectGridType.disabled = false;
+            if (gridTypeControlItem) gridTypeControlItem.classList.remove('disabled');
+            if (gridTypeHelpText) gridTypeHelpText.style.display = 'none';
+
             if (currentImage) {
                 if (btnAutoDetect) btnAutoDetect.style.display = 'flex';
                 tipText.innerHTML = "Mẹo: Bạn có thể kéo thả các đường lưới màu xanh để thay đổi kích thước các ô.";
@@ -212,6 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectRatio) selectRatio.disabled = false;
             if (ratioControlItem) ratioControlItem.classList.remove('disabled');
             if (ratioHelpText) ratioHelpText.style.display = 'none';
+
+            if (selectGridType) selectGridType.disabled = true;
+            if (gridTypeControlItem) gridTypeControlItem.classList.add('disabled');
+            if (gridTypeHelpText) gridTypeHelpText.style.display = 'block';
 
             if (currentImage) {
                 if (btnAutoDetect) btnAutoDetect.style.display = 'none';
@@ -3791,7 +3801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: parseInt(inputRows.value) || 1,
                 cols: parseInt(inputCols.value) || 1,
                 ratio: selectRatio.value,
-                scale: selectExportScale.value,
+                scale: selectExportScale ? selectExportScale.value : 'auto',
                 offset_val: parseInt(inputOffset.value) || 0,
                 selection_boxes: selectionBoxes,
                 switch_uniform: switchUniform.checked,

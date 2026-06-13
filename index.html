@@ -121,18 +121,7 @@
 
                     <!-- Parameters Box: Dynamic content based on Mode -->
                     <div class="params-container">
-                        <!-- Grid Mode Controls -->
                         <div id="controls-grid-mode" class="controls-pane active">
-                            <div class="control-item" style="margin-bottom: 12px;">
-                                <label for="select-grid-type">
-                                    <i class="fa-solid fa-table-cells" style="color: #06b6d4;"></i> Bố cục lưới (Grid Layout)
-                                </label>
-                                <select id="select-grid-type">
-                                    <option value="even" selected>Chia đều (Hàng x Cột)</option>
-                                    <option value="fb-1d3v">Facebook: 1 Dọc + 3 Vuông phải</option>
-                                    <option value="fb-1n3v">Facebook: 1 Ngang + 3 Vuông dưới</option>
-                                </select>
-                            </div>
 
 
                             <div class="control-group-grid" id="grid-even-parameters">
@@ -172,8 +161,21 @@
                         </div>
                     </div>
 
-                    <!-- Ratio & Scale selectors in one row -->
-                    <div class="control-group-grid scale-ratio-group" style="margin-bottom: 12px;">
+                    <!-- Grid Layout & Ratio selectors in one row -->
+                    <div class="control-group-grid grid-ratio-group" style="margin-bottom: 12px;">
+                        <div class="control-item" id="grid-type-control-item">
+                            <label for="select-grid-type">
+                                <i class="fa-solid fa-table-cells" style="color: #06b6d4;"></i> Bố cục lưới
+                            </label>
+                            <select id="select-grid-type">
+                                <option value="even" selected>Chia đều (Hàng x Cột)</option>
+                                <option value="fb-1d3v">Facebook: 1 Dọc + 3 Vuông phải</option>
+                                <option value="fb-1n3v">Facebook: 1 Ngang + 3 Vuông dưới</option>
+                            </select>
+                            <div class="control-help-text" id="grid-type-help-text" style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 4px; display: none; opacity: 0.8;">
+                                <i class="fa-solid fa-circle-info"></i> Chỉ áp dụng cho chế độ Chia lưới
+                            </div>
+                        </div>
                         <div class="control-item" id="ratio-control-item">
                             <label for="select-ratio">
                                 <i class="fa-solid fa-crop"></i> Tỷ lệ cắt (Ratio)
@@ -188,18 +190,6 @@
                             <div class="control-help-text" id="ratio-help-text" style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 4px; display: none; opacity: 0.8;">
                                 <i class="fa-solid fa-circle-info"></i> Chỉ áp dụng cho chế độ Tự do
                             </div>
-                        </div>
-                        <div class="control-item scale-control-group">
-                            <label for="select-export-scale">
-                                <i class="fa-solid fa-up-right-and-down-left-from-center" style="color: #06b6d4;"></i> Độ nét (Scale)
-                            </label>
-                            <select id="select-export-scale">
-                                <option value="auto">Tối ưu HD</option>
-                                <option value="1">1x (Gốc)</option>
-                                <option value="1.5">1.5x (Sắc nét)</option>
-                                <option value="2">2x (Siêu nét)</option>
-                                <option value="3" selected>3x (Cực nét)</option>
-                            </select>
                         </div>
                     </div>
 
