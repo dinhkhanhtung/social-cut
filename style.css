@@ -2349,9 +2349,10 @@ input[type="number"] {
     }
 
     .action-buttons .btn {
-        height: 36px !important;
+        height: 38px !important;
         font-size: 0.8rem !important;
-        padding: 4px 10px !important;
+        padding: 0 10px !important;
+        box-sizing: border-box !important;
     }
 
     /* Tabs View Panel */
@@ -2830,13 +2831,13 @@ input[type="number"] {
     }
 
     .mobile-sync-settings .sync-connect-form input {
-        height: 36px !important;
+        height: 38px !important;
         font-size: 0.8rem !important;
     }
 
     .mobile-sync-settings .btn-sync-connect {
-        height: 36px !important;
-        width: 36px !important;
+        height: 38px !important;
+        width: 38px !important;
         padding: 0 !important;
         justify-content: center !important;
     }
