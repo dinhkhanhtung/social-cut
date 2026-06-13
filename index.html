@@ -292,6 +292,22 @@
         <footer class="app-footer">
             <p>&copy; 2026 Carousel Cut. Được xây dựng bằng HTML5, CSS3 và JS thuần.</p>
         </footer>
+
+        <!-- Mobile Bottom Navigation Bar (Đưa vào trong app-container) -->
+        <div class="mobile-bottom-nav">
+            <button class="mobile-nav-item active" data-tab="upload" id="mobile-nav-upload">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Tải ảnh</span>
+            </button>
+            <button class="mobile-nav-item" data-tab="edit" id="mobile-nav-edit" style="display: none;">
+                <i class="fa-solid fa-crop-simple"></i>
+                <span>Cắt ảnh</span>
+            </button>
+            <button class="mobile-nav-item" data-tab="result" id="mobile-nav-result" style="display: none;">
+                <i class="fa-solid fa-images"></i>
+                <span>Thư viện</span>
+            </button>
+        </div>
     </div>
 
     <!-- Mobile Carousel Preview Modal -->
@@ -386,22 +402,6 @@
                 <div class="shortcut-item"><span class="key">Esc</span> (Xem thử)<span class="desc">Đóng khung xem thử điện thoại</span></div>
             </div>
         </div>
-    </div>
-
-    <!-- Mobile Bottom Navigation Bar -->
-    <div class="mobile-bottom-nav">
-        <button class="mobile-nav-item active" data-tab="upload" id="mobile-nav-upload">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>Tải ảnh</span>
-        </button>
-        <button class="mobile-nav-item" data-tab="edit" id="mobile-nav-edit" style="display: none;">
-            <i class="fa-solid fa-crop-simple"></i>
-            <span>Cắt ảnh</span>
-        </button>
-        <button class="mobile-nav-item" data-tab="result" id="mobile-nav-result" style="display: none;">
-            <i class="fa-solid fa-images"></i>
-            <span>Thư viện</span>
-        </button>
     </div>
 
 </body>
