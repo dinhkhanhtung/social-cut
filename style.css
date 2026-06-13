@@ -982,6 +982,7 @@ input[type="number"] {
 
 .result-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 12px;
     padding-bottom: 16px;
 }
@@ -1530,18 +1531,29 @@ input[type="number"] {
    MOBILE RESPONSIVE & LAYOUT OPTIMIZATION (MOBILE-FIRST)
    ========================================== */
 @media (max-width: 768px) {
-    /* Tối ưu container chính */
+    /* Khóa cuộn toàn trang web trên mobile khi đã có ảnh */
+    body:has(.app-content.has-image) {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Tối ưu container chính thành 100vh không cuộn ngoài */
     .app-container {
-        padding: 8px !important;
-        gap: 8px !important;
-        height: auto !important;
-        overflow-x: hidden !important;
+        padding: 6px !important;
+        gap: 6px !important;
+        height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
     }
 
     .app-header {
-        margin-bottom: 4px !important;
-        padding: 4px 0 !important;
+        margin-bottom: 2px !important;
+        padding: 2px 0 !important;
         text-align: center !important;
+        flex-shrink: 0 !important;
     }
 
     .app-header .logo {
@@ -1549,7 +1561,7 @@ input[type="number"] {
     }
 
     .app-header .brand-text {
-        font-size: 1.5rem !important;
+        font-size: 1.4rem !important;
     }
 
     .app-header .subtitle {
@@ -1560,26 +1572,48 @@ input[type="number"] {
     .app-content {
         display: flex !important;
         flex-direction: column !important;
-        gap: 10px !important;
-        height: auto !important;
-        overflow: visible !important;
+        gap: 6px !important;
+        flex: 1 !important;
+        height: calc(100vh - 50px) !important;
+        overflow: hidden !important;
     }
 
     /* 1. KHI CHƯA CÓ ẢNH: Ẩn view-panel (chưa có canvas và kết quả) */
     .app-content:not(.has-image) .view-panel {
         display: none !important;
     }
+    
+    .app-content:not(.has-image) #sidebar {
+        height: 100% !important;
+        overflow-y: auto !important;
+    }
 
-    /* 2. KHI ĐÃ CÓ ẢNH: Đưa Canvas lên trên cùng, Bảng cấu hình xuống dưới */
+    /* 2. KHI ĐÃ CÓ ẢNH: Đưa Canvas lên trên (43% vh), Bảng cấu hình xuống dưới (57% vh) và tự cuộn dọc */
     .app-content.has-image .view-panel {
         order: 1 !important;
-        height: auto !important;
-        min-height: 250px !important;
+        flex: 0 0 43% !important;
+        height: 43% !important;
+        min-height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+    
+    .app-content.has-image .view-panel .canvas-wrapper {
+        flex: 1 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .app-content.has-image #sidebar {
         order: 2 !important;
-        height: auto !important;
+        flex: 0 0 57% !important;
+        height: 57% !important;
+        overflow-y: auto !important;
+        padding-bottom: 24px !important;
     }
 
     /* Tối ưu hóa panel */
@@ -1759,7 +1793,7 @@ input[type="number"] {
     }
 
     .result-grid {
-        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
         gap: 6px !important;
         padding: 4px 0 !important;
     }

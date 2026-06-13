@@ -939,6 +939,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const target = findNearestGridLine(e.clientX, e.clientY);
             if (target) {
                 dragTarget = target;
+            } else {
+                isPanning = true;
+                previewCanvas.style.cursor = 'grabbing';
+                panStart = { x: e.clientX, y: e.clientY };
             }
         } else {
             const interaction = getBoxInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
@@ -1042,9 +1046,133 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Biến lưu trạng thái pinch zoom và pan cảm ứng
+    let touchStartDist = 0;
+    let startZoomScale = 1;
+    let touchStartPanX = 0;
+    let touchStartPanY = 0;
+    let touchStartCenter = { x: 0, y: 0 };
+    let isPinching = false;
+
     // Touch support mapping for main canvas
     previewCanvas.addEventListener('touchstart', (e) => {
+        if (!currentImage) return;
+        
         if (e.touches.length === 1) {
+            isPinching = false;
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            previewCanvas.dispatchEvent(mouseEvent);
+        } else if (e.touches.length === 2) {
+            isPinching = true;
+            e.preventDefault();
+            
+            const t1 = e.touches[0];
+            const t2 = e.touches[1];
+            
+            touchStartDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            startZoomScale = zoomScale;
+            
+            touchStartCenter = {
+                x: (t1.clientX + t2.clientX) / 2,
+                y: (t1.clientY + t2.clientY) / 2
+            };
+            
+            touchStartPanX = panX;
+            touchStartPanY = panY;
+        }
+    }, { passive: false });
+
+    previewCanvas.addEventListener('touchmove', (e) => {
+        if (!currentImage) return;
+        
+        if (e.touches.length === 1 && !isPinching) {
+            const touch = e.touches[0];
+            e.preventDefault(); // Chặn cuộn trang ngoài ý muốn khi vẽ/kéo lưới trên canvas
+            
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            previewCanvas.dispatchEvent(mouseEvent);
+        } else if (e.touches.length === 2 && isPinching) {
+            e.preventDefault();
+            
+            const t1 = e.touches[0];
+            const t2 = e.touches[1];
+            
+            const currentCenter = {
+                x: (t1.clientX + t2.clientX) / 2,
+                y: (t1.clientY + t2.clientY) / 2
+            };
+            
+            const dx = currentCenter.x - touchStartCenter.x;
+            const dy = currentCenter.y - touchStartCenter.y;
+            
+            const rect = previewCanvas.getBoundingClientRect();
+            const scaleX = currentImage.naturalWidth / rect.width;
+            const scaleY = currentImage.naturalHeight / rect.height;
+            
+            let tempPanX = touchStartPanX + dx * scaleX;
+            let tempPanY = touchStartPanY + dy * scaleY;
+            
+            const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            if (touchStartDist > 0 && currentDist > 0) {
+                const factor = currentDist / touchStartDist;
+                const newZoomScale = Math.max(0.05, Math.min(10.0, startZoomScale * factor));
+                
+                const mouseX = currentCenter.x - rect.left;
+                const mouseY = currentCenter.y - rect.top;
+                
+                const imgRatio = currentImage.naturalWidth / currentImage.naturalHeight;
+                const canvasW = rect.width;
+                const canvasH = rect.height;
+                const canvasRatio = canvasW / canvasH;
+                
+                let actualRenderedW = canvasW;
+                let actualRenderedH = canvasH;
+                let offsetX = 0;
+                let offsetY = 0;
+                
+                if (canvasRatio > imgRatio) {
+                    actualRenderedW = canvasH * imgRatio;
+                    offsetX = (canvasW - actualRenderedW) / 2;
+                } else {
+                    actualRenderedH = canvasW / imgRatio;
+                    offsetY = (canvasH - actualRenderedH) / 2;
+                }
+                
+                const relativeX = mouseX - offsetX;
+                const relativeY = mouseY - offsetY;
+                
+                const sX = currentImage.naturalWidth / actualRenderedW;
+                const sY = currentImage.naturalHeight / actualRenderedH;
+                
+                const canvasX = relativeX * sX;
+                const canvasY = relativeY * sY;
+                
+                panX = canvasX - (canvasX - tempPanX) * (newZoomScale / startZoomScale);
+                panY = canvasY - (canvasY - tempPanY) * (newZoomScale / startZoomScale);
+                zoomScale = newZoomScale;
+            } else {
+                panX = tempPanX;
+                panY = tempPanY;
+            }
+            
+            drawLiveGrid();
+        }
+    }, { passive: false });
+
+    previewCanvas.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+            isPinching = false;
+            const mouseEvent = new MouseEvent('mouseup', {});
+            window.dispatchEvent(mouseEvent);
+        } else if (e.touches.length === 1) {
+            isPinching = false;
             const touch = e.touches[0];
             const mouseEvent = new MouseEvent('mousedown', {
                 clientX: touch.clientX,
@@ -1052,29 +1180,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             previewCanvas.dispatchEvent(mouseEvent);
         }
-    }, { passive: true });
-
-    previewCanvas.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            // Ngăn chặn cuộn trang khi đang thao tác vẽ/kéo trên canvas
-            if (typeof dragTarget !== 'undefined' && dragTarget || 
-                typeof dragBoxTarget !== 'undefined' && dragBoxTarget || 
-                typeof isDrawingNewBox !== 'undefined' && isDrawingNewBox || 
-                typeof isPanning !== 'undefined' && isPanning) {
-                e.preventDefault();
-            }
-            const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            previewCanvas.dispatchEvent(mouseEvent);
-        }
-    }, { passive: false });
-
-    previewCanvas.addEventListener('touchend', (e) => {
-        const mouseEvent = new MouseEvent('mouseup', {});
-        window.dispatchEvent(mouseEvent);
     }, { passive: true });
 
     // Mouse Wheel Zoom Listener
@@ -2033,6 +2138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (slicingMode === 'grid') {
             if (gridType === 'even') {
+                resetGridToEven(); // Đảm bảo colsX và rowsY luôn được chia đều chính xác theo giá trị mới nhất trong input
                 const rows = parseInt(inputRows.value) || 1;
                 const cols = parseInt(inputCols.value) || 1;
                 const boundariesX = [0, ...colsX, width];
@@ -2266,8 +2372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultCountBadge.textContent = totalImages;
         }
 
-        const colsCount = Math.min(4, Math.ceil(Math.sqrt(totalImages)));
-        resultGrid.style.gridTemplateColumns = `repeat(${colsCount}, 1fr)`;
+        // CSS Grid sẽ tự động điều chỉnh số cột cho nhỏ gọn và responsive đẹp mắt
 
         tabBtnResult.disabled = false;
         switchTab('tab-result-grid');
@@ -2332,8 +2437,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalTargetW = null;
                 globalTargetH = null;
             } else {
-                const colsCount = Math.min(4, Math.ceil(Math.sqrt(total)));
-                resultGrid.style.gridTemplateColumns = `repeat(${colsCount}, 1fr)`;
+                // CSS Grid sẽ tự động điều chỉnh số cột cho nhỏ gọn
             }
         });
         resultItem.appendChild(btnDel);
