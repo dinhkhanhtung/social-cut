@@ -567,19 +567,19 @@ input[type="number"] {
 
 /* Offset Slider and Spinner layout */
 .offset-control-group {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
     width: 100%;
+    align-items: center;
 }
 
 .offset-control-group .slider {
-    flex-grow: 1;
+    width: 100%;
 }
 
 .offset-control-group .offset-spinner {
-    width: 110px;
-    flex-shrink: 0;
+    width: 100%;
 }
 
 /* Custom Dropdown select */
@@ -615,6 +615,7 @@ input[type="number"] {
     border: 1px solid rgba(255, 255, 255, 0.08);
     height: 38px;
     box-sizing: border-box;
+    width: 100%;
 }
 
 .label-switch {
@@ -3833,4 +3834,10 @@ input[type="number"] {
     background: #ef4444 !important;
     color: #fff !important;
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+}
+
+@media (max-width: 768px) {
+    .offset-control-group {
+        gap: 8px !important;
+    }
 }
