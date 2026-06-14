@@ -330,8 +330,6 @@ body {
     cursor: default;
     border-style: solid;
     background: rgba(17, 24, 39, 0.5);
-    height: auto !important;
-    padding: 8px !important;
 }
 
 .dropzone.has-image .file-input {
@@ -4637,6 +4635,74 @@ input[type="number"] {
     pointer-events: none !important;
     user-select: none !important;
     filter: grayscale(20%) !important;
+}
+
+/* Nút bánh răng cài đặt và hiệu ứng chuyển đổi view */
+.btn-popup-settings-toggle {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: color 0.25s ease, transform 0.25s ease;
+    padding: 0;
+}
+
+.btn-popup-settings-toggle:hover {
+    color: var(--accent) !important;
+    transform: rotate(45deg);
+}
+
+.btn-settings-nav-go {
+    transition: all 0.25s ease;
+}
+
+.btn-settings-nav-go:hover {
+    background: rgba(6, 182, 212, 0.1) !important;
+    border-color: rgba(6, 182, 212, 0.35) !important;
+}
+
+.settings-teleport-zone::-webkit-scrollbar {
+    width: 4px;
+}
+
+.settings-teleport-zone::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.settings-teleport-zone::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+.settings-teleport-zone::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Nút tròn icon bánh răng cài đặt */
+.btn-settings-circle-gear {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 0;
+}
+
+.btn-settings-circle-gear:hover {
+    color: var(--accent) !important;
+    background: rgba(6, 182, 212, 0.1) !important;
+    border-color: rgba(6, 182, 212, 0.35) !important;
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
 }
 
 

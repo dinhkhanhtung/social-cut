@@ -251,137 +251,139 @@
                         </div>
                     </div>
 
-                    <!-- Collapsible Panels side-by-side -->
-                    <div class="collapsible-panels-row" style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
-                        <!-- Collapsible Watermark Panel -->
-                        <div class="collapsible-panel" id="panel-watermark" style="margin-bottom: 0; position: static; overflow: visible;">
-                            <div class="collapsible-header" id="header-watermark" style="height: 38px; box-sizing: border-box; padding: 0 10px;">
-                                <span class="collapsible-title" style="font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    <i class="fa-solid fa-copyright" style="color: #f59e0b; font-size: 0.85rem;"></i> Đóng dấu
-                                </span>
-                                <i class="fa-solid fa-chevron-down collapsible-arrow" style="font-size: 0.75rem;"></i>
+                    <!-- Global Settings Wrapper (teleported to settings popup/drawer) -->
+                    <div id="global-settings-wrapper" style="display: none; width: 100%;">
+                        <div class="collapsible-panels-row" style="position: relative; display: flex; flex-direction: column; gap: 12px; margin-bottom: 0;">
+                            <!-- Collapsible Watermark Panel -->
+                            <div class="collapsible-panel" id="panel-watermark" style="margin-bottom: 0; position: static; overflow: visible;">
+                                <div class="collapsible-header" id="header-watermark" style="height: 38px; box-sizing: border-box; padding: 0 10px;">
+                                    <span class="collapsible-title" style="font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <i class="fa-solid fa-copyright" style="color: #f59e0b; font-size: 0.85rem;"></i> Đóng dấu bản quyền
+                                    </span>
+                                    <i class="fa-solid fa-chevron-down collapsible-arrow" style="font-size: 0.75rem;"></i>
+                                </div>
+                                <div class="collapsible-content" id="content-watermark" style="display: none;">
+                                    <!-- Checkbox bật tắt watermark -->
+                                    <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
+                                        <div class="switch-inline-container">
+                                            <label for="switch-watermark" class="label-switch">
+                                                <i class="fa-solid fa-square-check" style="color: #10b981;"></i> Bật đóng dấu
+                                            </label>
+                                            <div class="switch-wrapper">
+                                                <input type="checkbox" id="switch-watermark" class="switch-checkbox">
+                                                <label for="switch-watermark" class="switch-label-btn"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="watermark-options-container" style="display: none;">
+                                        <!-- Dropdown chọn loại đóng dấu (Chữ / Ảnh) -->
+                                        <div class="control-item" style="margin-bottom: 12px;">
+                                            <label for="select-watermark-type" style="font-size: 0.8rem; color: var(--text-secondary);">Loại đóng dấu</label>
+                                            <select id="select-watermark-type" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                                <option value="text" selected>Dạng chữ (Text)</option>
+                                                <option value="image">Dạng ảnh logo (Image)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Cấu hình Watermark Chữ -->
+                                        <div id="watermark-text-config" style="display: block;">
+                                            <!-- Input text -->
+                                            <div class="control-item" style="margin-bottom: 12px;">
+                                                <label for="input-watermark-text" style="font-size: 0.8rem; color: var(--text-secondary);">Nội dung chữ</label>
+                                                <input type="text" id="input-watermark-text" placeholder="Ví dụ: @username" value="@SocialCut" class="text-input" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                            </div>
+
+                                            <!-- Slider size chữ -->
+                                            <div class="control-item" style="margin-bottom: 12px;">
+                                                <div class="label-with-value">
+                                                    <label for="input-watermark-size">Cỡ chữ (px)</label>
+                                                    <span class="value-display" id="watermark-size-val">24</span>
+                                                </div>
+                                                <input type="range" id="input-watermark-size" min="12" max="64" value="24" step="1" class="slider" style="width: 100%; margin-top: 4px;">
+                                            </div>
+                                        </div>
+
+                                        <!-- Cấu hình Watermark Ảnh -->
+                                        <div id="watermark-image-config" style="display: none;">
+                                            <!-- Input file -->
+                                            <div class="control-item" style="margin-bottom: 12px;">
+                                                <label for="input-watermark-image" style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tải ảnh logo</label>
+                                                <input type="file" id="input-watermark-image" accept="image/*" style="width: 100%; font-size: 0.8rem; color: var(--text-secondary);">
+                                                <div id="watermark-image-preview-info" style="font-size: 0.72rem; color: var(--success); margin-top: 4px; display: none;">
+                                                    <i class="fa-solid fa-circle-check"></i> Đã tải logo thành công
+                                                </div>
+                                            </div>
+
+                                            <!-- Slider size ảnh logo -->
+                                            <div class="control-item" style="margin-bottom: 12px;">
+                                                <div class="label-with-value">
+                                                    <label for="input-watermark-image-scale">Kích thước logo (%)</label>
+                                                    <span class="value-display" id="watermark-image-scale-val">20</span>
+                                                </div>
+                                                <input type="range" id="input-watermark-image-scale" min="5" max="60" value="20" step="1" class="slider" style="width: 100%; margin-top: 4px;">
+                                            </div>
+                                        </div>
+
+                                        <!-- Cấu hình chung cho cả 2 loại -->
+                                        <!-- Select vị trí -->
+                                        <div class="control-item" style="margin-bottom: 12px;">
+                                            <label for="select-watermark-position" style="font-size: 0.8rem; color: var(--text-secondary);">Vị trí đóng dấu</label>
+                                            <select id="select-watermark-position" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                                <option value="bottom-right" selected>Dưới cùng bên phải</option>
+                                                <option value="bottom-left">Dưới cùng bên trái</option>
+                                                <option value="top-right">Trên cùng bên phải</option>
+                                                <option value="top-left">Trên cùng bên trái</option>
+                                                <option value="center">Ở giữa</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Slider opacity -->
+                                        <div class="control-item" style="margin-bottom: 12px;">
+                                            <div class="label-with-value">
+                                                <label for="input-watermark-opacity">Độ mờ dấu (%)</label>
+                                                <span class="value-display" id="watermark-opacity-val">50</span>
+                                            </div>
+                                            <input type="range" id="input-watermark-opacity" min="10" max="100" value="50" step="5" class="slider" style="width: 100%; margin-top: 4px;">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="collapsible-content" id="content-watermark" style="display: none;">
-                                <!-- Checkbox bật tắt watermark -->
-                                <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
-                                    <div class="switch-inline-container">
-                                        <label for="switch-watermark" class="label-switch">
-                                            <i class="fa-solid fa-square-check" style="color: #10b981;"></i> Bật đóng dấu
+
+                            <!-- Collapsible Panel: Export Settings (Cấu hình xuất ảnh) -->
+                            <div class="collapsible-panel" id="panel-export-settings" style="margin-bottom: 0; position: static; overflow: visible;">
+                                <div class="collapsible-header" id="header-export-settings" style="height: 38px; box-sizing: border-box; padding: 0 10px;">
+                                    <span class="collapsible-title" style="font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <i class="fa-solid fa-download" style="color: #10b981; font-size: 0.85rem;"></i> Cấu hình xuất ảnh
+                                    </span>
+                                    <i class="fa-solid fa-chevron-down collapsible-arrow" style="font-size: 0.75rem;"></i>
+                                </div>
+                                <div class="collapsible-content" id="content-export-settings" style="display: none;">
+                                    <!-- Dropdown chọn độ phân giải -->
+                                    <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
+                                        <label for="select-export-resolution" style="font-size: 0.8rem; color: var(--text-secondary);">
+                                            <i class="fa-solid fa-expand" style="margin-right: 4px;"></i>Độ phân giải xuất (Resolution)
                                         </label>
-                                        <div class="switch-wrapper">
-                                            <input type="checkbox" id="switch-watermark" class="switch-checkbox">
-                                            <label for="switch-watermark" class="switch-label-btn"></label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="watermark-options-container" style="display: none;">
-                                    <!-- Dropdown chọn loại đóng dấu (Chữ / Ảnh) -->
-                                    <div class="control-item" style="margin-bottom: 12px;">
-                                        <label for="select-watermark-type" style="font-size: 0.8rem; color: var(--text-secondary);">Loại đóng dấu</label>
-                                        <select id="select-watermark-type" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                            <option value="text" selected>Dạng chữ (Text)</option>
-                                            <option value="image">Dạng ảnh logo (Image)</option>
+                                        <select id="select-export-resolution" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                            <option value="auto" selected>Tự động (Tối thiểu 1080px)</option>
+                                            <option value="original">Gốc (Không tự động phóng to)</option>
+                                            <option value="2k">Phóng đại 2K (Tối thiểu 2160px)</option>
+                                            <option value="4k">Phóng đại 4K (Tối thiểu 3840px)</option>
                                         </select>
                                     </div>
 
-                                    <!-- Cấu hình Watermark Chữ -->
-                                    <div id="watermark-text-config" style="display: block;">
-                                        <!-- Input text -->
-                                        <div class="control-item" style="margin-bottom: 12px;">
-                                            <label for="input-watermark-text" style="font-size: 0.8rem; color: var(--text-secondary);">Nội dung chữ</label>
-                                            <input type="text" id="input-watermark-text" placeholder="Ví dụ: @username" value="@SocialCut" class="text-input" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                        </div>
-
-                                        <!-- Slider size chữ -->
-                                        <div class="control-item" style="margin-bottom: 12px;">
-                                            <div class="label-with-value">
-                                                <label for="input-watermark-size">Cỡ chữ (px)</label>
-                                                <span class="value-display" id="watermark-size-val">24</span>
-                                            </div>
-                                            <input type="range" id="input-watermark-size" min="12" max="64" value="24" step="1" class="slider" style="width: 100%; margin-top: 4px;">
-                                        </div>
-                                    </div>
-
-                                    <!-- Cấu hình Watermark Ảnh -->
-                                    <div id="watermark-image-config" style="display: none;">
-                                        <!-- Input file -->
-                                        <div class="control-item" style="margin-bottom: 12px;">
-                                            <label for="input-watermark-image" style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tải ảnh logo</label>
-                                            <input type="file" id="input-watermark-image" accept="image/*" style="width: 100%; font-size: 0.8rem; color: var(--text-secondary);">
-                                            <div id="watermark-image-preview-info" style="font-size: 0.72rem; color: var(--success); margin-top: 4px; display: none;">
-                                                <i class="fa-solid fa-circle-check"></i> Đã tải logo thành công
-                                            </div>
-                                        </div>
-
-                                        <!-- Slider size ảnh logo -->
-                                        <div class="control-item" style="margin-bottom: 12px;">
-                                            <div class="label-with-value">
-                                                <label for="input-watermark-image-scale">Kích thước logo (%)</label>
-                                                <span class="value-display" id="watermark-image-scale-val">20</span>
-                                            </div>
-                                            <input type="range" id="input-watermark-image-scale" min="5" max="60" value="20" step="1" class="slider" style="width: 100%; margin-top: 4px;">
-                                        </div>
-                                    </div>
-
-                                    <!-- Cấu hình chung cho cả 2 loại -->
-                                    <!-- Select vị trí -->
+                                    <!-- Dropdown chọn độ sắc nét -->
                                     <div class="control-item" style="margin-bottom: 12px;">
-                                        <label for="select-watermark-position" style="font-size: 0.8rem; color: var(--text-secondary);">Vị trí đóng dấu</label>
-                                        <select id="select-watermark-position" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                            <option value="bottom-right" selected>Dưới cùng bên phải</option>
-                                            <option value="bottom-left">Dưới cùng bên trái</option>
-                                            <option value="top-right">Trên cùng bên phải</option>
-                                            <option value="top-left">Trên cùng bên trái</option>
-                                            <option value="center">Ở giữa</option>
+                                        <label for="select-export-sharpness" style="font-size: 0.8rem; color: var(--text-secondary);">
+                                            <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 4px;"></i>Độ sắc nét AI (Sharpening)
+                                        </label>
+                                        <select id="select-export-sharpness" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                            <option value="off" selected>Tắt (Mặc định)</option>
+                                            <option value="light">Nhẹ (Light)</option>
+                                            <option value="medium">Vừa (Medium)</option>
+                                            <option value="strong">Mạnh (Strong)</option>
                                         </select>
                                     </div>
-
-                                    <!-- Slider opacity -->
-                                    <div class="control-item" style="margin-bottom: 12px;">
-                                        <div class="label-with-value">
-                                            <label for="input-watermark-opacity">Độ mờ dấu (%)</label>
-                                            <span class="value-display" id="watermark-opacity-val">50</span>
-                                        </div>
-                                        <input type="range" id="input-watermark-opacity" min="10" max="100" value="50" step="5" class="slider" style="width: 100%; margin-top: 4px;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Collapsible Panel: Export Settings (Cấu hình xuất ảnh) -->
-                        <div class="collapsible-panel" id="panel-export-settings" style="margin-bottom: 0; position: static; overflow: visible;">
-                            <div class="collapsible-header" id="header-export-settings" style="height: 38px; box-sizing: border-box; padding: 0 10px;">
-                                <span class="collapsible-title" style="font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    <i class="fa-solid fa-download" style="color: #10b981; font-size: 0.85rem;"></i> Cấu hình xuất
-                                </span>
-                                <i class="fa-solid fa-chevron-down collapsible-arrow" style="font-size: 0.75rem;"></i>
-                            </div>
-                            <div class="collapsible-content" id="content-export-settings" style="display: none;">
-                                <!-- Dropdown chọn độ phân giải -->
-                                <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
-                                    <label for="select-export-resolution" style="font-size: 0.8rem; color: var(--text-secondary);">
-                                        <i class="fa-solid fa-expand" style="margin-right: 4px;"></i>Độ phân giải xuất (Resolution)
-                                    </label>
-                                    <select id="select-export-resolution" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                        <option value="auto" selected>Tự động (Tối thiểu 1080px)</option>
-                                        <option value="original">Gốc (Không tự động phóng to)</option>
-                                        <option value="2k">Phóng đại 2K (Tối thiểu 2160px)</option>
-                                        <option value="4k">Phóng đại 4K (Tối thiểu 3840px)</option>
-                                    </select>
-                                </div>
-
-                                <!-- Dropdown chọn độ sắc nét -->
-                                <div class="control-item" style="margin-bottom: 12px;">
-                                    <label for="select-export-sharpness" style="font-size: 0.8rem; color: var(--text-secondary);">
-                                        <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 4px;"></i>Độ sắc nét AI (Sharpening)
-                                    </label>
-                                    <select id="select-export-sharpness" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                        <option value="off" selected>Tắt (Mặc định)</option>
-                                        <option value="light">Nhẹ (Light)</option>
-                                        <option value="medium">Vừa (Medium)</option>
-                                        <option value="strong">Mạnh (Strong)</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -415,42 +417,79 @@
 
                     <!-- PC Account Auth Popup -->
                     <div class="auth-popup" id="pc-auth-popup">
-                        <div class="auth-popup-header">
-                            <h3><i class="fa-solid fa-circle-user"></i> Tài Khoản Hệ Thống</h3>
-                            <button type="button" class="btn-close-auth-popup" id="btn-close-auth-popup">&times;</button>
-                        </div>
-                        <div class="auth-popup-content">
-                            <!-- Account Section for PC -->
-                            <div class="auth-section" id="pc-auth-section">
-                                <!-- Logged out view -->
-                                <div class="auth-logged-out" id="pc-auth-logged-out">
-                                    <div class="auth-title" id="pc-auth-title">Đăng Nhập Hệ Thống</div>
-                                    <div class="auth-input-wrapper">
-                                        <i class="fa-solid fa-user auth-input-icon"></i>
-                                        <input type="text" id="pc-username-input" placeholder="Tên đăng nhập" maxlength="30">
-                                    </div>
-                                    <div class="auth-input-wrapper">
-                                        <i class="fa-solid fa-lock auth-input-icon"></i>
-                                        <input type="password" id="pc-password-input" placeholder="Mật khẩu">
-                                    </div>
-                                    <div class="auth-buttons-container">
-                                        <button type="button" class="btn btn-primary btn-auth-submit" id="btn-pc-auth-submit">Đăng nhập</button>
-                                    </div>
-                                    <div class="auth-switch-mode">
-                                        <span id="pc-auth-switch-text">Chưa có tài khoản?</span> 
-                                        <a href="#" id="link-pc-auth-switch">Đăng ký ngay</a>
-                                    </div>
-                                </div>
-                                <!-- Logged in view -->
-                                <div class="auth-logged-in" id="pc-auth-logged-in" style="display: none;">
-                                    <div class="auth-user-info">
-                                        <i class="fa-solid fa-circle-user"></i>
-                                        <span class="auth-username" id="pc-auth-username">username</span>
-                                    </div>
-                                    <button type="button" class="btn-auth-logout" id="btn-pc-logout">
-                                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                        <!-- View 1: Auth Content View -->
+                        <div id="pc-auth-content-view" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                            <div class="auth-popup-header">
+                                <h3><i class="fa-solid fa-circle-user"></i> Tài Khoản Hệ Thống</h3>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <button type="button" class="btn-popup-settings-toggle" id="btn-pc-settings-header" title="Cấu hình & Đóng dấu" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;">
+                                        <i class="fa-solid fa-gear"></i>
                                     </button>
+                                    <button type="button" class="btn-close-auth-popup" id="btn-close-auth-popup" style="display: flex; align-items: center;">&times;</button>
                                 </div>
+                            </div>
+                            <div class="auth-popup-content">
+                                <!-- Account Section for PC -->
+                                <div class="auth-section" id="pc-auth-section">
+                                    <!-- Logged out view -->
+                                    <div class="auth-logged-out" id="pc-auth-logged-out">
+                                        <div class="auth-title" id="pc-auth-title">Đăng Nhập Hệ Thống</div>
+                                        <div class="auth-input-wrapper">
+                                            <i class="fa-solid fa-user auth-input-icon"></i>
+                                            <input type="text" id="pc-username-input" placeholder="Tên đăng nhập" maxlength="30">
+                                        </div>
+                                        <div class="auth-input-wrapper">
+                                            <i class="fa-solid fa-lock auth-input-icon"></i>
+                                            <input type="password" id="pc-password-input" placeholder="Mật khẩu">
+                                        </div>
+                                        <div class="auth-buttons-container">
+                                            <button type="button" class="btn btn-primary btn-auth-submit" id="btn-pc-auth-submit">Đăng nhập</button>
+                                        </div>
+                                        
+                                        <!-- Nút cấu hình khi chưa đăng nhập -->
+                                        <div style="display: flex; justify-content: center; margin-top: 12px; margin-bottom: 8px;">
+                                            <button type="button" class="btn-settings-circle-gear btn-pc-settings-toggle-btn" title="Cấu hình & Đóng dấu">
+                                                <i class="fa-solid fa-gear" style="font-size: 1.15rem;"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="auth-switch-mode">
+                                            <span id="pc-auth-switch-text">Chưa có tài khoản?</span> 
+                                            <a href="#" id="link-pc-auth-switch">Đăng ký ngay</a>
+                                        </div>
+                                    </div>
+                                    <!-- Logged in view -->
+                                    <div class="auth-logged-in" id="pc-auth-logged-in" style="display: none;">
+                                        <div class="auth-user-info">
+                                            <i class="fa-solid fa-circle-user"></i>
+                                            <span class="auth-username" id="pc-auth-username">username</span>
+                                        </div>
+                                        
+                                        <!-- Nút cấu hình khi đã đăng nhập -->
+                                        <div style="display: flex; justify-content: center; margin-bottom: 12px; margin-top: 8px;">
+                                            <button type="button" class="btn-settings-circle-gear btn-pc-settings-toggle-btn" title="Cấu hình & Đóng dấu">
+                                                <i class="fa-solid fa-gear" style="font-size: 1.15rem;"></i>
+                                            </button>
+                                        </div>
+
+                                        <button type="button" class="btn-auth-logout" id="btn-pc-logout">
+                                            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- View 2: Settings View -->
+                        <div id="pc-settings-view" style="display: none; flex-direction: column; gap: 12px; width: 100%;">
+                            <div class="auth-popup-header">
+                                <h3 style="cursor: pointer;" id="btn-pc-settings-back">
+                                    <i class="fa-solid fa-arrow-left" style="color: var(--text-secondary); margin-right: 4px;"></i> Quay lại
+                                </h3>
+                                <button type="button" class="btn-close-auth-popup" id="btn-close-settings-popup" style="display: flex; align-items: center;">&times;</button>
+                            </div>
+                            <div class="settings-teleport-zone" id="pc-settings-teleport-zone" style="max-height: 420px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin;">
+                                <!-- global-settings-wrapper sẽ được append vào đây bằng JS -->
                             </div>
                         </div>
                     </div>
@@ -718,42 +757,79 @@
     <div class="mobile-drawer" id="mobile-drawer">
         <div class="mobile-drawer-backdrop" id="mobile-drawer-backdrop"></div>
         <div class="mobile-drawer-content">
-            <div class="mobile-drawer-header">
-                <h3><i class="fa-solid fa-circle-user"></i> Tài Khoản</h3>
-                <button type="button" class="btn-close-drawer" id="btn-close-drawer">&times;</button>
-            </div>
-            <div class="mobile-drawer-body">
-                <!-- Account Section for Mobile -->
-                <div class="auth-section mobile-auth-section" id="mobile-auth-section">
-                    <!-- Logged out view -->
-                    <div class="auth-logged-out" id="mobile-auth-logged-out">
-                        <div class="auth-title" id="mobile-auth-title">Đăng Nhập Hệ Thống</div>
-                        <div class="auth-input-wrapper">
-                            <i class="fa-solid fa-user auth-input-icon"></i>
-                            <input type="text" id="mobile-username-input" placeholder="Tên đăng nhập" maxlength="30">
-                        </div>
-                        <div class="auth-input-wrapper">
-                            <i class="fa-solid fa-lock auth-input-icon"></i>
-                            <input type="password" id="mobile-password-input" placeholder="Mật khẩu">
-                        </div>
-                        <div class="auth-buttons-container">
-                            <button type="button" class="btn btn-primary btn-auth-submit" id="btn-mobile-auth-submit">Đăng nhập</button>
-                        </div>
-                        <div class="auth-switch-mode">
-                            <span id="mobile-auth-switch-text">Chưa có tài khoản?</span> 
-                            <a href="#" id="link-mobile-auth-switch">Đăng ký ngay</a>
-                        </div>
-                    </div>
-                    <!-- Logged in view -->
-                    <div class="auth-logged-in" id="mobile-auth-logged-in" style="display: none;">
-                        <div class="auth-user-info">
-                            <i class="fa-solid fa-circle-user"></i>
-                            <span class="auth-username" id="mobile-auth-username">username</span>
-                        </div>
-                        <button type="button" class="btn-auth-logout" id="btn-mobile-logout" title="Đăng xuất">
-                            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            <!-- View 1: Auth View -->
+            <div id="mobile-auth-content-view" style="display: flex; flex-direction: column; height: 100%; width: 100%;">
+                <div class="mobile-drawer-header">
+                    <h3><i class="fa-solid fa-circle-user"></i> Tài Khoản</h3>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <button type="button" class="btn-popup-settings-toggle" id="btn-mobile-settings-header" title="Cấu hình & Đóng dấu" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.15rem; cursor: pointer; display: flex; align-items: center;">
+                            <i class="fa-solid fa-gear"></i>
                         </button>
+                        <button type="button" class="btn-close-drawer" id="btn-close-drawer" style="display: flex; align-items: center;">&times;</button>
                     </div>
+                </div>
+                <div class="mobile-drawer-body" style="flex: 1; overflow-y: auto; padding: 18px;">
+                    <!-- Account Section for Mobile -->
+                    <div class="auth-section mobile-auth-section" id="mobile-auth-section">
+                        <!-- Logged out view -->
+                        <div class="auth-logged-out" id="mobile-auth-logged-out">
+                            <div class="auth-title" id="mobile-auth-title">Đăng Nhập Hệ Thống</div>
+                            <div class="auth-input-wrapper">
+                                <i class="fa-solid fa-user auth-input-icon"></i>
+                                <input type="text" id="mobile-username-input" placeholder="Tên đăng nhập" maxlength="30">
+                            </div>
+                            <div class="auth-input-wrapper">
+                                <i class="fa-solid fa-lock auth-input-icon"></i>
+                                <input type="password" id="mobile-password-input" placeholder="Mật khẩu">
+                            </div>
+                            <div class="auth-buttons-container">
+                                <button type="button" class="btn btn-primary btn-auth-submit" id="btn-mobile-auth-submit">Đăng nhập</button>
+                            </div>
+                            
+                            <!-- Nút cấu hình khi chưa đăng nhập (Mobile) -->
+                            <div style="display: flex; justify-content: center; margin-top: 16px; margin-bottom: 8px;">
+                                <button type="button" class="btn-settings-circle-gear btn-mobile-settings-toggle-btn" title="Cấu hình & Đóng dấu">
+                                    <i class="fa-solid fa-gear" style="font-size: 1.15rem;"></i>
+                                </button>
+                            </div>
+
+                            <div class="auth-switch-mode">
+                                <span id="mobile-auth-switch-text">Chưa có tài khoản?</span> 
+                                <a href="#" id="link-mobile-auth-switch">Đăng ký ngay</a>
+                            </div>
+                        </div>
+                        <!-- Logged in view -->
+                        <div class="auth-logged-in" id="mobile-auth-logged-in" style="display: none;">
+                            <div class="auth-user-info">
+                                <i class="fa-solid fa-circle-user"></i>
+                                <span class="auth-username" id="mobile-auth-username">username</span>
+                            </div>
+                            
+                            <!-- Nút cấu hình khi đã đăng nhập (Mobile) -->
+                            <div style="display: flex; justify-content: center; margin-bottom: 16px; margin-top: 12px;">
+                                <button type="button" class="btn-settings-circle-gear btn-mobile-settings-toggle-btn" title="Cấu hình & Đóng dấu">
+                                    <i class="fa-solid fa-gear" style="font-size: 1.15rem;"></i>
+                                </button>
+                            </div>
+
+                            <button type="button" class="btn-auth-logout" id="btn-mobile-logout" title="Đăng xuất">
+                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 2: Settings View (Mobile) -->
+            <div id="mobile-settings-view" style="display: none; flex-direction: column; height: 100%; width: 100%;">
+                <div class="mobile-drawer-header">
+                    <h3 style="cursor: pointer;" id="btn-mobile-settings-back">
+                        <i class="fa-solid fa-arrow-left" style="color: var(--text-secondary); margin-right: 6px;"></i> Quay lại
+                    </h3>
+                    <button type="button" class="btn-close-drawer" id="btn-close-settings-drawer" style="display: flex; align-items: center;">&times;</button>
+                </div>
+                <div class="mobile-drawer-body settings-teleport-zone" id="mobile-settings-teleport-zone" style="flex: 1; overflow-y: auto; padding: 18px; scrollbar-width: thin;">
+                    <!-- global-settings-wrapper sẽ được append vào đây bằng JS -->
                 </div>
             </div>
         </div>

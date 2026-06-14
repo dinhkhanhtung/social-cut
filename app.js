@@ -5790,10 +5790,147 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Cài đặt & Đóng dấu Popup/Drawer Navigation Logic ---
+    const globalSettingsWrapper = document.getElementById('global-settings-wrapper');
+    const pcSettingsTeleportZone = document.getElementById('pc-settings-teleport-zone');
+    const mobileSettingsTeleportZone = document.getElementById('mobile-settings-teleport-zone');
+
+    const pcAuthContentView = document.getElementById('pc-auth-content-view');
+    const pcSettingsView = document.getElementById('pc-settings-view');
+    
+    const mobileAuthContentView = document.getElementById('mobile-auth-content-view');
+    const mobileSettingsView = document.getElementById('mobile-settings-view');
+
+    const expandAllSettingsPanels = () => {
+        const panelWatermark = document.getElementById('panel-watermark');
+        const contentWatermark = document.getElementById('content-watermark');
+        const panelExportSettings = document.getElementById('panel-export-settings');
+        const contentExportSettings = document.getElementById('content-export-settings');
+
+        if (panelWatermark && contentWatermark) {
+            panelWatermark.classList.add('expanded');
+            contentWatermark.style.display = 'block';
+        }
+        if (panelExportSettings && contentExportSettings) {
+            panelExportSettings.classList.add('expanded');
+            contentExportSettings.style.display = 'block';
+        }
+    };
+
+    const switchToPcSettings = () => {
+        if (globalSettingsWrapper && pcSettingsTeleportZone) {
+            pcSettingsTeleportZone.appendChild(globalSettingsWrapper);
+            globalSettingsWrapper.style.display = 'block';
+            expandAllSettingsPanels();
+        }
+        if (pcAuthContentView) pcAuthContentView.style.display = 'none';
+        if (pcSettingsView) pcSettingsView.style.display = 'flex';
+    };
+
+    const switchToPcAuth = () => {
+        if (pcAuthContentView) pcAuthContentView.style.display = 'flex';
+        if (pcSettingsView) pcSettingsView.style.display = 'none';
+    };
+
+    const switchToMobileSettings = () => {
+        if (globalSettingsWrapper && mobileSettingsTeleportZone) {
+            mobileSettingsTeleportZone.appendChild(globalSettingsWrapper);
+            globalSettingsWrapper.style.display = 'block';
+            expandAllSettingsPanels();
+        }
+        if (mobileAuthContentView) mobileAuthContentView.style.display = 'none';
+        if (mobileSettingsView) mobileSettingsView.style.display = 'flex';
+    };
+
+    const switchToMobileAuth = () => {
+        if (mobileAuthContentView) mobileAuthContentView.style.display = 'flex';
+        if (mobileSettingsView) mobileSettingsView.style.display = 'none';
+    };
+
+    // Đăng ký sự kiện PC Settings Toggle
+    const btnPcSettingsHeader = document.getElementById('btn-pc-settings-header');
+    if (btnPcSettingsHeader) {
+        btnPcSettingsHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (pcSettingsView && pcSettingsView.style.display === 'flex') {
+                switchToPcAuth();
+            } else {
+                switchToPcSettings();
+            }
+        });
+    }
+    document.querySelectorAll('.btn-pc-settings-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchToPcSettings();
+        });
+    });
+    const btnPcSettingsBack = document.getElementById('btn-pc-settings-back');
+    if (btnPcSettingsBack) {
+        btnPcSettingsBack.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchToPcAuth();
+        });
+    }
+
+    // Đăng ký sự kiện Mobile Settings Toggle
+    const btnMobileSettingsHeader = document.getElementById('btn-mobile-settings-header');
+    if (btnMobileSettingsHeader) {
+        btnMobileSettingsHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (mobileSettingsView && mobileSettingsView.style.display === 'flex') {
+                switchToMobileAuth();
+            } else {
+                switchToMobileSettings();
+            }
+        });
+    }
+    document.querySelectorAll('.btn-mobile-settings-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchToMobileSettings();
+        });
+    });
+    const btnMobileSettingsBack = document.getElementById('btn-mobile-settings-back');
+    if (btnMobileSettingsBack) {
+        btnMobileSettingsBack.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchToMobileAuth();
+        });
+    }
+
+    // Gắn thêm logic reset view khi đóng popup/drawer
     if (btnCloseAuthPopup && pcAuthPopup) {
         btnCloseAuthPopup.addEventListener('click', (e) => {
             e.stopPropagation();
             pcAuthPopup.classList.remove('active');
+            setTimeout(switchToPcAuth, 300);
+        });
+    }
+    const btnCloseSettingsPopup = document.getElementById('btn-close-settings-popup');
+    if (btnCloseSettingsPopup && pcAuthPopup) {
+        btnCloseSettingsPopup.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pcAuthPopup.classList.remove('active');
+            setTimeout(switchToPcAuth, 300);
+        });
+    }
+
+    if (btnCloseDrawer) {
+        btnCloseDrawer.addEventListener('click', () => {
+            setTimeout(switchToMobileAuth, 300);
+        });
+    }
+    const btnCloseSettingsDrawer = document.getElementById('btn-close-settings-drawer');
+    if (btnCloseSettingsDrawer) {
+        btnCloseSettingsDrawer.addEventListener('click', () => {
+            closeMobileDrawer();
+            setTimeout(switchToMobileAuth, 300);
+        });
+    }
+    if (mobileDrawerBackdrop) {
+        mobileDrawerBackdrop.addEventListener('click', () => {
+            setTimeout(switchToMobileAuth, 300);
         });
     }
 
@@ -5802,6 +5939,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pcAuthPopup && pcAuthPopup.classList.contains('active')) {
             if (!pcAuthPopup.contains(e.target) && e.target !== sidebarAccountPanel && !sidebarAccountPanel.contains(e.target)) {
                 pcAuthPopup.classList.remove('active');
+                setTimeout(switchToPcAuth, 300);
             }
         }
     });
