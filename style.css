@@ -1155,8 +1155,8 @@ input[type="number"] {
 
 .result-item-btn-dl {
     position: absolute;
-    bottom: 6px;
-    right: 6px;
+    top: 6px;
+    right: 36px; /* Cách ra 36px để đứng bên trái nút xóa (right: 6px) */
     background: rgba(6, 182, 212, 0.85);
     border: none;
     color: #000;
@@ -4285,11 +4285,11 @@ input[type="number"] {
     transform: translateY(0);
 }
 
-/* Nút Cắt lại góc trên bên trái của thẻ kết quả */
+/* Nút Cắt lại góc trên bên phải của thẻ kết quả (cạnh nút tải và nút xóa) */
 .result-item-btn-edit {
     position: absolute;
     top: 6px;
-    left: 36px; /* Cách ra để tránh đè lên nút grip kéo thả */
+    right: 66px; /* Cách ra 66px để đứng bên trái nút tải (right: 36px) và nút xóa (right: 6px) */
     background: rgba(6, 182, 212, 0.85); /* Màu Cyan */
     border: 1px solid rgba(255, 255, 255, 0.25);
     color: #000;
@@ -4318,7 +4318,8 @@ input[type="number"] {
 @media (max-width: 768px) {
     .result-item .result-item-btn-edit {
         opacity: 1 !important;
-        left: 44px !important; /* Dịch sang phải để tránh đè lên nút grip (size lớn) trên di động */
+        right: 66px !important; /* Cố định ở góc phải cạnh nút tải trên di động */
+        left: auto !important;
         top: 6px !important;
     }
 }
