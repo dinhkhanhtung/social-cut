@@ -187,6 +187,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let exportSharpness = 'off';    // 'off' | 'light' | 'medium' | 'strong'
     let currentSlideIndex = 0; // Chỉ số slide hiện tại cho Mobile Preview
 
+    // Hàm tính tỷ lệ scale xuất ảnh động dựa theo cấu hình độ phân giải (phạm vi file-scope)
+    const getExportScale = (w) => {
+        if (exportResolution === 'original') {
+            return 1.0;
+        }
+        let targetMinW = 1080;
+        if (exportResolution === '2k') {
+            targetMinW = 2160;
+        } else if (exportResolution === '4k') {
+            targetMinW = 3840;
+        }
+        return w < targetMinW ? (targetMinW / w) : 1.0;
+    };
+
+    let recutTempCoords = null; // Tọa độ tạm thời của slide đơn đang cắt lại
+    let dragRecutTarget = null; // Target kéo thả khi cắt lại slide đơn
+
     // --- Mode 1: Grid Mode Variables ---
     let colsX = [];        // X coordinates of vertical grid lines. Length: cols - 1
     let rowsY = [];        // Y coordinates of horizontal grid lines. Length: rows - 1
@@ -1469,6 +1486,96 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = coords.x;
         const imgY = coords.y;
 
+        // Xử lý kéo thả khung crop khi đang recut
+        if (recutSlideId !== null && dragRecutTarget) {
+            let deltaX = imgX - dragRecutTarget.startX;
+            let deltaY = imgY - dragRecutTarget.startY;
+            if (e.altKey) {
+                deltaX *= 0.15;
+                deltaY *= 0.15;
+            }
+
+            const orig = dragRecutTarget.originalCoords;
+            const action = dragRecutTarget.action;
+
+            let newSx = orig.sx;
+            let newSy = orig.sy;
+            let newW = orig.cropW;
+            let newH = orig.cropH;
+
+            const minSize = 20;
+
+            if (action === 'move') {
+                newSx = Math.max(0, Math.min(currentImage.naturalWidth - newW, orig.sx + deltaX));
+                newSy = Math.max(0, Math.min(currentImage.naturalHeight - newH, orig.sy + deltaY));
+            } else {
+                if (action.includes('l')) {
+                    const proposedSx = orig.sx + deltaX;
+                    const limitX = orig.sx + orig.cropW - minSize;
+                    newSx = Math.max(0, Math.min(limitX, proposedSx));
+                    newW = orig.cropW + (orig.sx - newSx);
+                }
+                if (action.includes('r')) {
+                    const proposedW = orig.cropW + deltaX;
+                    const maxW = currentImage.naturalWidth - orig.sx;
+                    newW = Math.max(minSize, Math.min(maxW, proposedW));
+                }
+                if (action.includes('t')) {
+                    const proposedSy = orig.sy + deltaY;
+                    const limitY = orig.sy + orig.cropH - minSize;
+                    newSy = Math.max(0, Math.min(limitY, proposedSy));
+                    newH = orig.cropH + (orig.sy - newSy);
+                }
+                if (action.includes('b')) {
+                    const proposedH = orig.cropH + deltaY;
+                    const maxH = currentImage.naturalHeight - orig.sy;
+                    newH = Math.max(minSize, Math.min(maxH, proposedH));
+                }
+            }
+
+            recutTempCoords = {
+                sx: Math.round(newSx),
+                sy: Math.round(newSy),
+                cropW: Math.round(newW),
+                cropH: Math.round(newH)
+            };
+
+            // Đổi cursor trong lúc kéo
+            if (action === 'tl' || action === 'br') previewCanvas.style.cursor = 'nwse-resize';
+            else if (action === 'tr' || action === 'bl') previewCanvas.style.cursor = 'nesw-resize';
+            else if (action === 'l' || action === 'r') previewCanvas.style.cursor = 'ew-resize';
+            else if (action === 't' || action === 'b') previewCanvas.style.cursor = 'ns-resize';
+            else if (action === 'move') previewCanvas.style.cursor = 'move';
+
+            drawLiveGrid();
+            return;
+        }
+
+        // Thay đổi con trỏ chuột khi hover qua các handle/cạnh/bên trong khi recut
+        if (recutSlideId !== null && recutTempCoords && !dragRecutTarget) {
+            const action = getRecutInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
+            if (action) {
+                if (action === 'tl' || action === 'br') {
+                    previewCanvas.style.cursor = 'nwse-resize';
+                } else if (action === 'tr' || action === 'bl') {
+                    previewCanvas.style.cursor = 'nesw-resize';
+                } else if (action === 'l' || action === 'r') {
+                    previewCanvas.style.cursor = 'ew-resize';
+                } else if (action === 't' || action === 'b') {
+                    previewCanvas.style.cursor = 'ns-resize';
+                } else if (action === 'move') {
+                    previewCanvas.style.cursor = 'move';
+                }
+
+                // Kiểm tra xem hover nút Xác nhận / Hủy
+                const recutAction = checkRecutButtonInteraction(imgX, imgY);
+                if (recutAction) {
+                    previewCanvas.style.cursor = 'pointer';
+                }
+                return;
+            }
+        }
+
         if (slicingMode === 'grid') {
             if (dragTarget) {
                 let deltaX = imgX - lastDragMouseX;
@@ -1643,6 +1750,26 @@ document.addEventListener('DOMContentLoaded', () => {
         lastDragMouseX = imgX;
         lastDragMouseY = imgY;
 
+        if (recutSlideId !== null && recutTempCoords) {
+            const action = getRecutInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
+            if (action) {
+                dragRecutTarget = {
+                    action: action,
+                    startX: imgX,
+                    startY: imgY,
+                    originalCoords: { ...recutTempCoords }
+                };
+                drawLiveGrid();
+                return;
+            } else {
+                // Click ra ngoài khung: Chuyển sang di chuyển (panning) màn hình
+                isPanning = true;
+                previewCanvas.style.cursor = 'grabbing';
+                panStart = { x: e.clientX, y: e.clientY };
+                return;
+            }
+        }
+
         if (slicingMode === 'grid') {
             const target = findNearestGridLine(e.clientX, e.clientY);
             if (target) {
@@ -1746,6 +1873,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mouse Up Event Listener ---
     window.addEventListener('mouseup', () => {
+        if (dragRecutTarget) {
+            dragRecutTarget = null;
+            drawLiveGrid();
+        }
+
         if (snapGuides.length > 0) {
             snapGuides = [];
             drawLiveGrid();
@@ -2586,27 +2718,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.stroke();
             }
 
-            // Nổi bật ô đang được cắt lại (recut highlight) nếu đang ở chế độ chỉnh sửa ảnh đơn
-            if (recutSlideId !== null) {
-                const recutItem = slicedImages.find(item => item.id === recutSlideId);
-                if (recutItem && recutItem.meta && recutItem.meta.slicingMode === 'grid') {
-                    const cellIdx = recutItem.meta.cellIndex;
-                    const cell = cells[cellIdx];
-                    if (cell && cell.sw > 0 && cell.sh > 0) {
-                        ctx.save();
-                        ctx.strokeStyle = '#eab308';
-                        ctx.lineWidth = Math.max(4, Math.floor(width / 300));
-                        ctx.setLineDash([8, 4]);
-                        ctx.strokeRect(cell.sx, cell.sy, cell.sw, cell.sh);
-
-                        ctx.fillStyle = 'rgba(234, 179, 8, 0.15)';
-                        ctx.fillRect(cell.sx, cell.sy, cell.sw, cell.sh);
-                        ctx.restore();
-                    }
-                }
-            }
         } else {
             selectionBoxes.forEach((box, idx) => {
+                const isRecutting = (recutSlideId !== null && slicedImages.find(item => item.id === recutSlideId)?.meta?.boxId === box.id);
+                if (isRecutting) {
+                    return; // Skip vẽ box đang recut vì sẽ vẽ recutTempCoords màu vàng
+                }
                 const x = box.x;
                 const y = box.y;
                 const w = box.w;
@@ -2621,17 +2738,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.fillRect(x + w - offset, y + offset, offset, h - 2 * offset);
                 }
 
-                const isRecutting = (recutSlideId !== null && slicedImages.find(item => item.id === recutSlideId)?.meta?.boxId === box.id);
                 let boxStrokeColor = gridLineColor;
                 if (isSelected) boxStrokeColor = '#eab308';
-                if (isRecutting) boxStrokeColor = '#10b981'; // Nổi bật viền xanh Emerald
 
                 ctx.strokeStyle = boxStrokeColor;
-                ctx.lineWidth = (isSelected || isRecutting) ? Math.max(4, Math.floor(width / 450)) : Math.max(2, Math.floor(width / 700));
-                ctx.setLineDash((isSelected || isRecutting) ? [8, 4] : []);
+                ctx.lineWidth = isSelected ? Math.max(4, Math.floor(width / 450)) : Math.max(2, Math.floor(width / 700));
+                ctx.setLineDash(isSelected ? [8, 4] : []);
                 ctx.strokeRect(x, y, w, h);
                 
-                ctx.fillStyle = isRecutting ? 'rgba(16, 185, 129, 0.15)' : (isSelected ? 'rgba(234, 179, 8, 0.08)' : 'rgba(6, 182, 212, 0.12)');
+                ctx.fillStyle = isSelected ? 'rgba(234, 179, 8, 0.08)' : 'rgba(6, 182, 212, 0.12)';
                 ctx.fillRect(x, y, w, h);
 
                 if (offset > 0 && w > 2 * offset && h > 2 * offset) {
@@ -2793,70 +2908,104 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Vẽ nút điều khiển Xác nhận / Hủy cho chế độ Cắt lại slide đơn
-        if (recutSlideId !== null) {
-            const recutItem = slicedImages.find(item => item.id === recutSlideId);
-            const coords = getRecutSlideCoords(recutItem);
-            if (coords) {
-                const x1 = coords.sx;
-                const y1 = coords.sy;
-                const x2 = coords.sx + coords.cropW;
-                const y2 = coords.sy + coords.cropH;
+        // Vẽ khung đứt nét màu vàng, 8 handles và 2 nút Xác nhận / Hủy cho chế độ Cắt lại slide đơn
+        if (recutSlideId !== null && recutTempCoords) {
+            const { sx, sy, cropW, cropH } = recutTempCoords;
 
-                if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
-                    const btnRad = 12 / zoomScale;
-                    const btnY = y1 + 18 / zoomScale;
-                    const confirmX = x2 - 18 / zoomScale;
-                    const cancelX = x2 - 46 / zoomScale;
+            ctx.save();
+            // 1. Vẽ khung viền đứt nét màu vàng
+            ctx.strokeStyle = '#eab308'; // Màu vàng ấm rực rỡ
+            ctx.lineWidth = Math.max(3, Math.floor(width / 350));
+            ctx.setLineDash([8, 4]);
+            ctx.strokeRect(sx, sy, cropW, cropH);
 
-                    ctx.save();
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                    ctx.shadowBlur = 4 / zoomScale;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 2 / zoomScale;
+            // Đổ màu vàng nhạt bán trong suốt vào bên trong
+            ctx.fillStyle = 'rgba(234, 179, 8, 0.12)';
+            ctx.fillRect(sx, sy, cropW, cropH);
 
-                    // Vẽ nút Hủy (Xóa màu đỏ)
-                    ctx.beginPath();
-                    ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#ef4444';
-                    ctx.fill();
-                    ctx.lineWidth = 1.5 / zoomScale;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.stroke();
+            // 2. Vẽ 8 handles cho khung crop
+            const handleSize = Math.max(8, Math.floor(width / 180));
+            ctx.fillStyle = '#eab308';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
 
-                    // Vẽ nút Xác nhận (Check màu xanh Emerald)
-                    ctx.beginPath();
-                    ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#10b981';
-                    ctx.fill();
-                    ctx.lineWidth = 1.5 / zoomScale;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.stroke();
+            const x1 = sx;
+            const y1 = sy;
+            const x2 = sx + cropW;
+            const y2 = sy + cropH;
+            const xm = sx + cropW / 2;
+            const ym = sy + cropH / 2;
 
-                    // Tắt shadow để vẽ chữ
-                    ctx.shadowBlur = 0;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 0;
+            const handles = [
+                { x: x1, y: y1 }, // tl
+                { x: xm, y: y1 }, // t
+                { x: x2, y: y1 }, // tr
+                { x: x1, y: ym }, // l
+                { x: x2, y: ym }, // r
+                { x: x1, y: y2 }, // bl
+                { x: xm, y: y2 }, // b
+                { x: x2, y: y2 }  // br
+            ];
 
-                    // Vẽ chữ '✕'
-                    ctx.beginPath();
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = `bold ${Math.round(11 / zoomScale)}px var(--font-sans), sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('✕', cancelX, btnY + 0.5 / zoomScale);
+            handles.forEach(h => {
+                ctx.beginPath();
+                ctx.arc(h.x, h.y, handleSize / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            });
 
-                    // Vẽ chữ '✓'
-                    ctx.beginPath();
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = `bold ${Math.round(12 / zoomScale)}px var(--font-sans), sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('✓', confirmX, btnY + 0.5 / zoomScale);
+            // 3. Vẽ 2 nút điều khiển Xác nhận (Check xanh) và Hủy (X đỏ) nằm chính giữa cạnh dưới khung màu vàng
+            const centerX = sx + cropW / 2;
+            const btnRad = 18 / zoomScale; // Tăng kích thước nút từ 12 thành 18
+            const btnY = sy + cropH - 25 / zoomScale; // Căn giữa cạnh dưới, thụt vào trong 25px
+            const confirmX = centerX + 25 / zoomScale;
+            const cancelX = centerX - 25 / zoomScale;
 
-                    ctx.restore();
-                }
-            }
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 6 / zoomScale;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 3 / zoomScale;
+
+            // Vẽ nút Hủy (Xóa màu đỏ)
+            ctx.beginPath();
+            ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+            ctx.lineWidth = 2.0 / zoomScale;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Vẽ nút Xác nhận (Check màu xanh Emerald)
+            ctx.beginPath();
+            ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
+            ctx.fillStyle = '#10b981';
+            ctx.fill();
+            ctx.lineWidth = 2.0 / zoomScale;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Tắt shadow để vẽ chữ
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Vẽ chữ '✕'
+            ctx.beginPath();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${Math.round(15 / zoomScale)}px var(--font-sans), sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('✕', cancelX, btnY + 0.5 / zoomScale);
+
+            // Vẽ chữ '✓'
+            ctx.beginPath();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${Math.round(17 / zoomScale)}px var(--font-sans), sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('✓', confirmX, btnY + 0.5 / zoomScale);
+
+            ctx.restore();
         }
 
         ctx.restore();
@@ -3179,19 +3328,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
 
-        // Hàm tính tỷ lệ scale xuất ảnh động dựa theo cấu hình độ phân giải
-        const getExportScale = (w) => {
-            if (exportResolution === 'original') {
-                return 1.0;
-            }
-            let targetMinW = 1080;
-            if (exportResolution === '2k') {
-                targetMinW = 2160;
-            } else if (exportResolution === '4k') {
-                targetMinW = 3840;
-            }
-            return w < targetMinW ? (targetMinW / w) : 1.0;
-        };
 
         // Bắt đầu từ vị trí tiếp nối (số ảnh kết quả hiện tại)
         const startIndex = 0;
@@ -3596,6 +3732,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btnEdit.addEventListener('click', (e) => {
             e.stopPropagation();
             recutSlideId = resultId;
+            const recutItem = slicedImages.find(item => item.id === resultId);
+            if (recutItem) {
+                const coords = getRecutSlideCoords(recutItem);
+                if (coords) {
+                    recutTempCoords = {
+                        sx: coords.sx,
+                        sy: coords.sy,
+                        cropW: coords.cropW,
+                        cropH: coords.cropH
+                    };
+                }
+            }
             if (btnSlice) {
                 btnSlice.disabled = true; // Vô hiệu hóa nút cắt ảnh chính
             }
@@ -5442,6 +5590,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function getRecutSlideCoords(recutItem) {
         if (!currentImage || !recutItem) return null;
         
+        if (recutItem.meta.customCoords) {
+            const cc = recutItem.meta.customCoords;
+            return {
+                sx: cc.sx,
+                sy: cc.sy,
+                cropW: cc.cropW,
+                cropH: cc.cropH,
+                x1: cc.sx,
+                y1: cc.sy,
+                x2: cc.sx + cc.cropW,
+                y2: cc.sy + cc.cropH
+            };
+        }
+        
         const offset = parseInt(inputOffset.value) || 0;
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
@@ -5538,21 +5700,50 @@ document.addEventListener('DOMContentLoaded', () => {
         return { x1, y1, x2, y2, sx, sy, cropW, cropH };
     }
 
+    // --- Box Mode: Check Cursor Hover Target for Recutting 8 Directions ---
+    const getRecutInteractionTarget = (imgX, imgY, scaleX, scaleY) => {
+        if (!recutTempCoords) return null;
+
+        const { sx, sy, cropW, cropH } = recutTempCoords;
+        const x1 = sx;
+        const y1 = sy;
+        const x2 = sx + cropW;
+        const y2 = sy + cropH;
+
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const toleranceMultiplier = isTouch ? 2.5 : 1.5;
+        const handleSize = 10;
+        const toleranceX = handleSize * scaleX * toleranceMultiplier;
+        const toleranceY = handleSize * scaleY * toleranceMultiplier;
+
+        // 1. Check 4 corners
+        if (Math.abs(imgX - x1) <= toleranceX && Math.abs(imgY - y1) <= toleranceY) return 'tl';
+        if (Math.abs(imgX - x2) <= toleranceX && Math.abs(imgY - y1) <= toleranceY) return 'tr';
+        if (Math.abs(imgX - x1) <= toleranceX && Math.abs(imgY - y2) <= toleranceY) return 'bl';
+        if (Math.abs(imgX - x2) <= toleranceX && Math.abs(imgY - y2) <= toleranceY) return 'br';
+
+        // 2. Check 4 edges
+        if (Math.abs(imgX - x1) <= toleranceX && imgY >= y1 && imgY <= y2) return 'l';
+        if (Math.abs(imgX - x2) <= toleranceX && imgY >= y1 && imgY <= y2) return 'r';
+        if (Math.abs(imgY - y1) <= toleranceY && imgX >= x1 && imgX <= x2) return 't';
+        if (Math.abs(imgY - y2) <= toleranceY && imgX >= x1 && imgX <= x2) return 'b';
+
+        // 3. Check inside
+        if (imgX >= x1 && imgX <= x2 && imgY >= y1 && imgY <= y2) return 'move';
+
+        return null;
+    };
+
     // --- checkRecutButtonInteraction ---
     const checkRecutButtonInteraction = (imgX, imgY) => {
-        if (recutSlideId === null) return null;
-        const recutItem = slicedImages.find(item => item.id === recutSlideId);
-        if (!recutItem) return null;
+        if (recutSlideId === null || !recutTempCoords) return null;
 
-        const coords = getRecutSlideCoords(recutItem);
-        if (!coords) return null;
-
-        const rx = coords.sx + coords.cropW; // Rìa phải của ô xén viền
-
-        const btnRad = 12 / zoomScale;
-        const btnY = coords.sy + 18 / zoomScale;
-        const confirmX = rx - 18 / zoomScale;
-        const cancelX = rx - 46 / zoomScale;
+        const { sx, sy, cropW, cropH } = recutTempCoords;
+        const centerX = sx + cropW / 2;
+        const btnRad = 18 / zoomScale; // Bán kính nút to 18px
+        const btnY = sy + cropH - 25 / zoomScale; // Căn giữa cạnh dưới, thụt vào trong 25px
+        const confirmX = centerX + 25 / zoomScale;
+        const cancelX = centerX - 25 / zoomScale;
 
         const distConfirm = Math.hypot(imgX - confirmX, imgY - btnY);
         const distCancel = Math.hypot(imgX - cancelX, imgY - btnY);
@@ -5565,30 +5756,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Confirm Recut Single Slide Implementation ---
     const handleConfirmRecut = () => {
-        if (recutSlideId === null) return;
+        if (recutSlideId === null || !recutTempCoords) return;
 
         const recutItem = slicedImages.find(item => item.id === recutSlideId);
         if (!recutItem) {
             recutSlideId = null;
+            recutTempCoords = null;
             if (btnSlice) btnSlice.disabled = false;
             updateSidebarControlsState();
             return;
         }
 
-        const coords = getRecutSlideCoords(recutItem);
-        if (!coords) {
-            showToast("Không xác định được tọa độ để cắt lại slide!", "error");
-            return;
-        }
-
-        const { sx, sy, cropW, cropH } = coords;
-        const targetW = recutItem.meta.targetW;
-        const targetH = recutItem.meta.targetH;
+        const { sx, sy, cropW, cropH } = recutTempCoords;
 
         if (cropW <= 0 || cropH <= 0) {
             showToast("Kích thước cắt quá nhỏ. Hãy kéo rộng lưới/khung hoặc giảm xén viền!", "error");
             return;
         }
+
+        // Tính toán lại kích thước đích để chống méo hình
+        const scale = getExportScale(cropW);
+        const targetW = Math.round(cropW * scale);
+        const targetH = Math.round(cropH * scale);
+
+        // Cập nhật kích thước đích vào meta
+        recutItem.meta.targetW = targetW;
+        recutItem.meta.targetH = targetH;
 
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
@@ -5643,8 +5836,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataUrl = sliceCanvas.toDataURL('image/png');
         recutItem.dataUrl = dataUrl;
 
+        // Lưu tọa độ cắt mới tùy theo chế độ
+        if (recutItem.meta.slicingMode === 'grid') {
+            recutItem.meta.customCoords = { sx, sy, cropW, cropH };
+        } else if (recutItem.meta.slicingMode === 'box') {
+            const box = selectionBoxes.find(b => b.id === recutItem.meta.boxId);
+            if (box) {
+                const offset = parseInt(inputOffset.value) || 0;
+                box.x = sx - offset;
+                box.y = sy - offset;
+                box.w = cropW + 2 * offset;
+                box.h = cropH + 2 * offset;
+            }
+        }
+
         const resultItem = resultGrid.querySelector(`.result-item[data-id="${recutItem.id}"]`);
         if (resultItem) {
+            // Cập nhật lại tỷ lệ hiển thị của thẻ slide trên UI
+            resultItem.style.aspectRatio = `${targetW} / ${targetH}`;
             const imgEl = resultItem.querySelector('.result-img');
             if (imgEl) imgEl.src = dataUrl;
             
@@ -5673,6 +5882,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Đã cắt lại slide thành công!", "success");
 
         recutSlideId = null;
+        recutTempCoords = null;
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
         drawLiveGrid();
@@ -5683,6 +5893,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handleCancelRecut = () => {
         recutSlideId = null;
+        recutTempCoords = null;
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
         drawLiveGrid();
