@@ -2001,7 +2001,8 @@ input[type="number"] {
     .app-container.mobile-tab-upload #sidebar .params-container,
     .app-container.mobile-tab-upload #sidebar .control-group-grid,
     .app-container.mobile-tab-upload #sidebar .control-item,
-    .app-container.mobile-tab-upload #sidebar .action-buttons {
+    .app-container.mobile-tab-upload #sidebar .action-buttons,
+    .app-container.mobile-tab-upload #sidebar .collapsible-panel {
         display: none !important;
     }
 
