@@ -942,6 +942,35 @@ document.addEventListener('DOMContentLoaded', () => {
     inputCols.addEventListener('input', handleParamsChange);
     inputOffset.addEventListener('input', handleParamsChange);
 
+    // --- Canvas Background Toggle (Caro / Trơn) ---
+    const canvasBgModeText = document.getElementById('canvas-bg-mode-text');
+    let canvasBgMode = localStorage.getItem('canvas_bg_mode') || 'checkerboard';
+
+    const updateCanvasBgDisplay = () => {
+        if (!previewCanvas || !canvasBgModeText) return;
+        if (canvasBgMode === 'solid') {
+            previewCanvas.classList.add('bg-solid');
+            canvasBgModeText.textContent = 'Trơn';
+            canvasBgModeText.style.color = 'var(--text-secondary)';
+        } else {
+            previewCanvas.classList.remove('bg-solid');
+            canvasBgModeText.textContent = 'Caro';
+            canvasBgModeText.style.color = 'var(--accent)';
+        }
+    };
+
+    // Khởi tạo hiển thị ban đầu
+    updateCanvasBgDisplay();
+
+    if (canvasBgModeText) {
+        canvasBgModeText.addEventListener('click', (e) => {
+            e.stopPropagation();
+            canvasBgMode = (canvasBgMode === 'checkerboard') ? 'solid' : 'checkerboard';
+            localStorage.setItem('canvas_bg_mode', canvasBgMode);
+            updateCanvasBgDisplay();
+        });
+    }
+
 
 
     if (selectGridType) {
