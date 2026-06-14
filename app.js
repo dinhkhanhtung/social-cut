@@ -247,6 +247,101 @@ document.addEventListener('DOMContentLoaded', () => {
     const boxHandleSize = 10;    // Size of the resize handle at bottom-right of selection boxes
     const deleteBtnSize = 18;   // Size of the close (delete) button at top-right of selection boxes
 
+    // --- Save & Load Application Settings (Export & Watermark) ---
+    const saveAppSettings = () => {
+        try {
+            const settings = {
+                exportResolution: exportResolution,
+                exportSharpness: exportSharpness,
+                watermarkEnabled: switchWatermark ? switchWatermark.checked : false,
+                watermarkType: selectWatermarkType ? selectWatermarkType.value : 'text',
+                watermarkText: inputWatermarkText ? inputWatermarkText.value : '',
+                watermarkPosition: selectWatermarkPosition ? selectWatermarkPosition.value : 'bottom-right',
+                watermarkSize: inputWatermarkSize ? inputWatermarkSize.value : '24',
+                watermarkOpacity: inputWatermarkOpacity ? inputWatermarkOpacity.value : '50',
+                watermarkImageScale: inputWatermarkImageScale ? inputWatermarkImageScale.value : '20'
+            };
+            localStorage.setItem('carousel_cut_app_settings', JSON.stringify(settings));
+        } catch (err) {
+            console.error("Lỗi khi lưu cài đặt ứng dụng:", err);
+        }
+    };
+
+    const loadAppSettings = () => {
+        try {
+            const settingsStr = localStorage.getItem('carousel_cut_app_settings');
+            if (settingsStr) {
+                const settings = JSON.parse(settingsStr);
+                
+                if (settings.exportResolution) {
+                    exportResolution = settings.exportResolution;
+                    if (selectExportResolution) selectExportResolution.value = exportResolution;
+                }
+                
+                if (settings.exportSharpness) {
+                    exportSharpness = settings.exportSharpness;
+                    if (selectExportSharpness) selectExportSharpness.value = exportSharpness;
+                }
+                
+                if (switchWatermark) {
+                    switchWatermark.checked = settings.watermarkEnabled || false;
+                    if (watermarkOptionsContainer) {
+                        watermarkOptionsContainer.style.display = switchWatermark.checked ? 'block' : 'none';
+                    }
+                }
+                
+                if (selectWatermarkType) {
+                    selectWatermarkType.value = settings.watermarkType || 'text';
+                    if (watermarkTextConfig) {
+                        watermarkTextConfig.style.display = (selectWatermarkType.value === 'text') ? 'block' : 'none';
+                    }
+                    if (watermarkImageConfig) {
+                        watermarkImageConfig.style.display = (selectWatermarkType.value === 'image') ? 'block' : 'none';
+                    }
+                }
+                
+                if (inputWatermarkText && settings.watermarkText !== undefined) {
+                    inputWatermarkText.value = settings.watermarkText;
+                }
+                
+                if (selectWatermarkPosition) {
+                    selectWatermarkPosition.value = settings.watermarkPosition || 'bottom-right';
+                }
+                
+                if (inputWatermarkSize) {
+                    inputWatermarkSize.value = settings.watermarkSize || '24';
+                    if (watermarkSizeVal) watermarkSizeVal.textContent = inputWatermarkSize.value;
+                }
+                
+                if (inputWatermarkOpacity) {
+                    inputWatermarkOpacity.value = settings.watermarkOpacity || '50';
+                    if (watermarkOpacityVal) watermarkOpacityVal.textContent = inputWatermarkOpacity.value;
+                }
+                
+                if (inputWatermarkImageScale) {
+                    inputWatermarkImageScale.value = settings.watermarkImageScale || '20';
+                    if (watermarkImageScaleVal) watermarkImageScaleVal.textContent = inputWatermarkImageScale.value;
+                }
+            }
+            
+            const imgData = localStorage.getItem('carousel_cut_watermark_image');
+            if (imgData) {
+                const img = new Image();
+                img.onload = () => {
+                    watermarkImageObj = img;
+                    if (watermarkImagePreviewInfo) watermarkImagePreviewInfo.style.display = 'block';
+                    drawLiveGrid();
+                };
+                img.src = imgData;
+            }
+        } catch (err) {
+            console.error("Lỗi khi khôi phục cài đặt ứng dụng:", err);
+        }
+    };
+
+    // Khởi tạo khôi phục cấu hình ứng dụng
+    loadAppSettings();
+
     // --- Custom Toast System ---
     function showToast(message, type = 'info', duration = 3000) {
         let container = document.querySelector('.toast-container');
@@ -452,12 +547,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectExportResolution) {
         selectExportResolution.addEventListener('change', () => {
             exportResolution = selectExportResolution.value;
+            saveAppSettings();
         });
     }
 
     if (selectExportSharpness) {
         selectExportSharpness.addEventListener('change', () => {
             exportSharpness = selectExportSharpness.value;
+            saveAppSettings();
         });
     }
 
@@ -468,18 +565,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 watermarkOptionsContainer.style.display = isEnabled ? 'block' : 'none';
             }
             drawLiveGrid();
+            saveAppSettings();
         });
     }
 
     if (inputWatermarkText) {
         inputWatermarkText.addEventListener('input', () => {
             drawLiveGrid();
+            saveAppSettings();
         });
     }
 
     if (selectWatermarkPosition) {
         selectWatermarkPosition.addEventListener('change', () => {
             drawLiveGrid();
+            saveAppSettings();
         });
     }
 
@@ -487,6 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputWatermarkSize.addEventListener('input', (e) => {
             watermarkSizeVal.textContent = e.target.value;
             drawLiveGrid();
+            saveAppSettings();
         });
     }
 
@@ -494,6 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputWatermarkOpacity.addEventListener('input', (e) => {
             watermarkOpacityVal.textContent = e.target.value;
             drawLiveGrid();
+            saveAppSettings();
         });
     }
 
@@ -507,6 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 watermarkImageConfig.style.display = (type === 'image') ? 'block' : 'none';
             }
             drawLiveGrid();
+            saveAppSettings();
         });
     }
 
@@ -515,15 +618,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) {
                 watermarkImageObj = null;
+                localStorage.removeItem('carousel_cut_watermark_image');
                 if (watermarkImagePreviewInfo) watermarkImagePreviewInfo.style.display = 'none';
                 drawLiveGrid();
+                saveAppSettings();
                 return;
             }
             if (!file.type.startsWith('image/')) {
                 showToast('Logo phải là file hình ảnh!', 'warning');
                 watermarkImageObj = null;
+                localStorage.removeItem('carousel_cut_watermark_image');
                 if (watermarkImagePreviewInfo) watermarkImagePreviewInfo.style.display = 'none';
                 inputWatermarkImage.value = '';
+                saveAppSettings();
                 return;
             }
 
@@ -532,8 +639,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const img = new Image();
                 img.onload = () => {
                     watermarkImageObj = img;
+                    try {
+                        localStorage.setItem('carousel_cut_watermark_image', ev.target.result);
+                    } catch (err) {
+                        console.warn("Không thể lưu ảnh logo vào localStorage (có thể vượt quá dung lượng 5MB):", err);
+                    }
                     if (watermarkImagePreviewInfo) watermarkImagePreviewInfo.style.display = 'block';
                     drawLiveGrid();
+                    saveAppSettings();
                 };
                 img.src = ev.target.result;
             };
@@ -545,6 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputWatermarkImageScale.addEventListener('input', (e) => {
             watermarkImageScaleVal.textContent = e.target.value;
             drawLiveGrid();
+            saveAppSettings();
         });
     }
 
