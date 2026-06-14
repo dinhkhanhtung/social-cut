@@ -3090,6 +3090,33 @@ input[type="number"] {
         margin: 6px 12px 10px 12px;
         padding: 12px;
     }
+    .mobile-auth-section .auth-logged-in {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 14px 16px !important;
+    }
+    .mobile-auth-section .auth-user-info {
+        justify-content: center !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding-bottom: 10px !important;
+        margin-bottom: 4px !important;
+        font-size: 0.95rem !important;
+    }
+    .mobile-auth-section .btn-auth-settings-wide {
+        margin: 0 !important;
+        padding: 10px 12px !important;
+        font-size: 0.82rem !important;
+        height: 38px !important;
+    }
+    .mobile-auth-section .btn-auth-logout {
+        width: 100% !important;
+        height: 38px !important;
+        justify-content: center !important;
+        font-size: 0.82rem !important;
+        padding: 10px 12px !important;
+        box-sizing: border-box !important;
+    }
     .history-header {
         padding: 0 13px 0 8px !important; /* Căn thẳng hàng nút X xóa trên dưới */
     }
