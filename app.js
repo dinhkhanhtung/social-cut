@@ -1596,14 +1596,98 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (dragTarget.type === 'col') {
                     const idx = dragTarget.index;
-                    const minLimit = (idx === 0) ? 0 : colsX[idx - 1];
-                    const maxLimit = (idx === colsX.length - 1) ? currentImage.naturalWidth : colsX[idx + 1];
-                    colsX[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, colsX[idx] + deltaX));
+                    let newVal = colsX[idx] + deltaX;
+
+                    // Giới hạn trong biên ảnh
+                    newVal = Math.max(5, Math.min(currentImage.naturalWidth - 5, newVal));
+
+                    // Mảng map kèm index ban đầu để sort ổn định
+                    let mapped = colsX.map((val, i) => ({ val: (i === idx ? newVal : val), original: i === idx }));
+                    mapped.sort((a, b) => a.val - b.val);
+
+                    // Đảm bảo khoảng cách tối thiểu là 5px
+                    for (let i = 0; i < mapped.length - 1; i++) {
+                        if (mapped[i + 1].val - mapped[i].val < 5) {
+                            if (mapped[i].original) {
+                                mapped[i + 1].val = mapped[i].val + 5;
+                            } else if (mapped[i + 1].original) {
+                                mapped[i].val = mapped[i + 1].val - 5;
+                            } else {
+                                mapped[i + 1].val = mapped[i].val + 5;
+                            }
+                        }
+                    }
+
+                    // Đảm bảo không vượt biên ảnh
+                    if (mapped[mapped.length - 1].val > currentImage.naturalWidth - 5) {
+                        mapped[mapped.length - 1].val = currentImage.naturalWidth - 5;
+                        for (let i = mapped.length - 1; i > 0; i--) {
+                            if (mapped[i].val - mapped[i - 1].val < 5) {
+                                mapped[i - 1].val = mapped[i].val - 5;
+                            }
+                        }
+                    }
+                    if (mapped[0].val < 5) {
+                        mapped[0].val = 5;
+                        for (let i = 0; i < mapped.length - 1; i++) {
+                            if (mapped[i + 1].val - mapped[i].val < 5) {
+                                mapped[i + 1].val = mapped[i].val + 5;
+                            }
+                        }
+                    }
+
+                    colsX = mapped.map(item => item.val);
+                    const newIdx = mapped.findIndex(item => item.original);
+                    if (newIdx !== -1) {
+                        dragTarget.index = newIdx;
+                    }
                 } else if (dragTarget.type === 'row') {
                     const idx = dragTarget.index;
-                    const minLimit = (idx === 0) ? 0 : rowsY[idx - 1];
-                    const maxLimit = (idx === rowsY.length - 1) ? currentImage.naturalHeight : rowsY[idx + 1];
-                    rowsY[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, rowsY[idx] + deltaY));
+                    let newVal = rowsY[idx] + deltaY;
+
+                    // Giới hạn trong biên ảnh
+                    newVal = Math.max(5, Math.min(currentImage.naturalHeight - 5, newVal));
+
+                    // Mảng map kèm index ban đầu để sort ổn định
+                    let mapped = rowsY.map((val, i) => ({ val: (i === idx ? newVal : val), original: i === idx }));
+                    mapped.sort((a, b) => a.val - b.val);
+
+                    // Đảm bảo khoảng cách tối thiểu là 5px
+                    for (let i = 0; i < mapped.length - 1; i++) {
+                        if (mapped[i + 1].val - mapped[i].val < 5) {
+                            if (mapped[i].original) {
+                                mapped[i + 1].val = mapped[i].val + 5;
+                            } else if (mapped[i + 1].original) {
+                                mapped[i].val = mapped[i + 1].val - 5;
+                            } else {
+                                mapped[i + 1].val = mapped[i].val + 5;
+                            }
+                        }
+                    }
+
+                    // Đảm bảo không vượt biên ảnh
+                    if (mapped[mapped.length - 1].val > currentImage.naturalHeight - 5) {
+                        mapped[mapped.length - 1].val = currentImage.naturalHeight - 5;
+                        for (let i = mapped.length - 1; i > 0; i--) {
+                            if (mapped[i].val - mapped[i - 1].val < 5) {
+                                mapped[i - 1].val = mapped[i].val - 5;
+                            }
+                        }
+                    }
+                    if (mapped[0].val < 5) {
+                        mapped[0].val = 5;
+                        for (let i = 0; i < mapped.length - 1; i++) {
+                            if (mapped[i + 1].val - mapped[i].val < 5) {
+                                mapped[i + 1].val = mapped[i].val + 5;
+                            }
+                        }
+                    }
+
+                    rowsY = mapped.map(item => item.val);
+                    const newIdx = mapped.findIndex(item => item.original);
+                    if (newIdx !== -1) {
+                        dragTarget.index = newIdx;
+                    }
                 }
 
                 isCustomGrid = true;
