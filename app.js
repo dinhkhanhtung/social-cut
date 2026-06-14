@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileName = document.getElementById('file-name');
     const fileSize = document.getElementById('file-size');
     const btnRemoveFile = document.getElementById('btn-remove-file');
+    const preCropToolsDiv = document.getElementById('pre-crop-tools');
+    const btnPreCrop = document.getElementById('btn-pre-crop');
+    const btnResetImage = document.getElementById('btn-reset-image');
     
     const modeGridBtn = document.getElementById('mode-grid');
     const modeBoxBtn = document.getElementById('mode-box');
@@ -103,6 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global State
     let currentImage = null;
+    let originalImage = null;
+    let isPreCropping = false;
+    let preCropBox = null;
+    let dragPreCropTarget = null;
     let currentOriginalFile = null;
     let slicedImages = []; // Array of { name, dataUrl }
     let slicedBlobs = [];  // Array of { name, blob }
@@ -114,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Update state of sidebar controls when recutting single slide ---
     function updateSidebarControlsState() {
         const isRecutting = (recutSlideId !== null);
+        const isDisabled = isRecutting || isPreCropping;
 
         // Sidebar parameter controls
         const sidebarControls = [
@@ -125,16 +133,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sidebarControls.forEach(el => {
             if (el) {
-                el.disabled = isRecutting;
-                el.style.opacity = isRecutting ? '0.5' : '';
-                el.style.pointerEvents = isRecutting ? 'none' : '';
+                el.disabled = isDisabled;
+                el.style.opacity = isDisabled ? '0.5' : '';
+                el.style.pointerEvents = isDisabled ? 'none' : '';
             }
         });
 
         // Mode switch buttons - add/remove visual disabled class
         [modeGridBtn, modeBoxBtn].forEach(btn => {
             if (btn) {
-                if (isRecutting) {
+                if (isDisabled) {
                     btn.classList.add('disabled-recut');
                 } else {
                     btn.classList.remove('disabled-recut');
@@ -146,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const resultActionBtns = [btnDownloadZip, btnClearResults, btnRenumberResults, btnMobilePreview];
         resultActionBtns.forEach(btn => {
             if (btn) {
-                btn.disabled = isRecutting;
-                if (isRecutting) {
+                btn.disabled = isDisabled;
+                if (isDisabled) {
                     btn.classList.add('disabled-recut');
                 } else {
                     btn.classList.remove('disabled-recut');
@@ -157,8 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Tab result button
         if (tabBtnResult) {
-            tabBtnResult.disabled = isRecutting;
-            if (isRecutting) {
+            tabBtnResult.disabled = isDisabled;
+            if (isDisabled) {
                 tabBtnResult.classList.add('disabled-recut');
             } else {
                 tabBtnResult.classList.remove('disabled-recut');
@@ -167,16 +175,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Dropzone
         if (dropzone) {
-            if (isRecutting) {
+            if (isDisabled) {
                 dropzone.classList.add('disabled-recut');
             } else {
                 dropzone.classList.remove('disabled-recut');
             }
         }
 
+        // Action buttons
+        if (btnSlice) {
+            btnSlice.disabled = isDisabled || !currentImage;
+        }
+
         // Result items - dim non-target, highlight target
         if (isRecutting) {
             disableResultItemActions(recutSlideId);
+        } else if (isPreCropping) {
+            disableResultItemActions(-1);
         } else {
             enableResultItemActions();
         }
@@ -449,6 +464,33 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation(); // Prevent opening file chooser
         resetApp();
     });
+
+    if (btnPreCrop) {
+        btnPreCrop.addEventListener('click', () => {
+            if (!currentImage) return;
+            
+            // Hủy recut nếu đang bật
+            recutSlideId = null;
+            recutButtonsOffset = { x: 0, y: 0 };
+            
+            isPreCropping = true;
+            preCropBox = {
+                x: 0,
+                y: 0,
+                w: currentImage.naturalWidth,
+                h: currentImage.naturalHeight
+            };
+            
+            updateSidebarControlsState();
+            drawLiveGrid();
+        });
+    }
+
+    if (btnResetImage) {
+        btnResetImage.addEventListener('click', () => {
+            resetToOriginalImage();
+        });
+    }
 
     // --- Watermark Collapsible & Controls Event Listeners ---
     if (headerWatermark && contentWatermark && panelWatermark) {
@@ -1529,6 +1571,94 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = coords.x;
         const imgY = coords.y;
 
+        // Xử lý kéo cho Pre-crop
+        if (isPreCropping && dragPreCropTarget) {
+            const deltaX = imgX - dragPreCropTarget.startX;
+            const deltaY = imgY - dragPreCropTarget.startY;
+            const orig = dragPreCropTarget.originalBox;
+            const imgW = currentImage.naturalWidth;
+            const imgH = currentImage.naturalHeight;
+
+            if (dragPreCropTarget.type === 'move') {
+                let newX = orig.x + deltaX;
+                let newY = orig.y + deltaY;
+
+                // Giới hạn trong ảnh
+                newX = Math.max(0, Math.min(imgW - orig.w, newX));
+                newY = Math.max(0, Math.min(imgH - orig.h, newY));
+
+                preCropBox.x = newX;
+                preCropBox.y = newY;
+            } else if (dragPreCropTarget.type === 'handle') {
+                const name = dragPreCropTarget.name;
+                const minSz = 20; // Kích thước xén tối thiểu
+
+                if (name === 'tl') {
+                    let newX = Math.max(0, Math.min(orig.x + orig.w - minSz, orig.x + deltaX));
+                    let newY = Math.max(0, Math.min(orig.y + orig.h - minSz, orig.y + deltaY));
+                    preCropBox.x = newX;
+                    preCropBox.y = newY;
+                    preCropBox.w = orig.x + orig.w - newX;
+                    preCropBox.h = orig.y + orig.h - newY;
+                } else if (name === 'tr') {
+                    let newY = Math.max(0, Math.min(orig.y + orig.h - minSz, orig.y + deltaY));
+                    let newW = Math.max(minSz, Math.min(imgW - orig.x, orig.w + deltaX));
+                    preCropBox.y = newY;
+                    preCropBox.w = newW;
+                    preCropBox.h = orig.y + orig.h - newY;
+                } else if (name === 'bl') {
+                    let newX = Math.max(0, Math.min(orig.x + orig.w - minSz, orig.x + deltaX));
+                    let newH = Math.max(minSz, Math.min(imgH - orig.y, orig.h + deltaY));
+                    preCropBox.x = newX;
+                    preCropBox.w = orig.x + orig.w - newX;
+                    preCropBox.h = newH;
+                } else if (name === 'br') {
+                    preCropBox.w = Math.max(minSz, Math.min(imgW - orig.x, orig.w + deltaX));
+                    preCropBox.h = Math.max(minSz, Math.min(imgH - orig.y, orig.h + deltaY));
+                } else if (name === 't') {
+                    let newY = Math.max(0, Math.min(orig.y + orig.h - minSz, orig.y + deltaY));
+                    preCropBox.y = newY;
+                    preCropBox.h = orig.y + orig.h - newY;
+                } else if (name === 'b') {
+                    preCropBox.h = Math.max(minSz, Math.min(imgH - orig.y, orig.h + deltaY));
+                } else if (name === 'l') {
+                    let newX = Math.max(0, Math.min(orig.x + orig.w - minSz, orig.x + deltaX));
+                    preCropBox.x = newX;
+                    preCropBox.w = orig.x + orig.w - newX;
+                } else if (name === 'r') {
+                    preCropBox.w = Math.max(minSz, Math.min(imgW - orig.x, orig.w + deltaX));
+                }
+            }
+
+            drawLiveGrid();
+            lastDragMouseX = imgX;
+            lastDragMouseY = imgY;
+            return;
+        }
+
+        // Cập nhật cursor khi hover các phần tử Pre-crop
+        if (isPreCropping && preCropBox && !dragPreCropTarget) {
+            const interaction = checkPreCropInteraction(imgX, imgY, coords.scaleX, coords.scaleY);
+            if (interaction) {
+                if (interaction.type === 'button') {
+                    previewCanvas.style.cursor = 'pointer';
+                } else if (interaction.type === 'handle') {
+                    const name = interaction.name;
+                    if (name === 'tl' || name === 'br') previewCanvas.style.cursor = 'nwse-resize';
+                    else if (name === 'tr' || name === 'bl') previewCanvas.style.cursor = 'nesw-resize';
+                    else if (name === 't' || name === 'b') previewCanvas.style.cursor = 'ns-resize';
+                    else if (name === 'l' || name === 'r') previewCanvas.style.cursor = 'ew-resize';
+                } else if (interaction.type === 'move') {
+                    previewCanvas.style.cursor = 'move';
+                }
+            } else {
+                previewCanvas.style.cursor = 'default';
+            }
+            lastDragMouseX = imgX;
+            lastDragMouseY = imgY;
+            return;
+        }
+
         // Xử lý kéo nắm di chuyển cụm nút recut
         if (isDraggingRecutButtons && recutSlideId !== null) {
             const recutItem = slicedImages.find(item => item.id === recutSlideId);
@@ -1860,6 +1990,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = coords.x;
         const imgY = coords.y;
 
+        // Xử lý kéo thả cho Pre-crop
+        if (isPreCropping && preCropBox) {
+            const interaction = checkPreCropInteraction(imgX, imgY, coords.scaleX, coords.scaleY);
+            if (interaction) {
+                if (interaction.type === 'button') {
+                    if (interaction.action === 'confirm') {
+                        confirmPreCrop();
+                    } else if (interaction.action === 'cancel') {
+                        cancelPreCrop();
+                    }
+                } else if (interaction.type === 'handle') {
+                    dragPreCropTarget = {
+                        type: 'handle',
+                        name: interaction.name,
+                        startX: imgX,
+                        startY: imgY,
+                        originalBox: { ...preCropBox }
+                    };
+                } else if (interaction.type === 'move') {
+                    dragPreCropTarget = {
+                        type: 'move',
+                        startX: imgX,
+                        startY: imgY,
+                        originalBox: { ...preCropBox }
+                    };
+                    previewCanvas.style.cursor = 'move';
+                }
+            } else {
+                isPanning = true;
+                previewCanvas.style.cursor = 'grabbing';
+                panStart = { x: e.clientX, y: e.clientY };
+            }
+            return;
+        }
+
         // Kiểm tra bấm nút điều khiển Recut nổi trên canvas
         const recutAction = checkRecutButtonInteraction(imgX, imgY);
         if (recutAction) {
@@ -2016,6 +2181,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mouse Up Event Listener ---
     window.addEventListener('mouseup', () => {
+        if (isPreCropping && dragPreCropTarget) {
+            dragPreCropTarget = null;
+            previewCanvas.style.cursor = 'default';
+        }
         isDraggingRecutButtons = false;
         if (snapGuides.length > 0) {
             snapGuides = [];
@@ -2447,6 +2616,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleImageSelection(file) {
         recutSlideId = null;
         recutButtonsOffset = { x: 0, y: 0 };
+        originalImage = null;
+        isPreCropping = false;
+        preCropBox = null;
+        if (preCropToolsDiv) preCropToolsDiv.style.display = 'none';
+        if (btnResetImage) btnResetImage.style.display = 'none';
         updateSidebarControlsState();
         
         if (!file.type.startsWith('image/')) {
@@ -2492,6 +2666,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const img = new Image();
             img.onload = () => {
                 currentImage = img;
+                originalImage = img;
+                if (preCropToolsDiv) preCropToolsDiv.style.display = 'block';
+                if (btnResetImage) btnResetImage.style.display = 'none';
                 
                 // Reset zoom & pan for new image
                 zoomScale = 1.0;
@@ -2672,6 +2849,119 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
+
+        if (isPreCropping && preCropBox) {
+            const { x, y, w, h } = preCropBox;
+
+            // 1. Vẽ lớp phủ tối mờ bên ngoài khung xén (vùng sẽ bị cắt bỏ)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            // Phía trên
+            ctx.fillRect(0, 0, width, y);
+            // Phía dưới
+            ctx.fillRect(0, y + h, width, height - (y + h));
+            // Phía trái
+            ctx.fillRect(0, y, x, h);
+            // Phía phải
+            ctx.fillRect(x + w, y, width - (x + w), h);
+
+            // 2. Vẽ viền khung xén nét đứt màu xanh Cyan
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = Math.max(3, Math.floor(width / 400));
+            ctx.setLineDash([8, 4]);
+            ctx.strokeRect(x, y, w, h);
+            ctx.setLineDash([]); // Reset line dash
+
+            // 3. Vẽ 8 handles
+            const handleRadius = Math.max(6, Math.floor(width / 150));
+            ctx.fillStyle = '#06b6d4';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = Math.max(2, Math.floor(width / 600));
+
+            const drawHandle = (hx, hy) => {
+                ctx.beginPath();
+                ctx.arc(hx, hy, handleRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            };
+
+            // 4 góc
+            drawHandle(x, y); // TL
+            drawHandle(x + w, y); // TR
+            drawHandle(x, y + h); // BL
+            drawHandle(x + w, y + h); // BR
+
+            // 4 cạnh
+            drawHandle(x + w / 2, y); // T
+            drawHandle(x + w / 2, y + h); // B
+            drawHandle(x, y + h / 2); // L
+            drawHandle(x + w, y + h / 2); // R
+
+            // 4. Vẽ cụm nút Xác nhận / Hủy ở giữa khung cắt
+            const centerX = x + w / 2;
+            const centerY = y + h / 2;
+            const btnRad = 24 / zoomScale;
+            const confirmX = centerX + 30 / zoomScale;
+            const cancelX = centerX - 30 / zoomScale;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+            ctx.shadowBlur = 8 / zoomScale;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 3 / zoomScale;
+
+            // Nút Hủy (Đỏ)
+            const cancelGrad = ctx.createLinearGradient(cancelX - btnRad, centerY - btnRad, cancelX + btnRad, centerY + btnRad);
+            cancelGrad.addColorStop(0, '#f87171');
+            cancelGrad.addColorStop(1, '#dc2626');
+            ctx.beginPath();
+            ctx.arc(cancelX, centerY, btnRad, 0, 2 * Math.PI);
+            ctx.fillStyle = cancelGrad;
+            ctx.fill();
+            ctx.lineWidth = 1.5 / zoomScale;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Nút Xác nhận (Xanh Emerald)
+            const confirmGrad = ctx.createLinearGradient(confirmX - btnRad, centerY - btnRad, confirmX + btnRad, centerY + btnRad);
+            confirmGrad.addColorStop(0, '#34d399');
+            confirmGrad.addColorStop(1, '#059669');
+            ctx.beginPath();
+            ctx.arc(confirmX, centerY, btnRad, 0, 2 * Math.PI);
+            ctx.fillStyle = confirmGrad;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Vẽ dấu nhân '✕'
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3 / zoomScale;
+            ctx.lineCap = 'round';
+            const crossSz = 5.5 / zoomScale;
+            ctx.moveTo(cancelX - crossSz, centerY - crossSz);
+            ctx.lineTo(cancelX + crossSz, centerY + crossSz);
+            ctx.moveTo(cancelX + crossSz, centerY - crossSz);
+            ctx.lineTo(cancelX - crossSz, centerY + crossSz);
+            ctx.stroke();
+
+            // Vẽ dấu tích '✓'
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3 / zoomScale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.moveTo(confirmX - 6.5 / zoomScale, centerY - 0.5 / zoomScale);
+            ctx.lineTo(confirmX - 1.5 / zoomScale, centerY + 4.5 / zoomScale);
+            ctx.lineTo(confirmX + 6.5 / zoomScale, centerY - 4.5 / zoomScale);
+            ctx.stroke();
+
+            ctx.restore();
+            ctx.restore();
+            return;
+        }
         const offset = parseInt(inputOffset.value) || 0;
 
         if (slicingMode === 'grid') {
@@ -4695,6 +4985,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Reset Application State ---
     function resetApp() {
         recutSlideId = null;
+        originalImage = null;
+        isPreCropping = false;
+        preCropBox = null;
+        if (preCropToolsDiv) preCropToolsDiv.style.display = 'none';
+        if (btnResetImage) btnResetImage.style.display = 'none';
         updateSidebarControlsState();
         fileInput.value = '';
         currentImage = null;
@@ -6198,6 +6493,105 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Đã hủy cắt lại", "info");
         switchTab('tab-result-grid');
         switchMobileTab('result');
+    };
+
+    // --- Pre-crop (Dao lam xén viền ảnh gốc) Helpers ---
+    const checkPreCropInteraction = (imgX, imgY, scaleX, scaleY) => {
+        if (!isPreCropping || !preCropBox) return null;
+        const { x, y, w, h } = preCropBox;
+        
+        const handleRadius = Math.max(6, Math.floor(currentImage.naturalWidth / 150));
+        const tolX = handleRadius * scaleX * 1.5;
+        const tolY = handleRadius * scaleY * 1.5;
+
+        // Kiểm tra bấm nút xác nhận / hủy nổi ở giữa
+        const centerX = x + w / 2;
+        const centerY = y + h / 2;
+        const btnRad = 24 / zoomScale;
+        const confirmX = centerX + 30 / zoomScale;
+        const cancelX = centerX - 30 / zoomScale;
+
+        const distConfirm = Math.hypot(imgX - confirmX, imgY - centerY);
+        const distCancel = Math.hypot(imgX - cancelX, imgY - centerY);
+        if (distConfirm <= btnRad) return { type: 'button', action: 'confirm' };
+        if (distCancel <= btnRad) return { type: 'button', action: 'cancel' };
+
+        // Kiểm tra handles 4 góc
+        if (Math.abs(imgX - x) <= tolX && Math.abs(imgY - y) <= tolY) return { type: 'handle', name: 'tl' };
+        if (Math.abs(imgX - (x + w)) <= tolX && Math.abs(imgY - y) <= tolY) return { type: 'handle', name: 'tr' };
+        if (Math.abs(imgX - x) <= tolX && Math.abs(imgY - (y + h)) <= tolY) return { type: 'handle', name: 'bl' };
+        if (Math.abs(imgX - (x + w)) <= tolX && Math.abs(imgY - (y + h)) <= tolY) return { type: 'handle', name: 'br' };
+
+        // Kiểm tra handles 4 cạnh
+        if (Math.abs(imgX - (x + w / 2)) <= tolX && Math.abs(imgY - y) <= tolY) return { type: 'handle', name: 't' };
+        if (Math.abs(imgX - (x + w / 2)) <= tolX && Math.abs(imgY - (y + h)) <= tolY) return { type: 'handle', name: 'b' };
+        if (Math.abs(imgX - x) <= tolX && Math.abs(imgY - (y + h / 2)) <= tolY) return { type: 'handle', name: 'l' };
+        if (Math.abs(imgX - (x + w)) <= tolX && Math.abs(imgY - (y + h / 2)) <= tolY) return { type: 'handle', name: 'r' };
+
+        // Di chuyển toàn bộ khung xén
+        if (imgX > x && imgX < x + w && imgY > y && imgY < y + h) {
+            return { type: 'move' };
+        }
+
+        return null;
+    };
+
+    const confirmPreCrop = () => {
+        if (!currentImage || !preCropBox) return;
+
+        const { x, y, w, h } = preCropBox;
+        if (w <= 10 || h <= 10) return;
+
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = w;
+        cropCanvas.height = h;
+        const cropCtx = cropCanvas.getContext('2d');
+        
+        cropCtx.drawImage(currentImage, x, y, w, h, 0, 0, w, h);
+
+        const croppedImg = new Image();
+        croppedImg.onload = () => {
+            currentImage = croppedImg;
+            isPreCropping = false;
+            preCropBox = null;
+            
+            if (btnResetImage) btnResetImage.style.display = 'inline-flex';
+            
+            resetGridToEven();
+            if (imgDimOriginal) imgDimOriginal.textContent = `${currentImage.naturalWidth}×${currentImage.naturalHeight}`;
+            
+            handleParamsChange();
+            updateSidebarControlsState();
+            drawLiveGrid();
+            
+            showToast("Đã xén ảnh gốc thành công!", "success");
+        };
+        croppedImg.src = cropCanvas.toDataURL('image/png');
+    };
+
+    const cancelPreCrop = () => {
+        isPreCropping = false;
+        preCropBox = null;
+        updateSidebarControlsState();
+        drawLiveGrid();
+        showToast("Đã hủy xén ảnh", "info");
+    };
+
+    const resetToOriginalImage = () => {
+        if (!originalImage) return;
+        currentImage = originalImage;
+        isPreCropping = false;
+        preCropBox = null;
+        if (btnResetImage) btnResetImage.style.display = 'none';
+        
+        resetGridToEven();
+        if (imgDimOriginal) imgDimOriginal.textContent = `${currentImage.naturalWidth}×${currentImage.naturalHeight}`;
+        
+        handleParamsChange();
+        updateSidebarControlsState();
+        drawLiveGrid();
+        
+        showToast("Đã khôi phục ảnh gốc ban đầu!", "success");
     };
 
     // --- Password Gate Security ---

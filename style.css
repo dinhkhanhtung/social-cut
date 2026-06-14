@@ -1077,6 +1077,8 @@ input[type="number"] {
     transition: var(--transition-smooth);
     cursor: grab;
     user-select: none;
+    min-width: 110px;
+    min-height: 110px;
 }
 
 .result-item:active {
@@ -2494,6 +2496,8 @@ input[type="number"] {
         background: rgba(0, 0, 0, 0.4) !important;
         width: 100% !important;
         cursor: pointer !important;
+        min-width: 100px !important;
+        min-height: 100px !important;
     }
     
     .result-item .result-img {

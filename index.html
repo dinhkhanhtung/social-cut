@@ -95,6 +95,21 @@
                         </div>
                     </div>
 
+                    <!-- Công cụ xén ảnh gốc trước khi chia lưới -->
+                    <div class="pre-crop-tools" id="pre-crop-tools" style="display: none; margin: 12px 0; padding: 12px; background: rgba(6, 182, 212, 0.05); border: 1px dashed var(--accent); border-radius: var(--border-radius-sm); text-align: center;">
+                        <span style="font-size: 0.8rem; display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 600;">
+                            <i class="fa-solid fa-scissors" style="margin-right: 4px;"></i> Tiền xử lý ảnh gốc
+                        </span>
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <button type="button" id="btn-pre-crop" class="btn btn-secondary btn-accent-hover" style="font-size: 0.8rem; padding: 6px 12px;" title="Xén viền ảnh gốc (loại bỏ lề thừa)">
+                                <i class="fa-solid fa-crop"></i> Xén ảnh gốc
+                            </button>
+                            <button type="button" id="btn-reset-image" class="btn btn-secondary btn-danger-hover" style="font-size: 0.8rem; padding: 6px 12px; display: none;" title="Khôi phục lại ảnh gốc ban đầu chưa xén">
+                                <i class="fa-solid fa-rotate-left"></i> Khôi phục ảnh
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Project History Section (Mobile Only in Sidebar) -->
                     <div class="history-section" id="history-section">
 
