@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentOriginalFile = null;
     let slicedImages = []; // Array of { name, dataUrl }
     let slicedBlobs = [];  // Array of { name, blob }
+    let recutSlideId = null; // ID of the slice being recut (single edit mode)
     
     let slicingMode = 'grid'; // 'grid' or 'box'
     let gridType = 'even';    // 'even' | 'fb-1d3v' | 'fb-1n3v'
@@ -2333,16 +2334,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.stroke();
             }
 
-            // Vẽ viền nét đứt màu xanh lá cây đại diện cho vùng ảnh thực tế giữ lại
-            if (offset > 0) {
-                ctx.strokeStyle = '#10b981';
-                ctx.lineWidth = Math.max(1, Math.floor(width / 800));
-                ctx.setLineDash([ctx.lineWidth * 2, ctx.lineWidth * 2]);
-                cells.forEach(cell => {
-                    if (cell.sw > 0 && cell.sh > 0) {
+            }
+
+            // Nổi bật ô đang được cắt lại (recut highlight) nếu đang ở chế độ chỉnh sửa ảnh đơn
+            if (recutSlideId !== null) {
+                const recutItem = slicedImages.find(item => item.id === recutSlideId);
+                if (recutItem && recutItem.meta && recutItem.meta.slicingMode === 'grid') {
+                    const cellIdx = recutItem.meta.cellIndex;
+                    const cell = cells[cellIdx];
+                    if (cell && cell.sw > 0 && cell.sh > 0) {
+                        ctx.save();
+                        ctx.strokeStyle = '#eab308';
+                        ctx.lineWidth = Math.max(4, Math.floor(width / 300));
+                        ctx.setLineDash([8, 4]);
                         ctx.strokeRect(cell.sx, cell.sy, cell.sw, cell.sh);
+
+                        ctx.fillStyle = 'rgba(234, 179, 8, 0.15)';
+                        ctx.fillRect(cell.sx, cell.sy, cell.sw, cell.sh);
+                        ctx.restore();
                     }
-                });
+                }
             }
         } else {
             selectionBoxes.forEach((box, idx) => {
@@ -2360,12 +2371,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.fillRect(x + w - offset, y + offset, offset, h - 2 * offset);
                 }
 
-                ctx.strokeStyle = isSelected ? '#eab308' : gridLineColor;
-                ctx.lineWidth = isSelected ? Math.max(3, Math.floor(width / 500)) : Math.max(2, Math.floor(width / 700));
-                ctx.setLineDash(isSelected ? [8, 4] : []);
+                const isRecutting = (recutSlideId !== null && slicedImages.find(item => item.id === recutSlideId)?.meta?.boxId === box.id);
+                let boxStrokeColor = gridLineColor;
+                if (isSelected) boxStrokeColor = '#eab308';
+                if (isRecutting) boxStrokeColor = '#10b981'; // Nổi bật viền xanh Emerald
+
+                ctx.strokeStyle = boxStrokeColor;
+                ctx.lineWidth = (isSelected || isRecutting) ? Math.max(4, Math.floor(width / 450)) : Math.max(2, Math.floor(width / 700));
+                ctx.setLineDash((isSelected || isRecutting) ? [8, 4] : []);
                 ctx.strokeRect(x, y, w, h);
                 
-                ctx.fillStyle = isSelected ? 'rgba(234, 179, 8, 0.08)' : 'rgba(6, 182, 212, 0.12)';
+                ctx.fillStyle = isRecutting ? 'rgba(16, 185, 129, 0.15)' : (isSelected ? 'rgba(234, 179, 8, 0.08)' : 'rgba(6, 182, 212, 0.12)');
                 ctx.fillRect(x, y, w, h);
 
                 if (offset > 0 && w > 2 * offset && h > 2 * offset) {
@@ -2835,6 +2851,13 @@ document.addEventListener('DOMContentLoaded', () => {
         globalTargetW = null;
         globalTargetH = null;
 
+        // Reset trạng thái sửa đổi ảnh đơn
+        recutSlideId = null;
+        const btnConfirmRecut = document.getElementById('btn-confirm-recut');
+        if (btnConfirmRecut) {
+            btnConfirmRecut.style.display = 'none';
+        }
+
         const offset = parseInt(inputOffset.value) || 0;
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
@@ -2929,7 +2952,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const resultId = resultIdCounter++;
                         const sliceName = `slide_${startIndex + count}.png`;
-                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH);
+                        const meta = {
+                            slicingMode: 'grid',
+                            gridType: 'even',
+                            cellIndex: count - 1,
+                            row: r,
+                            col: c,
+                            targetW: targetW,
+                            targetH: targetH
+                        };
+                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
                         count++;
                     }
                 }
@@ -3052,7 +3084,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tW = cell.isLarge ? targetW_large : targetW_small;
                     const tH = cell.isLarge ? targetH_large : targetH_small;
 
-                    processSlice(sx, sy, cropW, cropH, sliceName, resultId, tW, tH);
+                    const meta = {
+                        slicingMode: 'grid',
+                        gridType: gridType,
+                        cellIndex: idx,
+                        isLarge: cell.isLarge,
+                        targetW: tW,
+                        targetH: tH
+                    };
+                    processSlice(sx, sy, cropW, cropH, sliceName, resultId, tW, tH, meta);
                 });
             }
         } else {
@@ -3092,7 +3132,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const resultId = resultIdCounter++;
                 const sliceName = `slide_${startIndex + idx + 1}.png`;
-                processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH);
+                const meta = {
+                    slicingMode: 'box',
+                    boxId: box.id,
+                    targetW: targetW,
+                    targetH: targetH
+                };
+                processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
             });
         }
 
@@ -3120,7 +3166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveProjectToDB();
     });
 
-    function processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH) {
+    function processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta = null) {
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
 
@@ -3180,7 +3226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const dataUrl = sliceCanvas.toDataURL('image/png');
-        slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl });
+        slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl, meta: meta });
 
         const isFacebookMode = (gridType === 'fb-1d3v' || gridType === 'fb-1n3v');
 
@@ -3225,6 +3271,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         resultItem.appendChild(btnDel);
+
+        const btnEdit = document.createElement('button');
+        btnEdit.classList.add('result-item-btn-edit');
+        btnEdit.innerHTML = '<i class="fa-solid fa-crop-simple"></i>';
+        btnEdit.title = `Cắt lại ô này`;
+        btnEdit.addEventListener('click', (e) => {
+            e.stopPropagation();
+            recutSlideId = resultId;
+            const btnConfirmRecut = document.getElementById('btn-confirm-recut');
+            if (btnConfirmRecut) {
+                btnConfirmRecut.style.display = 'inline-flex';
+            }
+            switchTab('tab-live-grid');
+            switchMobileTab('edit');
+            drawLiveGrid();
+            showToast("Hãy điều chỉnh lưới hoặc khung vẽ, sau đó bấm Xác nhận để cắt lại slide này!", "info", 4000);
+        });
+        resultItem.appendChild(btnEdit);
 
         const imgEl = document.createElement('img');
         imgEl.src = dataUrl;
@@ -4906,6 +4970,218 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPcImportProject && pcImportProjectInput) {
         btnPcImportProject.addEventListener('click', () => pcImportProjectInput.click());
         pcImportProjectInput.addEventListener('change', (e) => handleImportFile(e.target.files[0]));
+    }
+
+    // --- Confirm Recut Single Slide Implementation ---
+    const btnConfirmRecut = document.getElementById('btn-confirm-recut');
+    if (btnConfirmRecut) {
+        btnConfirmRecut.addEventListener('click', () => {
+            if (recutSlideId === null) return;
+
+            const recutItem = slicedImages.find(item => item.id === recutSlideId);
+            if (!recutItem) {
+                recutSlideId = null;
+                btnConfirmRecut.style.display = 'none';
+                return;
+            }
+
+            const offset = parseInt(inputOffset.value) || 0;
+            const width = currentImage.naturalWidth;
+            const height = currentImage.naturalHeight;
+
+            let sx, sy, cropW, cropH, targetW, targetH;
+
+            if (recutItem.meta.slicingMode === 'grid') {
+                if (recutItem.meta.gridType === 'even') {
+                    const r = recutItem.meta.row;
+                    const c = recutItem.meta.col;
+                    const rows = parseInt(inputRows.value) || 1;
+                    const cols = parseInt(inputCols.value) || 1;
+
+                    // Đảm bảo boundaries được phân phối
+                    if (colsX.length === 0 && rowsY.length === 0) {
+                        resetGridToEven();
+                    }
+
+                    const boundariesX = [0, ...colsX, width];
+                    const boundariesY = [0, ...rowsY, height];
+
+                    const x1 = boundariesX[c];
+                    const x2 = boundariesX[c + 1];
+                    const y1 = boundariesY[r];
+                    const y2 = boundariesY[r + 1];
+
+                    const cellW = x2 - x1;
+                    const cellH = y2 - y1;
+
+                    const leftOffset = (c === 0) ? (2 * offset) : offset;
+                    const rightOffset = (c === cols - 1) ? (2 * offset) : offset;
+                    const topOffset = (r === 0) ? (2 * offset) : offset;
+                    const bottomOffset = (r === rows - 1) ? (2 * offset) : offset;
+
+                    sx = x1 + leftOffset;
+                    sy = y1 + topOffset;
+                    cropW = cellW - leftOffset - rightOffset;
+                    cropH = cellH - topOffset - bottomOffset;
+                    
+                    targetW = recutItem.meta.targetW;
+                    targetH = recutItem.meta.targetH;
+                } else {
+                    // Cấu trúc Facebook lưới
+                    const type = recutItem.meta.gridType;
+                    let gridCells = [];
+                    if (type === 'fb-1d3v') {
+                        const midX = width * 0.5;
+                        const h1 = height * (1/3);
+                        const h2 = height * (2/3);
+                        const smallCropW = (width - midX) - 3 * offset;
+                        const smallCropH = h1 - 3 * offset;
+
+                        gridCells.push({ sx: 2*offset, sy: 2*offset, cropW: midX - 3*offset, cropH: height - 4*offset });
+                        gridCells.push({ sx: midX + offset, sy: 2*offset, cropW: smallCropW, cropH: smallCropH });
+                        gridCells.push({ sx: midX + offset, sy: h1 + offset + Math.floor(offset / 2), cropW: smallCropW, cropH: smallCropH });
+                        gridCells.push({ sx: midX + offset, sy: h2 + offset, cropW: smallCropW, cropH: smallCropH });
+                    } else if (type === 'fb-1n3v') {
+                        const midY = height * 0.5;
+                        const w1 = width * (1/3);
+                        const w2 = width * (2/3);
+                        const smallCropW = w1 - 3 * offset;
+                        const smallCropH = (height - midY) - 3 * offset;
+
+                        gridCells.push({ sx: 2*offset, sy: 2*offset, cropW: width - 4*offset, cropH: midY - 3*offset });
+                        gridCells.push({ sx: 2*offset, sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
+                        gridCells.push({ sx: w1 + offset + Math.floor(offset / 2), sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
+                        gridCells.push({ sx: w2 + offset, sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
+                    }
+
+                    const cell = gridCells[recutItem.meta.cellIndex];
+                    sx = cell.sx;
+                    sy = cell.sy;
+                    cropW = cell.cropW;
+                    cropH = cell.cropH;
+                    targetW = recutItem.meta.targetW;
+                    targetH = recutItem.meta.targetH;
+                }
+            } else {
+                // Box Mode
+                const box = selectionBoxes.find(b => b.id === recutItem.meta.boxId);
+                if (!box) {
+                    showToast("Không tìm thấy khung vẽ tương ứng!", "error");
+                    return;
+                }
+                sx = box.x + offset;
+                sy = box.y + offset;
+                cropW = box.w - (2 * offset);
+                cropH = box.h - (2 * offset);
+                targetW = recutItem.meta.targetW;
+                targetH = recutItem.meta.targetH;
+            }
+
+            if (cropW <= 0 || cropH <= 0) {
+                showToast("Kích thước cắt quá nhỏ. Hãy kéo rộng lưới/khung hoặc giảm xén viền!", "error");
+                return;
+            }
+
+            // Tiến hành cắt lại
+            const sliceCanvas = document.createElement('canvas');
+            const sliceCtx = sliceCanvas.getContext('2d');
+            sliceCanvas.width = targetW;
+            sliceCanvas.height = targetH;
+            
+            if (targetW === cropW && targetH === cropH) {
+                sliceCtx.imageSmoothingEnabled = false;
+            } else {
+                sliceCtx.imageSmoothingEnabled = true;
+                sliceCtx.imageSmoothingQuality = 'high';
+            }
+            sliceCtx.clearRect(0, 0, targetW, targetH);
+
+            if (exportSharpness !== 'off') {
+                sliceCtx.filter = `url(#sharpen-${exportSharpness})`;
+            } else {
+                sliceCtx.filter = 'none';
+            }
+
+            sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+            sliceCtx.filter = 'none';
+
+            // Vẽ Watermark nếu bật
+            const isWatermarkEnabled = switchWatermark && switchWatermark.checked;
+            if (isWatermarkEnabled) {
+                const type = selectWatermarkType ? selectWatermarkType.value : 'text';
+                const position = selectWatermarkPosition ? selectWatermarkPosition.value : 'bottom-right';
+                const opacity = parseInt(inputWatermarkOpacity ? inputWatermarkOpacity.value : 50) || 50;
+                const size = parseInt(inputWatermarkSize ? inputWatermarkSize.value : 24) || 24;
+                const text = inputWatermarkText ? inputWatermarkText.value.trim() : '';
+                const scalePercent = parseInt(inputWatermarkImageScale ? inputWatermarkImageScale.value : 20) || 20;
+
+                if ((type === 'text' && text) || (type === 'image' && watermarkImageObj)) {
+                    const scaleFactor = targetW / cropW;
+                    const actualFontSize = Math.max(12, Math.round(size * scaleFactor));
+                    
+                    const cellConf = {
+                        type: type,
+                        text: text,
+                        fontSize: actualFontSize,
+                        imageObj: watermarkImageObj,
+                        scalePercent: scalePercent,
+                        cellX: 0,
+                        cellY: 0,
+                        cellW: targetW,
+                        cellH: targetH
+                    };
+                    drawWatermarkOnCtx(sliceCtx, position, opacity, cellConf);
+                }
+            }
+
+            const dataUrl = sliceCanvas.toDataURL('image/png');
+            
+            // Cập nhật dataUrl
+            recutItem.dataUrl = dataUrl;
+
+            // Cập nhật DOM
+            const resultItem = resultGrid.querySelector(`.result-item[data-id="${recutItem.id}"]`);
+            if (resultItem) {
+                const imgEl = resultItem.querySelector('.result-img');
+                if (imgEl) imgEl.src = dataUrl;
+                
+                // Cập nhật listener nút tải xuống riêng lẻ của card này
+                const btnDl = resultItem.querySelector('.result-item-btn-dl');
+                if (btnDl) {
+                    const newBtnDl = btnDl.cloneNode(true);
+                    newBtnDl.addEventListener('click', () => {
+                        const a = document.createElement('a');
+                        a.href = dataUrl;
+                        a.download = recutItem.name;
+                        a.click();
+                    });
+                    btnDl.parentNode.replaceChild(newBtnDl, btnDl);
+                }
+            }
+
+            // Cập nhật blob tương ứng
+            sliceCanvas.toBlob((blob) => {
+                const blobObj = slicedBlobs.find(item => item.id === recutItem.id);
+                if (blobObj) {
+                    blobObj.blob = blob;
+                } else {
+                    slicedBlobs.push({ id: recutItem.id, name: recutItem.name, blob: blob });
+                }
+            }, 'image/png');
+
+            showToast("Đã cắt lại slide thành công!", "success");
+
+            // Thoát chế độ recut
+            recutSlideId = null;
+            btnConfirmRecut.style.display = 'none';
+
+            // Vẽ lại live grid
+            drawLiveGrid();
+
+            // Quay về tab kết quả
+            switchTab('tab-slice-results');
+            switchMobileTab('result');
+        });
     }
 
     // --- Password Gate Security ---

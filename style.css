@@ -4271,3 +4271,46 @@ input[type="number"] {
     transform: translateY(-1px);
 }
 
+/* Nút Xác nhận cắt lại dạng Emerald */
+.btn-accent {
+    background: var(--success-gradient);
+    color: #000;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+.btn-accent:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    transform: translateY(-2px);
+}
+.btn-accent:active {
+    transform: translateY(0);
+}
+
+/* Nút Cắt lại góc trên bên trái của thẻ kết quả */
+.result-item-btn-edit {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: rgba(6, 182, 212, 0.85); /* Màu Cyan */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #000;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: var(--transition-smooth);
+    opacity: 0;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.result-item:hover .result-item-btn-edit {
+    opacity: 1;
+}
+.result-item-btn-edit:hover {
+    background: #00f2fe;
+    transform: scale(1.15);
+}
+
