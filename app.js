@@ -332,6 +332,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hideConfirm = () => {
             container.classList.remove('active');
+            if (container.keydownHandler) {
+                window.removeEventListener('keydown', container.keydownHandler);
+                container.keydownHandler = null;
+            }
         };
 
         const handleCancel = () => {
@@ -348,6 +352,24 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancel.onclick = handleCancel;
         btnOk.onclick = handleOk;
         container.querySelector('.custom-confirm-backdrop').onclick = handleCancel;
+
+        // Bàn phím Enter/Escape hỗ trợ cho confirm dialog
+        if (container.keydownHandler) {
+            window.removeEventListener('keydown', container.keydownHandler);
+        }
+        container.keydownHandler = (e) => {
+            if (!container.classList.contains('active')) return;
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleOk();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleCancel();
+            }
+        };
+        window.addEventListener('keydown', container.keydownHandler);
 
         // Force reflow and show
         container.offsetHeight;
@@ -1505,6 +1527,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = coords.x;
         const imgY = coords.y;
 
+        // Ưu tiên cursor pointer cho nút điều khiển recut
+        if (recutSlideId !== null) {
+            const recutAction = checkRecutButtonInteraction(imgX, imgY);
+            if (recutAction) {
+                previewCanvas.style.cursor = 'pointer';
+                return;
+            }
+        }
+
         if (slicingMode === 'grid') {
             if (dragTarget) {
                 let deltaX = imgX - lastDragMouseX;
@@ -1532,7 +1563,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 drawLiveGrid();
             } else {
                 const hoverTarget = findNearestGridLine(e.clientX, e.clientY);
-                if (hoverTarget) {
+                let isAllowed = true;
+                if (hoverTarget && recutSlideId !== null) {
+                    const recutItem = slicedImages.find(item => item.id === recutSlideId);
+                    if (recutItem && recutItem.meta && recutItem.meta.slicingMode === 'grid') {
+                        if (recutItem.meta.gridType === 'even') {
+                            const r = recutItem.meta.row;
+                            const c = recutItem.meta.col;
+                            isAllowed = false;
+                            if (hoverTarget.type === 'col') {
+                                if (hoverTarget.index === c - 1 || hoverTarget.index === c) isAllowed = true;
+                            } else if (hoverTarget.type === 'row') {
+                                if (hoverTarget.index === r - 1 || hoverTarget.index === r) isAllowed = true;
+                            }
+                        } else {
+                            isAllowed = false;
+                        }
+                    }
+                }
+                if (hoverTarget && isAllowed) {
                     previewCanvas.style.cursor = (hoverTarget.type === 'col') ? 'col-resize' : 'row-resize';
                 } else {
                     previewCanvas.style.cursor = 'default';
@@ -1580,7 +1629,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let newX = box.x + deltaX;
                     let newY = box.y + deltaY;
 
-                    // Áp dụng Smart Snap (Tạm tắt snap khi nhấn Alt để căn chỉnh chi tiết)
+                    // Áp dụng Smart Snap
                     const snapped = e.altKey ? { x: newX, y: newY } : applyMoveSnapping(newX, newY, box.w, box.h, dragBoxTarget.boxIndex);
                     newX = snapped.x;
                     newY = snapped.y;
@@ -1598,7 +1647,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         newH = newW / lockedRatio;
                     }
 
-                    // Áp dụng Smart Snap (Tạm tắt snap khi nhấn Alt)
+                    // Áp dụng Smart Snap
                     const snapped = e.altKey ? { w: newW, h: newH } : applyResizeSnapping(box.x, box.y, newW, newH, dragBoxTarget.boxIndex);
                     newW = snapped.w;
                     newH = snapped.h;
@@ -1698,6 +1747,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (slicingMode === 'grid') {
             const target = findNearestGridLine(e.clientX, e.clientY);
             if (target) {
+                if (recutSlideId !== null) {
+                    const recutItem = slicedImages.find(item => item.id === recutSlideId);
+                    if (recutItem && recutItem.meta && recutItem.meta.slicingMode === 'grid') {
+                        if (recutItem.meta.gridType === 'even') {
+                            const r = recutItem.meta.row;
+                            const c = recutItem.meta.col;
+                            let isAllowed = false;
+                            if (target.type === 'col') {
+                                if (target.index === c - 1 || target.index === c) isAllowed = true;
+                            } else if (target.type === 'row') {
+                                if (target.index === r - 1 || target.index === r) isAllowed = true;
+                            }
+                            if (!isAllowed) {
+                                showToast("Bạn chỉ có thể điều chỉnh ranh giới của ô đang cắt lại!", "info");
+                                return;
+                            }
+                        } else {
+                            showToast("Lưới Facebook có bố cục cố định, không thể kéo ranh giới!", "warning");
+                            return;
+                        }
+                    }
+                }
                 dragTarget = target;
             } else {
                 isPanning = true;
@@ -2099,10 +2170,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnToggleSidebar) btnToggleSidebar.click();
         }
 
-        // C or Enter to Slice
-        if ((e.key.toLowerCase() === 'c' || e.key === 'Enter') && !btnSlice.disabled) {
+        // C or Enter to Slice or Confirm Recut
+        if (e.key.toLowerCase() === 'c' || e.key === 'Enter') {
             e.preventDefault();
-            btnSlice.click();
+            if (recutSlideId !== null) {
+                showConfirm("Bạn có chắc chắn muốn lưu thay đổi cắt lại cho slide này?", () => {
+                    handleConfirmRecut();
+                });
+                return;
+            }
+            if (!btnSlice.disabled) {
+                btnSlice.click();
+            }
         }
 
         // Z to Download ZIP (blocked during recut)
@@ -2843,12 +2922,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 const y2 = coords.sy + coords.cropH;
 
                 if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
+                    const centerX = x1 + coords.cropW / 2;
+                    const centerY = y1 + coords.cropH / 2;
+
                     const btnRad = 16 / zoomScale;
-                    const btnY = y1 - 26 / zoomScale; // Đặt nút bên ngoài, phía trên ô crop
-                    const confirmX = x2 - 20 / zoomScale;
-                    const cancelX = x2 - 56 / zoomScale;
+                    const btnY = centerY - 6 / zoomScale;
+                    const confirmX = centerX + 26 / zoomScale;
+                    const cancelX = centerX - 26 / zoomScale;
 
                     ctx.save();
+                    
+                    // Vẽ nền Pill
+                    const pillW = 120 / zoomScale;
+                    const pillH = 56 / zoomScale;
+                    const pillX = centerX - pillW / 2;
+                    const pillY = centerY - pillH / 2;
+                    const pillRad = 10 / zoomScale;
+
+                    ctx.beginPath();
+                    ctx.moveTo(pillX + pillRad, pillY);
+                    ctx.lineTo(pillX + pillW - pillRad, pillY);
+                    ctx.quadraticCurveTo(pillX + pillW, pillY, pillX + pillW, pillY + pillRad);
+                    ctx.lineTo(pillX + pillW, pillY + pillH - pillRad);
+                    ctx.quadraticCurveTo(pillX + pillW, pillY + pillH, pillX + pillW - pillRad, pillY + pillH);
+                    ctx.lineTo(pillX + pillRad, pillY + pillH);
+                    ctx.quadraticCurveTo(pillX, pillY + pillH, pillX, pillY + pillH - pillRad);
+                    ctx.lineTo(pillX, pillY + pillRad);
+                    ctx.quadraticCurveTo(pillX, pillY, pillX + pillRad, pillY);
+                    ctx.closePath();
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.95)'; // Slate 900 mờ sang trọng
+                    ctx.fill();
+                    ctx.lineWidth = 1.5 / zoomScale;
+                    ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)'; // Emerald border nhạt
+                    ctx.stroke();
+
+                    // Shadow cho các nút tròn bên trong
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
                     ctx.shadowBlur = 6 / zoomScale;
                     ctx.shadowOffsetX = 0;
@@ -2859,7 +2967,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
                     ctx.fillStyle = '#ef4444';
                     ctx.fill();
-                    ctx.lineWidth = 2 / zoomScale;
+                    ctx.lineWidth = 1.5 / zoomScale;
                     ctx.strokeStyle = '#ffffff';
                     ctx.stroke();
 
@@ -2868,40 +2976,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
                     ctx.fillStyle = '#10b981';
                     ctx.fill();
-                    ctx.lineWidth = 2 / zoomScale;
+                    ctx.lineWidth = 1.5 / zoomScale;
                     ctx.strokeStyle = '#ffffff';
                     ctx.stroke();
 
-                    // Tắt shadow để vẽ chữ
+                    // Tắt shadow để vẽ icon paths
                     ctx.shadowBlur = 0;
                     ctx.shadowOffsetX = 0;
                     ctx.shadowOffsetY = 0;
 
-                    // Vẽ chữ '✕'
+                    // Vẽ dấu nhân '✕' bằng nét vẽ (path) đẹp mắt
                     ctx.beginPath();
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = `bold ${Math.round(14 / zoomScale)}px var(--font-sans), sans-serif`;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2.5 / zoomScale;
+                    ctx.lineCap = 'round';
+                    const crossSz = 4.5 / zoomScale;
+                    ctx.moveTo(cancelX - crossSz, btnY - crossSz);
+                    ctx.lineTo(cancelX + crossSz, btnY + crossSz);
+                    ctx.moveTo(cancelX + crossSz, btnY - crossSz);
+                    ctx.lineTo(cancelX - crossSz, btnY + crossSz);
+                    ctx.stroke();
+
+                    // Vẽ dấu tích '✓' bằng nét vẽ (path) chuẩn FontAwesome
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2.5 / zoomScale;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.moveTo(confirmX - 5.5 / zoomScale, btnY - 0.5 / zoomScale);
+                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 3.5 / zoomScale);
+                    ctx.lineTo(confirmX + 5.5 / zoomScale, btnY - 3.5 / zoomScale);
+                    ctx.stroke();
+
+                    // Vẽ label chữ bên dưới
+                    ctx.fillStyle = 'rgba(243, 244, 246, 0.9)'; // gray-100
+                    ctx.font = `bold ${Math.round(9 / zoomScale)}px var(--font-sans), sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText('✕', cancelX, btnY + 0.5 / zoomScale);
-
-                    // Vẽ chữ '✓'
-                    ctx.beginPath();
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = `bold ${Math.round(15 / zoomScale)}px var(--font-sans), sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('✓', confirmX, btnY + 0.5 / zoomScale);
-
-                    // Vẽ label nhỏ dưới nút
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-                    ctx.font = `${Math.round(9 / zoomScale)}px var(--font-sans), sans-serif`;
                     ctx.fillText('Hủy', cancelX, btnY + btnRad + 10 / zoomScale);
                     ctx.fillText('Lưu', confirmX, btnY + btnRad + 10 / zoomScale);
 
                     ctx.restore();
 
-                    // Vẽ banner thông báo recut ở trên ô crop
+                    // Vẽ banner thông báo recut
                     const recutItemForBanner = slicedImages.find(item => item.id === recutSlideId);
                     if (recutItemForBanner) {
                         const slideNumber = slicedImages.indexOf(recutItemForBanner) + 1;
@@ -2915,7 +3032,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         const bannerH = bannerFontSize + bannerPadY * 2;
                         const bannerW = textWidth + bannerPadX * 2;
                         const bannerX = (x1 + x2) / 2 - bannerW / 2;
-                        const bannerY = y1 - 26 / zoomScale - btnRad - 16 / zoomScale - bannerH;
+
+                        let bannerY = pillY - bannerH - 8 / zoomScale;
+                        if (bannerY < 4 / zoomScale) {
+                            bannerY = pillY + pillH + 8 / zoomScale;
+                        }
 
                         // Background pill
                         ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
@@ -5638,12 +5759,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const coords = getRecutSlideCoords(recutItem);
         if (!coords) return null;
 
-        const rx = coords.sx + coords.cropW; // Rìa phải của ô xén viền
+        const centerX = coords.sx + coords.cropW / 2;
+        const centerY = coords.sy + coords.cropH / 2;
 
         const btnRad = 16 / zoomScale;
-        const btnY = coords.sy - 26 / zoomScale; // Phía trên ô crop (khớp với drawLiveGrid)
-        const confirmX = rx - 20 / zoomScale;
-        const cancelX = rx - 56 / zoomScale;
+        const btnY = centerY - 6 / zoomScale;
+        const confirmX = centerX + 26 / zoomScale;
+        const cancelX = centerX - 26 / zoomScale;
 
         const distConfirm = Math.hypot(imgX - confirmX, imgY - btnY);
         const distCancel = Math.hypot(imgX - cancelX, imgY - btnY);
