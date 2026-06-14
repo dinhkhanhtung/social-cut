@@ -188,14 +188,30 @@
                     </div>
 
                     <!-- Global Slider (Applies to both modes) -->
+                    <!-- Global Offset Spinner & Grid Color Selector -->
                     <div class="control-item" style="margin-bottom: 12px;">
                         <div class="label-with-value">
-                            <label for="input-offset">
+                            <label for="input-offset-number">
                                 <i class="fa-solid fa-border-none"></i> Xén viền ô (Offset Padding)
                             </label>
                         </div>
-                        <div class="offset-control-group">
-                            <input type="range" id="input-offset" min="0" max="50" value="0" step="1" class="slider">
+                        <div class="offset-control-group" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px;">
+                            <!-- Grid color options -->
+                            <div class="grid-color-picker" style="display: flex; align-items: center; gap: 8px;">
+                                <span class="color-picker-label" style="font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-palette"></i> Màu:
+                                </span>
+                                <div class="color-options" style="display: flex; gap: 6px;">
+                                    <span class="color-dot active" data-color="#06b6d4" style="background-color: #06b6d4; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Xanh Cyan"></span>
+                                    <span class="color-dot" data-color="#ef4444" style="background-color: #ef4444; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Đỏ"></span>
+                                    <span class="color-dot" data-color="#eab308" style="background-color: #eab308; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Vàng"></span>
+                                    <span class="color-dot" data-color="#10b981" style="background-color: #10b981; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Xanh lá"></span>
+                                    <span class="color-dot" data-color="#a855f7" style="background-color: #a855f7; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Tím"></span>
+                                    <span class="color-dot" data-color="#ffffff" style="background-color: #ffffff; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Trắng"></span>
+                                    <span class="color-dot" data-color="#000000" style="background-color: #000000; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid #374151; transition: all 0.2s;" title="Đen"></span>
+                                </div>
+                            </div>
+                            <!-- Offset spinner -->
                             <div class="input-number-group offset-spinner">
                                 <button type="button" class="btn-spinner btn-minus" data-target="input-offset-number"><i class="fa-solid fa-minus"></i></button>
                                 <input type="number" id="input-offset-number" min="0" max="50" value="0">

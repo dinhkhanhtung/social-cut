@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const inputRows = document.getElementById('input-rows');
     const inputCols = document.getElementById('input-cols');
-    const inputOffset = document.getElementById('input-offset');
-    const offsetNumberVal = document.getElementById('input-offset-number');
+    const inputOffset = document.getElementById('input-offset-number');
+    const offsetNumberVal = inputOffset;
     
     const selectRatio = document.getElementById('select-ratio');
     const ratioControlItem = document.getElementById('ratio-control-item');
@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let slicingMode = 'grid'; // 'grid' or 'box'
     let gridType = 'even';    // 'even' | 'fb-1d3v' | 'fb-1n3v'
+    let gridLineColor = '#06b6d4'; // Màu sắc hiển thị của lưới
     let currentSlideIndex = 0; // Chỉ số slide hiện tại cho Mobile Preview
 
     // --- Mode 1: Grid Mode Variables ---
@@ -790,6 +791,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetGridToEven();
                 handleParamsChange();
                 showToast("Đã đặt lại lưới chia đều!", "success");
+            }
+        });
+    }
+
+    // --- Setup Grid Color Picker Event Listeners ---
+    document.querySelectorAll('.color-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            const chosenColor = dot.getAttribute('data-color');
+            if (chosenColor) {
+                gridLineColor = chosenColor;
+                
+                // Update active class UI on color dots
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+                
+                // Redraw grid
+                if (currentImage) {
+                    drawLiveGrid();
+                }
+            }
+        });
+    });
+
+    function updateColorPickerUI(color) {
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            if (dot.getAttribute('data-color') === color) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
             }
         });
     }
@@ -2162,8 +2192,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Vẽ các nét đứt phân cách cyan gốc (chỉ hiển thị trong phạm vi ảnh)
-            ctx.strokeStyle = '#06b6d4';
+            // Vẽ các nét đứt phân cách gốc (chỉ hiển thị trong phạm vi ảnh)
+            ctx.strokeStyle = gridLineColor;
             ctx.lineWidth = Math.max(2, Math.floor(width / 600));
             ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
             
@@ -2247,7 +2277,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.fillRect(x + w - offset, y + offset, offset, h - 2 * offset);
                 }
 
-                ctx.strokeStyle = isSelected ? '#eab308' : '#06b6d4';
+                ctx.strokeStyle = isSelected ? '#eab308' : gridLineColor;
                 ctx.lineWidth = isSelected ? Math.max(3, Math.floor(width / 500)) : Math.max(2, Math.floor(width / 700));
                 ctx.setLineDash(isSelected ? [8, 4] : []);
                 ctx.strokeRect(x, y, w, h);
@@ -2267,7 +2297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.beginPath();
                 ctx.arc(x + badgeRadius + 6, y + badgeRadius + 6, badgeRadius, 0, 2 * Math.PI);
                 ctx.fill();
-                ctx.strokeStyle = isSelected ? '#0b0f19' : '#06b6d4';
+                ctx.strokeStyle = isSelected ? '#0b0f19' : gridLineColor;
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
@@ -4290,6 +4320,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 switch_snap: switchSnap ? switchSnap.checked : true,
                 cols_x: colsX,
                 rows_y: rowsY,
+                grid_line_color: gridLineColor,
                 image_url: publicUrl
             };
 
@@ -4484,6 +4515,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputOffset.value = proj.offset_val || 0;
                 if (offsetNumberVal) offsetNumberVal.value = proj.offset_val || 0;
             }
+            gridLineColor = proj.grid_line_color || '#06b6d4';
+            updateColorPickerUI(gridLineColor);
             if (switchUniform) {
                 switchUniform.checked = proj.switch_uniform;
                 isUniformSize = proj.switch_uniform;
@@ -4617,6 +4650,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     switchSnap: proj.switch_snap,
                     colsX: proj.cols_x,
                     rowsY: proj.rows_y,
+                    gridLineColor: proj.grid_line_color || '#06b6d4',
                     imageBase64: base64Data
                 };
 
@@ -4690,6 +4724,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     switch_snap: data.switchSnap !== undefined ? data.switchSnap : true,
                     cols_x: data.colsX || [],
                     rows_y: data.rowsY || [],
+                    grid_line_color: data.gridLineColor || '#06b6d4',
                     image_url: publicUrl
                 };
 
