@@ -7,15 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileName = document.getElementById('file-name');
     const fileSize = document.getElementById('file-size');
     const btnRemoveFile = document.getElementById('btn-remove-file');
-    const preCropToolsDiv = document.getElementById('pre-crop-tools');
-    const btnPreCrop = document.getElementById('btn-pre-crop');
-    const btnResetImage = document.getElementById('btn-reset-image');
-    
-    const floatingCanvasActions = document.getElementById('floating-canvas-actions');
-    const switchNormalize = document.getElementById('switch-normalize');
-    const selectNormalizeBg = document.getElementById('select-normalize-bg');
-    const btnFloatingConfirm = document.getElementById('btn-floating-confirm');
-    const btnFloatingCancel = document.getElementById('btn-floating-cancel');
     
     const modeGridBtn = document.getElementById('mode-grid');
     const modeBoxBtn = document.getElementById('mode-box');
@@ -112,121 +103,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global State
     let currentImage = null;
-    let originalImage = null;
-    let isPreCropping = false;
-    let preCropBox = null;
-    let dragPreCropTarget = null;
     let currentOriginalFile = null;
     let slicedImages = []; // Array of { name, dataUrl }
     let slicedBlobs = [];  // Array of { name, blob }
     let recutSlideId = null; // ID of the slice being recut (single edit mode)
-    let recutButtonsOffset = { x: 0, y: 0 }; // Offset of the recut confirm/cancel buttons relative to center
-    let isDraggingRecutButtons = false;
-    let dragRecutButtonsStart = { x: 0, y: 0, startOffset: { x: 0, y: 0 } };
     
-    // --- Update state of sidebar controls when recutting single slide ---
-    function updateSidebarControlsState() {
+    // --- Helper to toggle Sidebar Controls when Recutting ---
+    const updateSidebarControlsState = () => {
         const isRecutting = (recutSlideId !== null);
-        const isDisabled = isRecutting || isPreCropping;
+        
+        // 1. Chế độ cắt
+        if (modeGridBtn) modeGridBtn.disabled = isRecutting;
+        if (modeBoxBtn) modeBoxBtn.disabled = isRecutting;
+        
+        const modeSelector = document.querySelector('.mode-selector');
+        if (modeSelector) {
+            if (isRecutting) modeSelector.classList.add('disabled-controls');
+            else modeSelector.classList.remove('disabled-controls');
+        }
 
-        // Sidebar parameter controls
-        const sidebarControls = [
-            inputRows, inputCols, inputOffset, selectRatio, selectGridType,
-            switchUniform, switchSnap, btnAutoDetect, btnGenBoxes, btnClearBoxes, fileInput,
-            btnRemoveFile, btnImportProject, btnPcImportProject,
-            selectExportResolution, selectExportSharpness
-        ];
-
-        sidebarControls.forEach(el => {
+        // 2. Input lưới
+        if (inputRows) inputRows.disabled = isRecutting;
+        if (inputCols) inputCols.disabled = isRecutting;
+        if (inputOffset) inputOffset.disabled = isRecutting;
+        if (selectRatio) selectRatio.disabled = isRecutting;
+        if (selectGridType) selectGridType.disabled = isRecutting;
+        
+        // Block thông số lưới
+        const gridEvenParams = document.getElementById('grid-even-parameters');
+        const gridTypeControl = document.getElementById('grid-type-control-item');
+        const ratioControl = document.getElementById('ratio-control-item');
+        
+        [gridEvenParams, gridTypeControl, ratioControl].forEach(el => {
             if (el) {
-                el.disabled = isDisabled;
-                el.style.opacity = isDisabled ? '0.5' : '';
-                el.style.pointerEvents = isDisabled ? 'none' : '';
+                if (isRecutting) el.classList.add('disabled-controls');
+                else el.classList.remove('disabled-controls');
             }
         });
 
-        // Mode switch buttons - add/remove visual disabled class
-        [modeGridBtn, modeBoxBtn].forEach(btn => {
-            if (btn) {
-                if (isDisabled) {
-                    btn.classList.add('disabled-recut');
-                } else {
-                    btn.classList.remove('disabled-recut');
-                }
-            }
-        });
-
-        // Result action buttons
-        const resultActionBtns = [btnDownloadZip, btnClearResults, btnRenumberResults, btnMobilePreview];
-        resultActionBtns.forEach(btn => {
-            if (btn) {
-                btn.disabled = isDisabled;
-                if (isDisabled) {
-                    btn.classList.add('disabled-recut');
-                } else {
-                    btn.classList.remove('disabled-recut');
-                }
-            }
-        });
-
-        // Tab result button
-        if (tabBtnResult) {
-            tabBtnResult.disabled = isDisabled;
-            if (isDisabled) {
-                tabBtnResult.classList.add('disabled-recut');
-            } else {
-                tabBtnResult.classList.remove('disabled-recut');
-            }
+        // 3. Nút auto detect, tự động tạo box, xóa box
+        if (btnAutoDetect) btnAutoDetect.disabled = isRecutting;
+        if (btnGenBoxes) btnGenBoxes.disabled = isRecutting;
+        if (btnClearBoxes) btnClearBoxes.disabled = isRecutting;
+        
+        const boxActions = document.querySelector('.box-actions');
+        if (boxActions) {
+            if (isRecutting) boxActions.classList.add('disabled-controls');
+            else boxActions.classList.remove('disabled-controls');
+        }
+        if (btnAutoDetect) {
+            if (isRecutting) btnAutoDetect.classList.add('disabled-controls');
+            else btnAutoDetect.classList.remove('disabled-controls');
         }
 
-        // Dropzone
+        // 4. File input & remove button
+        if (fileInput) fileInput.disabled = isRecutting;
+        if (btnRemoveFile) btnRemoveFile.disabled = isRecutting;
         if (dropzone) {
-            if (isDisabled) {
-                dropzone.classList.add('disabled-recut');
-            } else {
-                dropzone.classList.remove('disabled-recut');
-            }
+            if (isRecutting) dropzone.classList.add('disabled-controls');
+            else dropzone.classList.remove('disabled-controls');
         }
 
-        // Action buttons
-        if (btnSlice) {
-            btnSlice.disabled = isDisabled || !currentImage;
-        }
-
-        // Result items - dim non-target, highlight target
-        if (isRecutting) {
-            disableResultItemActions(recutSlideId);
-        } else if (isPreCropping) {
-            disableResultItemActions(-1);
-        } else {
-            enableResultItemActions();
-        }
-    }
-
-    // --- Disable/Enable result item buttons during recut ---
-    function disableResultItemActions(activeRecutId) {
-        if (!resultGrid) return;
-        const items = resultGrid.querySelectorAll('.result-item');
-        items.forEach(item => {
-            const itemId = parseInt(item.getAttribute('data-id'));
-            if (itemId === activeRecutId) {
-                item.classList.add('recut-active');
-                item.classList.remove('recut-dimmed');
-            } else {
-                item.classList.add('recut-dimmed');
-                item.classList.remove('recut-active');
+        // 5. Nhập dự án
+        if (btnImportProject) btnImportProject.disabled = isRecutting;
+        if (btnPcImportProject) btnPcImportProject.disabled = isRecutting;
+        
+        const importControls = [
+            document.getElementById('btn-import-project'),
+            document.getElementById('btn-pc-import-project')
+        ];
+        importControls.forEach(btn => {
+            if (btn) {
+                if (isRecutting) btn.classList.add('disabled-controls');
+                else btn.classList.remove('disabled-controls');
             }
         });
-    }
-
-    function enableResultItemActions() {
-        if (!resultGrid) return;
-        const items = resultGrid.querySelectorAll('.result-item');
-        items.forEach(item => {
-            item.classList.remove('recut-dimmed', 'recut-active');
-        });
-    }
-
+    };
+    
     let slicingMode = 'grid'; // 'grid' or 'box'
     let gridType = 'even';    // 'even' | 'fb-1d3v' | 'fb-1n3v'
     let gridLineColor = '#06b6d4'; // Màu sắc hiển thị của lưới
@@ -242,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mode 2: Box Mode Variables ---
     let selectionBoxes = []; // Array of { id, x, y, w, h } in original image space
-    let currentGridCells = []; // Danh sách các ô grid vẽ thực tế trên canvas để đồng bộ vị trí nút nổi
     let nextBoxId = 1;
     let isDrawingNewBox = false;
     let newBoxStart = { x: 0, y: 0 };
@@ -357,10 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hideConfirm = () => {
             container.classList.remove('active');
-            if (container.keydownHandler) {
-                window.removeEventListener('keydown', container.keydownHandler);
-                container.keydownHandler = null;
-            }
         };
 
         const handleCancel = () => {
@@ -377,24 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancel.onclick = handleCancel;
         btnOk.onclick = handleOk;
         container.querySelector('.custom-confirm-backdrop').onclick = handleCancel;
-
-        // Bàn phím Enter/Escape hỗ trợ cho confirm dialog
-        if (container.keydownHandler) {
-            window.removeEventListener('keydown', container.keydownHandler);
-        }
-        container.keydownHandler = (e) => {
-            if (!container.classList.contains('active')) return;
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOk();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                handleCancel();
-            }
-        };
-        window.addEventListener('keydown', container.keydownHandler);
 
         // Force reflow and show
         container.offsetHeight;
@@ -419,10 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     dropzone.addEventListener('drop', (e) => {
-        if (recutSlideId !== null) {
-            showToast("Không thể tải ảnh mới khi đang cắt lại slide!", "warning");
-            return;
-        }
         const dt = e.dataTransfer;
         const files = dt.files;
         if (files.length > 0) {
@@ -434,11 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     fileInput.addEventListener('change', (e) => {
-        if (recutSlideId !== null) {
-            showToast("Không thể tải ảnh mới khi đang cắt lại slide!", "warning");
-            fileInput.value = '';
-            return;
-        }
         if (fileInput.files.length > 0) {
             handleImageSelection(fileInput.files[0]);
         }
@@ -471,63 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation(); // Prevent opening file chooser
         resetApp();
     });
-
-    if (btnPreCrop) {
-        btnPreCrop.addEventListener('click', () => {
-            if (!currentImage) return;
-            
-            // Hủy recut nếu đang bật
-            recutSlideId = null;
-            recutButtonsOffset = { x: 0, y: 0 };
-            
-            isPreCropping = true;
-            preCropBox = {
-                x: 0,
-                y: 0,
-                w: currentImage.naturalWidth,
-                h: currentImage.naturalHeight
-            };
-            
-            updateSidebarControlsState();
-            drawLiveGrid();
-        });
-    }
-
-    if (btnResetImage) {
-        btnResetImage.addEventListener('click', () => {
-            resetToOriginalImage();
-        });
-    }
-
-    if (btnFloatingConfirm) {
-        btnFloatingConfirm.addEventListener('click', () => {
-            if (isPreCropping) {
-                confirmPreCrop();
-            } else if (recutSlideId !== null) {
-                showConfirm("Bạn có chắc chắn muốn lưu thay đổi cắt lại cho slide này?", () => {
-                    handleConfirmRecut();
-                });
-            }
-        });
-    }
-
-    if (btnFloatingCancel) {
-        btnFloatingCancel.addEventListener('click', () => {
-            if (isPreCropping) {
-                cancelPreCrop();
-            } else if (recutSlideId !== null) {
-                handleCancelRecut();
-            }
-        });
-    }
-
-    if (switchNormalize && selectNormalizeBg) {
-        switchNormalize.addEventListener('change', () => {
-            selectNormalizeBg.disabled = !switchNormalize.checked;
-            selectNormalizeBg.style.opacity = switchNormalize.checked ? '1' : '0.5';
-            selectNormalizeBg.style.pointerEvents = switchNormalize.checked ? 'auto' : 'none';
-        });
-    }
 
     // --- Watermark Collapsible & Controls Event Listeners ---
     if (headerWatermark && contentWatermark && panelWatermark) {
@@ -712,7 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     modeGridBtn.addEventListener('click', () => {
-        if (recutSlideId !== null) return;
         setSlicingMode('grid');
         if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
             document.getElementById('sidebar').classList.add('active-params');
@@ -725,7 +588,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     modeBoxBtn.addEventListener('click', () => {
-        if (recutSlideId !== null) return;
         setSlicingMode('box');
         if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
             document.getElementById('sidebar').classList.add('active-params');
@@ -1093,7 +955,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Parameter Control Events ---
     const handleParamsChange = (e) => {
         if (slicingMode === 'grid' && e && (e.target.id === 'input-rows' || e.target.id === 'input-cols')) {
-            if (recutSlideId !== null) return;
             if (isCustomGrid) {
                 updateGridParamsSmart(e.target.id === 'input-rows' ? 'rows' : 'cols');
             } else {
@@ -1608,150 +1469,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = coords.x;
         const imgY = coords.y;
 
-        // Xử lý kéo cho Pre-crop
-        if (isPreCropping && dragPreCropTarget) {
-            const deltaX = imgX - dragPreCropTarget.startX;
-            const deltaY = imgY - dragPreCropTarget.startY;
-            const orig = dragPreCropTarget.originalBox;
-            const imgW = currentImage.naturalWidth;
-            const imgH = currentImage.naturalHeight;
-
-            if (dragPreCropTarget.type === 'move') {
-                let newX = orig.x + deltaX;
-                let newY = orig.y + deltaY;
-
-                // Giới hạn trong ảnh
-                newX = Math.max(0, Math.min(imgW - orig.w, newX));
-                newY = Math.max(0, Math.min(imgH - orig.h, newY));
-
-                preCropBox.x = newX;
-                preCropBox.y = newY;
-            } else if (dragPreCropTarget.type === 'handle') {
-                const name = dragPreCropTarget.name;
-                const minSz = 20; // Kích thước xén tối thiểu
-
-                if (name === 'tl') {
-                    let newX = Math.max(0, Math.min(orig.x + orig.w - minSz, orig.x + deltaX));
-                    let newY = Math.max(0, Math.min(orig.y + orig.h - minSz, orig.y + deltaY));
-                    preCropBox.x = newX;
-                    preCropBox.y = newY;
-                    preCropBox.w = orig.x + orig.w - newX;
-                    preCropBox.h = orig.y + orig.h - newY;
-                } else if (name === 'tr') {
-                    let newY = Math.max(0, Math.min(orig.y + orig.h - minSz, orig.y + deltaY));
-                    let newW = Math.max(minSz, Math.min(imgW - orig.x, orig.w + deltaX));
-                    preCropBox.y = newY;
-                    preCropBox.w = newW;
-                    preCropBox.h = orig.y + orig.h - newY;
-                } else if (name === 'bl') {
-                    let newX = Math.max(0, Math.min(orig.x + orig.w - minSz, orig.x + deltaX));
-                    let newH = Math.max(minSz, Math.min(imgH - orig.y, orig.h + deltaY));
-                    preCropBox.x = newX;
-                    preCropBox.w = orig.x + orig.w - newX;
-                    preCropBox.h = newH;
-                } else if (name === 'br') {
-                    preCropBox.w = Math.max(minSz, Math.min(imgW - orig.x, orig.w + deltaX));
-                    preCropBox.h = Math.max(minSz, Math.min(imgH - orig.y, orig.h + deltaY));
-                } else if (name === 't') {
-                    let newY = Math.max(0, Math.min(orig.y + orig.h - minSz, orig.y + deltaY));
-                    preCropBox.y = newY;
-                    preCropBox.h = orig.y + orig.h - newY;
-                } else if (name === 'b') {
-                    preCropBox.h = Math.max(minSz, Math.min(imgH - orig.y, orig.h + deltaY));
-                } else if (name === 'l') {
-                    let newX = Math.max(0, Math.min(orig.x + orig.w - minSz, orig.x + deltaX));
-                    preCropBox.x = newX;
-                    preCropBox.w = orig.x + orig.w - newX;
-                } else if (name === 'r') {
-                    preCropBox.w = Math.max(minSz, Math.min(imgW - orig.x, orig.w + deltaX));
-                }
-            }
-
-            drawLiveGrid();
-            lastDragMouseX = imgX;
-            lastDragMouseY = imgY;
-            return;
-        }
-
-        // Cập nhật cursor khi hover các phần tử Pre-crop
-        if (isPreCropping && preCropBox && !dragPreCropTarget) {
-            const interaction = checkPreCropInteraction(imgX, imgY, coords.scaleX, coords.scaleY);
-            if (interaction) {
-                if (interaction.type === 'button') {
-                    previewCanvas.style.cursor = 'pointer';
-                } else if (interaction.type === 'handle') {
-                    const name = interaction.name;
-                    if (name === 'tl' || name === 'br') previewCanvas.style.cursor = 'nwse-resize';
-                    else if (name === 'tr' || name === 'bl') previewCanvas.style.cursor = 'nesw-resize';
-                    else if (name === 't' || name === 'b') previewCanvas.style.cursor = 'ns-resize';
-                    else if (name === 'l' || name === 'r') previewCanvas.style.cursor = 'ew-resize';
-                } else if (interaction.type === 'move') {
-                    previewCanvas.style.cursor = 'move';
-                }
-            } else {
-                previewCanvas.style.cursor = 'default';
-            }
-            lastDragMouseX = imgX;
-            lastDragMouseY = imgY;
-            return;
-        }
-
-        // Xử lý kéo nắm di chuyển cụm nút recut
-        if (isDraggingRecutButtons && recutSlideId !== null) {
-            const recutItem = slicedImages.find(item => item.id === recutSlideId);
-            if (recutItem) {
-                const recutCoords = getRecutSlideCoords(recutItem);
-                if (recutCoords) {
-                    const deltaX = imgX - dragRecutButtonsStart.x;
-                    const deltaY = imgY - dragRecutButtonsStart.y;
-                    let newOffsetX = dragRecutButtonsStart.startOffset.x + deltaX;
-                    let newOffsetY = dragRecutButtonsStart.startOffset.y + deltaY;
-
-                    const paddingX = 54 / zoomScale;
-                    const paddingY = 24 / zoomScale;
-
-                    const limitX = Math.max(0, recutCoords.cropW / 2 - paddingX);
-                    const limitY = Math.max(0, recutCoords.cropH / 2 - paddingY);
-
-                    newOffsetX = Math.max(-limitX, Math.min(limitX, newOffsetX));
-                    newOffsetY = Math.max(-limitY, Math.min(limitY, newOffsetY));
-
-                    recutButtonsOffset.x = newOffsetX;
-                    recutButtonsOffset.y = newOffsetY;
-                    
-                    drawLiveGrid();
-                    previewCanvas.style.cursor = 'move';
-                }
-            }
-            lastDragMouseX = imgX;
-            lastDragMouseY = imgY;
-            return;
-        }
-
-        // Ưu tiên cursor cho cụm nút recut (pointer khi hover nút, move khi hover khoảng giữa)
-        if (recutSlideId !== null) {
-            const recutAction = checkRecutButtonInteraction(imgX, imgY);
-            if (recutAction) {
-                previewCanvas.style.cursor = 'pointer';
-                return;
-            }
-
-            // Hover vào vùng kéo cụm nút
-            const recutItem = slicedImages.find(item => item.id === recutSlideId);
-            if (recutItem) {
-                const recutCoords = getRecutSlideCoords(recutItem);
-                if (recutCoords) {
-                    const cx = recutCoords.sx + recutCoords.cropW / 2 + recutButtonsOffset.x;
-                    const cy = recutCoords.sy + recutCoords.cropH / 2 + recutButtonsOffset.y;
-                    const distToCenter = Math.hypot(imgX - cx, imgY - cy);
-                    if (distToCenter <= 60 / zoomScale) {
-                        previewCanvas.style.cursor = 'move';
-                        return;
-                    }
-                }
-            }
-        }
-
         if (slicingMode === 'grid') {
             if (dragTarget) {
                 let deltaX = imgX - lastDragMouseX;
@@ -1763,98 +1480,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (dragTarget.type === 'col') {
                     const idx = dragTarget.index;
-                    let newVal = colsX[idx] + deltaX;
-
-                    // Giới hạn trong biên ảnh
-                    newVal = Math.max(5, Math.min(currentImage.naturalWidth - 5, newVal));
-
-                    // Mảng map kèm index ban đầu để sort ổn định
-                    let mapped = colsX.map((val, i) => ({ val: (i === idx ? newVal : val), original: i === idx }));
-                    mapped.sort((a, b) => a.val - b.val);
-
-                    // Đảm bảo khoảng cách tối thiểu là 5px
-                    for (let i = 0; i < mapped.length - 1; i++) {
-                        if (mapped[i + 1].val - mapped[i].val < 5) {
-                            if (mapped[i].original) {
-                                mapped[i + 1].val = mapped[i].val + 5;
-                            } else if (mapped[i + 1].original) {
-                                mapped[i].val = mapped[i + 1].val - 5;
-                            } else {
-                                mapped[i + 1].val = mapped[i].val + 5;
-                            }
-                        }
-                    }
-
-                    // Đảm bảo không vượt biên ảnh
-                    if (mapped[mapped.length - 1].val > currentImage.naturalWidth - 5) {
-                        mapped[mapped.length - 1].val = currentImage.naturalWidth - 5;
-                        for (let i = mapped.length - 1; i > 0; i--) {
-                            if (mapped[i].val - mapped[i - 1].val < 5) {
-                                mapped[i - 1].val = mapped[i].val - 5;
-                            }
-                        }
-                    }
-                    if (mapped[0].val < 5) {
-                        mapped[0].val = 5;
-                        for (let i = 0; i < mapped.length - 1; i++) {
-                            if (mapped[i + 1].val - mapped[i].val < 5) {
-                                mapped[i + 1].val = mapped[i].val + 5;
-                            }
-                        }
-                    }
-
-                    colsX = mapped.map(item => item.val);
-                    const newIdx = mapped.findIndex(item => item.original);
-                    if (newIdx !== -1) {
-                        dragTarget.index = newIdx;
-                    }
+                    const minLimit = (idx === 0) ? 0 : colsX[idx - 1];
+                    const maxLimit = (idx === colsX.length - 1) ? currentImage.naturalWidth : colsX[idx + 1];
+                    colsX[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, colsX[idx] + deltaX));
                 } else if (dragTarget.type === 'row') {
                     const idx = dragTarget.index;
-                    let newVal = rowsY[idx] + deltaY;
-
-                    // Giới hạn trong biên ảnh
-                    newVal = Math.max(5, Math.min(currentImage.naturalHeight - 5, newVal));
-
-                    // Mảng map kèm index ban đầu để sort ổn định
-                    let mapped = rowsY.map((val, i) => ({ val: (i === idx ? newVal : val), original: i === idx }));
-                    mapped.sort((a, b) => a.val - b.val);
-
-                    // Đảm bảo khoảng cách tối thiểu là 5px
-                    for (let i = 0; i < mapped.length - 1; i++) {
-                        if (mapped[i + 1].val - mapped[i].val < 5) {
-                            if (mapped[i].original) {
-                                mapped[i + 1].val = mapped[i].val + 5;
-                            } else if (mapped[i + 1].original) {
-                                mapped[i].val = mapped[i + 1].val - 5;
-                            } else {
-                                mapped[i + 1].val = mapped[i].val + 5;
-                            }
-                        }
-                    }
-
-                    // Đảm bảo không vượt biên ảnh
-                    if (mapped[mapped.length - 1].val > currentImage.naturalHeight - 5) {
-                        mapped[mapped.length - 1].val = currentImage.naturalHeight - 5;
-                        for (let i = mapped.length - 1; i > 0; i--) {
-                            if (mapped[i].val - mapped[i - 1].val < 5) {
-                                mapped[i - 1].val = mapped[i].val - 5;
-                            }
-                        }
-                    }
-                    if (mapped[0].val < 5) {
-                        mapped[0].val = 5;
-                        for (let i = 0; i < mapped.length - 1; i++) {
-                            if (mapped[i + 1].val - mapped[i].val < 5) {
-                                mapped[i + 1].val = mapped[i].val + 5;
-                            }
-                        }
-                    }
-
-                    rowsY = mapped.map(item => item.val);
-                    const newIdx = mapped.findIndex(item => item.original);
-                    if (newIdx !== -1) {
-                        dragTarget.index = newIdx;
-                    }
+                    const minLimit = (idx === 0) ? 0 : rowsY[idx - 1];
+                    const maxLimit = (idx === rowsY.length - 1) ? currentImage.naturalHeight : rowsY[idx + 1];
+                    rowsY[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, rowsY[idx] + deltaY));
                 }
 
                 isCustomGrid = true;
@@ -1863,25 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 drawLiveGrid();
             } else {
                 const hoverTarget = findNearestGridLine(e.clientX, e.clientY);
-                let isAllowed = true;
-                if (hoverTarget && recutSlideId !== null) {
-                    const recutItem = slicedImages.find(item => item.id === recutSlideId);
-                    if (recutItem && recutItem.meta && recutItem.meta.slicingMode === 'grid') {
-                        if (recutItem.meta.gridType === 'even') {
-                            const r = recutItem.meta.row;
-                            const c = recutItem.meta.col;
-                            isAllowed = false;
-                            if (hoverTarget.type === 'col') {
-                                if (hoverTarget.index === c - 1 || hoverTarget.index === c) isAllowed = true;
-                            } else if (hoverTarget.type === 'row') {
-                                if (hoverTarget.index === r - 1 || hoverTarget.index === r) isAllowed = true;
-                            }
-                        } else {
-                            isAllowed = false;
-                        }
-                    }
-                }
-                if (hoverTarget && isAllowed) {
+                if (hoverTarget) {
                     previewCanvas.style.cursor = (hoverTarget.type === 'col') ? 'col-resize' : 'row-resize';
                 } else {
                     previewCanvas.style.cursor = 'default';
@@ -1929,7 +1544,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let newX = box.x + deltaX;
                     let newY = box.y + deltaY;
 
-                    // Áp dụng Smart Snap
+                    // Áp dụng Smart Snap (Tạm tắt snap khi nhấn Alt để căn chỉnh chi tiết)
                     const snapped = e.altKey ? { x: newX, y: newY } : applyMoveSnapping(newX, newY, box.w, box.h, dragBoxTarget.boxIndex);
                     newX = snapped.x;
                     newY = snapped.y;
@@ -1947,7 +1562,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         newH = newW / lockedRatio;
                     }
 
-                    // Áp dụng Smart Snap
+                    // Áp dụng Smart Snap (Tạm tắt snap khi nhấn Alt)
                     const snapped = e.altKey ? { w: newW, h: newH } : applyResizeSnapping(box.x, box.y, newW, newH, dragBoxTarget.boxIndex);
                     newW = snapped.w;
                     newH = snapped.h;
@@ -1979,31 +1594,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const hover = getBoxInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
                 if (hover) {
-                    if (recutSlideId !== null) {
-                        const recutItem = slicedImages.find(item => item.id === recutSlideId);
-                        const isTargetBox = recutItem && selectionBoxes[hover.boxIndex].id === recutItem.meta.boxId;
-                        if (isTargetBox) {
-                            if (hover.actionType === 'delete') {
-                                previewCanvas.style.cursor = 'not-allowed';
-                            } else if (hover.actionType === 'resize-br') {
-                                previewCanvas.style.cursor = 'nwse-resize';
-                            } else {
-                                previewCanvas.style.cursor = 'move';
-                            }
-                        } else {
-                            previewCanvas.style.cursor = 'default';
-                        }
+                    if (hover.actionType === 'delete') {
+                        previewCanvas.style.cursor = 'pointer';
+                    } else if (hover.actionType === 'resize-br') {
+                        previewCanvas.style.cursor = 'nwse-resize';
                     } else {
-                        if (hover.actionType === 'delete') {
-                            previewCanvas.style.cursor = 'pointer';
-                        } else if (hover.actionType === 'resize-br') {
-                            previewCanvas.style.cursor = 'nwse-resize';
-                        } else {
-                            previewCanvas.style.cursor = 'move';
-                        }
+                        previewCanvas.style.cursor = 'move';
                     }
                 } else {
-                    previewCanvas.style.cursor = (recutSlideId !== null) ? 'default' : 'crosshair';
+                    previewCanvas.style.cursor = 'crosshair';
                 }
             }
         }
@@ -2027,41 +1626,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = coords.x;
         const imgY = coords.y;
 
-        // Xử lý kéo thả cho Pre-crop
-        if (isPreCropping && preCropBox) {
-            const interaction = checkPreCropInteraction(imgX, imgY, coords.scaleX, coords.scaleY);
-            if (interaction) {
-                if (interaction.type === 'button') {
-                    if (interaction.action === 'confirm') {
-                        confirmPreCrop();
-                    } else if (interaction.action === 'cancel') {
-                        cancelPreCrop();
-                    }
-                } else if (interaction.type === 'handle') {
-                    dragPreCropTarget = {
-                        type: 'handle',
-                        name: interaction.name,
-                        startX: imgX,
-                        startY: imgY,
-                        originalBox: { ...preCropBox }
-                    };
-                } else if (interaction.type === 'move') {
-                    dragPreCropTarget = {
-                        type: 'move',
-                        startX: imgX,
-                        startY: imgY,
-                        originalBox: { ...preCropBox }
-                    };
-                    previewCanvas.style.cursor = 'move';
-                }
-            } else {
-                isPanning = true;
-                previewCanvas.style.cursor = 'grabbing';
-                panStart = { x: e.clientX, y: e.clientY };
-            }
-            return;
-        }
-
         // Kiểm tra bấm nút điều khiển Recut nổi trên canvas
         const recutAction = checkRecutButtonInteraction(imgX, imgY);
         if (recutAction) {
@@ -2075,29 +1639,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Kiểm tra xem có kéo nắm di chuyển cụm nút Recut (Lưu/Hủy) hay không
-        if (recutSlideId !== null) {
-            const recutItem = slicedImages.find(item => item.id === recutSlideId);
-            if (recutItem) {
-                const recutCoords = getRecutSlideCoords(recutItem);
-                if (recutCoords) {
-                    const cx = recutCoords.sx + recutCoords.cropW / 2 + recutButtonsOffset.x;
-                    const cy = recutCoords.sy + recutCoords.cropH / 2 + recutButtonsOffset.y;
-                    const distToCenter = Math.hypot(imgX - cx, imgY - cy);
-                    if (distToCenter <= 60 / zoomScale) {
-                        isDraggingRecutButtons = true;
-                        dragRecutButtonsStart = {
-                            x: imgX,
-                            y: imgY,
-                            startOffset: { ...recutButtonsOffset }
-                        };
-                        previewCanvas.style.cursor = 'move';
-                        return;
-                    }
-                }
-            }
-        }
-
         // Lưu trữ tọa độ chuột bắt đầu kéo
         lastDragMouseX = imgX;
         lastDragMouseY = imgY;
@@ -2105,28 +1646,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (slicingMode === 'grid') {
             const target = findNearestGridLine(e.clientX, e.clientY);
             if (target) {
-                if (recutSlideId !== null) {
-                    const recutItem = slicedImages.find(item => item.id === recutSlideId);
-                    if (recutItem && recutItem.meta && recutItem.meta.slicingMode === 'grid') {
-                        if (recutItem.meta.gridType === 'even') {
-                            const r = recutItem.meta.row;
-                            const c = recutItem.meta.col;
-                            let isAllowed = false;
-                            if (target.type === 'col') {
-                                if (target.index === c - 1 || target.index === c) isAllowed = true;
-                            } else if (target.type === 'row') {
-                                if (target.index === r - 1 || target.index === r) isAllowed = true;
-                            }
-                            if (!isAllowed) {
-                                showToast("Bạn chỉ có thể điều chỉnh ranh giới của ô đang cắt lại!", "info");
-                                return;
-                            }
-                        } else {
-                            showToast("Lưới Facebook có bố cục cố định, không thể kéo ranh giới!", "warning");
-                            return;
-                        }
-                    }
-                }
                 dragTarget = target;
             } else {
                 isPanning = true;
@@ -2134,13 +1653,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 panStart = { x: e.clientX, y: e.clientY };
             }
         } else {
+            // Box Mode
+            const interaction = getBoxInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
+            
             if (recutSlideId !== null) {
+                // Đang trong chế độ cắt lại slide đơn
                 const recutItem = slicedImages.find(item => item.id === recutSlideId);
-                if (recutItem) {
-                    const interaction = getBoxInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
-                    if (interaction && selectionBoxes[interaction.boxIndex].id === recutItem.meta.boxId) {
+                const activeBoxId = recutItem?.meta?.boxId;
+                
+                if (interaction) {
+                    const interactingBox = selectionBoxes[interaction.boxIndex];
+                    if (interactingBox && interactingBox.id === activeBoxId) {
                         if (interaction.actionType === 'delete') {
-                            showToast("Không thể xóa khung khi đang trong chế độ cắt lại!", "warning");
+                            showToast("Không thể xóa khung vẽ đang trong chế độ cắt lại!", "warning");
                             return;
                         }
                         
@@ -2155,59 +1680,62 @@ document.addEventListener('DOMContentLoaded', () => {
                         };
                         drawLiveGrid();
                     } else {
-                        showToast("Hãy điều chỉnh khung viền màu xanh lá của slide này!", "info");
+                        showToast("Vui lòng chỉ thao tác trên khung vẽ đang được cắt lại (màu xanh lá)!", "warning");
                     }
-                }
-                return;
-            }
-
-            const interaction = getBoxInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
-            
-            if (interaction) {
-                selectedBoxIdx = interaction.boxIndex;
-                if (interaction.actionType === 'delete') {
-                    selectionBoxes.splice(interaction.boxIndex, 1);
-                    selectionBoxes.forEach((box, idx) => {
-                        box.id = idx + 1;
-                    });
-                    nextBoxId = selectionBoxes.length + 1;
-                    selectedBoxIdx = -1;
-                    gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
-                    handleParamsChange();
-                    drawLiveGrid();
                 } else {
-                    const box = selectionBoxes[interaction.boxIndex];
-                    dragBoxTarget = {
-                        boxIndex: interaction.boxIndex,
-                        actionType: interaction.actionType,
-                        startX: imgX,
-                        startY: imgY,
-                        originalBox: { x: box.x, y: box.y, w: box.w, h: box.h }
-                    };
-                    drawLiveGrid(); // Redraw to show yellow highlight border
+                    // Click ra ngoài: Chuyển sang di chuyển (panning) màn hình, KHÔNG vẽ box mới
+                    isPanning = true;
+                    previewCanvas.style.cursor = 'grabbing';
+                    panStart = { x: e.clientX, y: e.clientY };
                 }
             } else {
-                selectedBoxIdx = -1;
-                isDrawingNewBox = true;
-                newBoxStart = { x: imgX, y: imgY };
-                
-                let initialW = 0;
-                let initialH = 0;
-                if (isUniformSize && selectionBoxes.length > 0) {
-                    initialW = selectionBoxes[0].w;
-                    initialH = selectionBoxes[0].h;
-                }
+                // Chế độ bình thường (không recut)
+                if (interaction) {
+                    selectedBoxIdx = interaction.boxIndex;
+                    if (interaction.actionType === 'delete') {
+                        selectionBoxes.splice(interaction.boxIndex, 1);
+                        selectionBoxes.forEach((box, idx) => {
+                            box.id = idx + 1;
+                        });
+                        nextBoxId = selectionBoxes.length + 1;
+                        selectedBoxIdx = -1;
+                        gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
+                        handleParamsChange();
+                        drawLiveGrid();
+                    } else {
+                        const box = selectionBoxes[interaction.boxIndex];
+                        dragBoxTarget = {
+                            boxIndex: interaction.boxIndex,
+                            actionType: interaction.actionType,
+                            startX: imgX,
+                            startY: imgY,
+                            originalBox: { x: box.x, y: box.y, w: box.w, h: box.h }
+                        };
+                        drawLiveGrid(); // Redraw to show yellow highlight border
+                    }
+                } else {
+                    selectedBoxIdx = -1;
+                    isDrawingNewBox = true;
+                    newBoxStart = { x: imgX, y: imgY };
+                    
+                    let initialW = 0;
+                    let initialH = 0;
+                    if (isUniformSize && selectionBoxes.length > 0) {
+                        initialW = selectionBoxes[0].w;
+                        initialH = selectionBoxes[0].h;
+                    }
 
-                selectionBoxes.push({
-                    id: nextBoxId++,
-                    x: imgX,
-                    y: imgY,
-                    w: initialW,
-                    h: initialH
-                });
-                selectedBoxIdx = selectionBoxes.length - 1;
-                gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
-                drawLiveGrid();
+                    selectionBoxes.push({
+                        id: nextBoxId++,
+                        x: imgX,
+                        y: imgY,
+                        w: initialW,
+                        h: initialH
+                    });
+                    selectedBoxIdx = selectionBoxes.length - 1;
+                    gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
+                    drawLiveGrid();
+                }
             }
         }
     });
@@ -2218,11 +1746,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mouse Up Event Listener ---
     window.addEventListener('mouseup', () => {
-        if (isPreCropping && dragPreCropTarget) {
-            dragPreCropTarget = null;
-            previewCanvas.style.cursor = 'default';
-        }
-        isDraggingRecutButtons = false;
         if (snapGuides.length > 0) {
             snapGuides = [];
             drawLiveGrid();
@@ -2261,7 +1784,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // mouseleave to stop panning safely
     previewCanvas.addEventListener('mouseleave', () => {
-        isDraggingRecutButtons = false;
         if (isPanning) {
             isPanning = false;
             previewCanvas.style.cursor = spacePressed ? 'grab' : 'default';
@@ -2517,15 +2039,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 1 & 2 to Switch Mode (blocked during recut)
-        if (e.key === '1') {
+        // 1 & 2 to Switch Mode
+        if (e.key === '1' || e.key === '2') {
+            if (recutSlideId !== null) {
+                e.preventDefault();
+                showToast("Vui lòng hoàn thành hoặc hủy cắt lại slide hiện tại trước!", "warning");
+                return;
+            }
             e.preventDefault();
-            if (recutSlideId !== null) return;
-            if (modeGridBtn) modeGridBtn.click();
-        } else if (e.key === '2') {
-            e.preventDefault();
-            if (recutSlideId !== null) return;
-            if (modeBoxBtn) modeBoxBtn.click();
+            if (e.key === '1' && modeGridBtn) modeGridBtn.click();
+            else if (modeBoxBtn) modeBoxBtn.click();
         }
 
         // Q or B to Toggle Sidebar
@@ -2534,28 +2057,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnToggleSidebar) btnToggleSidebar.click();
         }
 
-        // C or Enter to Slice, Confirm Pre-crop or Confirm Recut
-        if (e.key.toLowerCase() === 'c' || e.key === 'Enter') {
+        // C or Enter to Slice
+        if ((e.key.toLowerCase() === 'c' || e.key === 'Enter') && !btnSlice.disabled) {
             e.preventDefault();
-            if (isPreCropping) {
-                confirmPreCrop();
-                return;
-            }
-            if (recutSlideId !== null) {
-                showConfirm("Bạn có chắc chắn muốn lưu thay đổi cắt lại cho slide này?", () => {
-                    handleConfirmRecut();
-                });
-                return;
-            }
-            if (!btnSlice.disabled) {
-                btnSlice.click();
-            }
+            btnSlice.click();
         }
 
-        // Z to Download ZIP (blocked during recut)
+        // Z to Download ZIP
         if (e.key.toLowerCase() === 'z' && !btnDownloadZip.disabled) {
             e.preventDefault();
-            if (recutSlideId !== null) return;
             btnDownloadZip.click();
         }
 
@@ -2577,8 +2087,13 @@ document.addEventListener('DOMContentLoaded', () => {
             drawLiveGrid();
         }
 
-        // Grid mode controls (W/S/A/D or Arrows) - blocked during recut
-        if (slicingMode === 'grid' && recutSlideId === null) {
+        // Grid mode controls (W/S/A/D or Arrows)
+        if (slicingMode === 'grid') {
+            if (recutSlideId !== null && ['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                showToast("Vui lòng hoàn thành hoặc hủy cắt lại slide hiện tại trước!", "warning");
+                return;
+            }
             if (e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 changeGridValue('input-rows', 1);
@@ -2596,6 +2111,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Box mode controls (W/S/A/D or Arrows to nudge box)
         if (slicingMode === 'box' && selectedBoxIdx !== -1) {
+            if (recutSlideId !== null) {
+                const recutItem = slicedImages.find(item => item.id === recutSlideId);
+                const activeBoxId = recutItem?.meta?.boxId;
+                const activeBoxIdx = selectionBoxes.findIndex(b => b.id === activeBoxId);
+                if (selectedBoxIdx !== activeBoxIdx) {
+                    // Chặn phím nudge trên các box khác
+                    e.preventDefault();
+                    return;
+                }
+            }
             const box = selectionBoxes[selectedBoxIdx];
             const step = e.shiftKey ? 10 : 1;
 
@@ -2617,10 +2142,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 drawLiveGrid();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
-                if (recutSlideId !== null) {
-                    showToast("Không thể xóa khung khi đang cắt lại!", "warning");
-                    return;
-                }
                 selectionBoxes.splice(selectedBoxIdx, 1);
                 selectionBoxes.forEach((b, idx) => {
                     b.id = idx + 1;
@@ -2635,14 +2156,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Global shortcuts for escape
         if (e.key === 'Escape') {
-            if (isPreCropping) {
-                cancelPreCrop();
-                return;
-            }
-            if (recutSlideId !== null) {
-                handleCancelRecut();
-                return;
-            }
             selectedBoxIdx = -1;
             drawLiveGrid();
         }
@@ -2659,15 +2172,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Handle Image Selection & Load ---
     function handleImageSelection(file) {
-        recutSlideId = null;
-        recutButtonsOffset = { x: 0, y: 0 };
-        originalImage = null;
-        isPreCropping = false;
-        preCropBox = null;
-        if (preCropToolsDiv) preCropToolsDiv.style.display = 'none';
-        if (btnResetImage) btnResetImage.style.display = 'none';
-        updateSidebarControlsState();
-        
         if (!file.type.startsWith('image/')) {
             showToast('File ảnh không hợp lệ!', 'warning');
             return;
@@ -2711,9 +2215,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const img = new Image();
             img.onload = () => {
                 currentImage = img;
-                originalImage = img;
-                if (preCropToolsDiv) preCropToolsDiv.style.display = 'block';
-                if (btnResetImage) btnResetImage.style.display = 'none';
                 
                 // Reset zoom & pan for new image
                 zoomScale = 1.0;
@@ -2894,56 +2395,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
-
-        if (isPreCropping && preCropBox) {
-            const { x, y, w, h } = preCropBox;
-
-            // 1. Vẽ lớp phủ tối mờ bên ngoài khung xén (vùng sẽ bị cắt bỏ)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            // Phía trên
-            ctx.fillRect(0, 0, width, y);
-            // Phía dưới
-            ctx.fillRect(0, y + h, width, height - (y + h));
-            // Phía trái
-            ctx.fillRect(0, y, x, h);
-            // Phía phải
-            ctx.fillRect(x + w, y, width - (x + w), h);
-
-            // 2. Vẽ viền khung xén nét đứt màu xanh Cyan
-            ctx.strokeStyle = '#06b6d4';
-            ctx.lineWidth = Math.max(3, Math.floor(width / 400));
-            ctx.setLineDash([8, 4]);
-            ctx.strokeRect(x, y, w, h);
-            ctx.setLineDash([]); // Reset line dash
-
-            // 3. Vẽ 8 handles
-            const handleRadius = Math.max(6, Math.floor(width / 150));
-            ctx.fillStyle = '#06b6d4';
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = Math.max(2, Math.floor(width / 600));
-
-            const drawHandle = (hx, hy) => {
-                ctx.beginPath();
-                ctx.arc(hx, hy, handleRadius, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-            };
-
-            // 4 góc
-            drawHandle(x, y); // TL
-            drawHandle(x + w, y); // TR
-            drawHandle(x, y + h); // BL
-            drawHandle(x + w, y + h); // BR
-
-            // 4 cạnh
-            drawHandle(x + w / 2, y); // T
-            drawHandle(x + w / 2, y + h); // B
-            drawHandle(x, y + h / 2); // L
-            drawHandle(x + w, y + h / 2); // R
-
-            ctx.restore();
-            return;
-        }
         const offset = parseInt(inputOffset.value) || 0;
 
         if (slicingMode === 'grid') {
@@ -2962,31 +2413,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         const y1 = boundariesY[r];
                         const y2 = boundariesY[r + 1];
                         
-                        const leftOffset = offset;
-                        const rightOffset = offset;
-                        const topOffset = offset;
-                        const bottomOffset = offset;
+                        const leftOffset = (c === 0) ? (2 * offset) : offset;
+                        const rightOffset = (c === totalCols - 1) ? (2 * offset) : offset;
+                        const topOffset = (r === 0) ? (2 * offset) : offset;
+                        const bottomOffset = (r === totalRows - 1) ? (2 * offset) : offset;
                         
-                        let sx = x1 + leftOffset;
-                        let sy = y1 + topOffset;
-                        let sw = (x2 - x1) - leftOffset - rightOffset;
-                        let sh = (y2 - y1) - topOffset - bottomOffset;
-
-                        if (sw <= 0) {
-                            sx = x1;
-                            sw = x2 - x1;
-                        }
-                        if (sh <= 0) {
-                            sy = y1;
-                            sh = y2 - y1;
-                        }
-
                         cells.push({
                             x1: x1, y1: y1, x2: x2, y2: y2,
-                            sx: sx,
-                            sy: sy,
-                            sw: sw,
-                            sh: sh
+                            sx: x1 + leftOffset,
+                            sy: y1 + topOffset,
+                            sw: (x2 - x1) - leftOffset - rightOffset,
+                            sh: (y2 - y1) - topOffset - bottomOffset
                         });
                     }
                 }
@@ -2995,72 +2432,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 const h1 = height * (1/3);
                 const h2 = height * (2/3);
                 
-                const rawLargeW = midX;
-                const rawLargeH = height;
-                const rawSmallW = width - midX;
-                const rawSmallH = h1;
-
-                let largeCropW = rawLargeW - 2 * offset;
-                let largeCropH = rawLargeH - 2 * offset;
-                let largeSx = offset;
-                let largeSy = offset;
-
-                if (largeCropW <= 0) {
-                    largeSx = 0;
-                    largeCropW = rawLargeW;
-                }
-                if (largeCropH <= 0) {
-                    largeSy = 0;
-                    largeCropH = rawLargeH;
-                }
-
-                let smallCropW = rawSmallW - 2 * offset;
-                let smallCropH = rawSmallH - 2 * offset;
-                let smallSxOffset = offset;
-                let smallSyOffsetTop = offset;
-                let smallSyOffsetMid = offset;
-                let smallSyOffsetBot = offset;
-
-                if (smallCropW <= 0) {
-                    smallSxOffset = 0;
-                    smallCropW = rawSmallW;
-                }
-                if (smallCropH <= 0) {
-                    smallSyOffsetTop = 0;
-                    smallSyOffsetMid = 0;
-                    smallSyOffsetBot = 0;
-                    smallCropH = rawSmallH;
-                }
-
+                const smallCropW = (width - midX) - 3 * offset;
+                const smallCropH = h1 - 3 * offset;
+                
                 // Ô 1 (dọc trái)
                 cells.push({
                     x1: 0, y1: 0, x2: midX, y2: height,
-                    sx: largeSx,
-                    sy: largeSy,
-                    sw: largeCropW,
-                    sh: largeCropH
+                    sx: 2 * offset,
+                    sy: 2 * offset,
+                    sw: midX - 3 * offset,
+                    sh: height - 4 * offset
                 });
                 // Ô 2 (nhỏ trên phải)
                 cells.push({
                     x1: midX, y1: 0, x2: width, y2: h1,
-                    sx: midX + smallSxOffset,
-                    sy: smallSyOffsetTop,
+                    sx: midX + offset,
+                    sy: 2 * offset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
-                // Ô 3 (nhỏ giữa phải)
+                // Ô 3 (nhỏ giữa phải) - Dịch chuyển thông minh chống méo
                 cells.push({
                     x1: midX, y1: h1, x2: width, y2: h2,
-                    sx: midX + smallSxOffset,
-                    sy: h1 + smallSyOffsetMid,
+                    sx: midX + offset,
+                    sy: h1 + offset + Math.floor(offset / 2),
                     sw: smallCropW,
                     sh: smallCropH
                 });
                 // Ô 4 (nhỏ dưới phải)
                 cells.push({
                     x1: midX, y1: h2, x2: width, y2: height,
-                    sx: midX + smallSxOffset,
-                    sy: h2 + smallSyOffsetBot,
+                    sx: midX + offset,
+                    sy: h2 + offset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
@@ -3069,72 +2472,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 const w1 = width * (1/3);
                 const w2 = width * (2/3);
                 
-                const rawLargeW = width;
-                const rawLargeH = midY;
-                const rawSmallW = w1;
-                const rawSmallH = height - midY;
-
-                let largeCropW = rawLargeW - 2 * offset;
-                let largeCropH = rawLargeH - 2 * offset;
-                let largeSx = offset;
-                let largeSy = offset;
-
-                if (largeCropW <= 0) {
-                    largeSx = 0;
-                    largeCropW = rawLargeW;
-                }
-                if (largeCropH <= 0) {
-                    largeSy = 0;
-                    largeCropH = rawLargeH;
-                }
-
-                let smallCropW = rawSmallW - 2 * offset;
-                let smallCropH = rawSmallH - 2 * offset;
-                let smallSxOffsetLeft = offset;
-                let smallSxOffsetMid = offset;
-                let smallSxOffsetRight = offset;
-                let smallSyOffset = offset;
-
-                if (smallCropW <= 0) {
-                    smallSxOffsetLeft = 0;
-                    smallSxOffsetMid = 0;
-                    smallSxOffsetRight = 0;
-                    smallCropW = rawSmallW;
-                }
-                if (smallCropH <= 0) {
-                    smallSyOffset = 0;
-                    smallCropH = rawSmallH;
-                }
-
+                const smallCropW = w1 - 3 * offset;
+                const smallCropH = (height - midY) - 3 * offset;
+                
                 // Ô 1 (ngang trên)
                 cells.push({
                     x1: 0, y1: 0, x2: width, y2: midY,
-                    sx: largeSx,
-                    sy: largeSy,
-                    sw: largeCropW,
-                    sh: largeCropH
+                    sx: 2 * offset,
+                    sy: 2 * offset,
+                    sw: width - 4 * offset,
+                    sh: midY - 3 * offset
                 });
                 // Ô 2 (nhỏ trái dưới)
                 cells.push({
                     x1: 0, y1: midY, x2: w1, y2: height,
-                    sx: smallSxOffsetLeft,
-                    sy: midY + smallSyOffset,
+                    sx: 2 * offset,
+                    sy: midY + offset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
-                // Ô 3 (nhỏ giữa dưới)
+                // Ô 3 (nhỏ giữa dưới) - Dịch chuyển thông minh chống méo
                 cells.push({
                     x1: w1, y1: midY, x2: w2, y2: height,
-                    sx: w1 + smallSxOffsetMid,
-                    sy: midY + smallSyOffset,
+                    sx: w1 + offset + Math.floor(offset / 2),
+                    sy: midY + offset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
                 // Ô 4 (nhỏ phải dưới)
                 cells.push({
                     x1: w2, y1: midY, x2: width, y2: height,
-                    sx: w2 + smallSxOffsetRight,
-                    sy: midY + smallSyOffset,
+                    sx: w2 + offset,
+                    sy: midY + offset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
@@ -3236,9 +2605,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            currentGridCells = cells;
         } else {
-            currentGridCells = [];
             selectionBoxes.forEach((box, idx) => {
                 const x = box.x;
                 const y = box.y;
@@ -3426,8 +2793,71 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Tự động cập nhật vị trí của cụm nút nổi HTML/CSS (Recut hoặc Pre-crop)
-        updateFloatingActionsPosition();
+        // Vẽ nút điều khiển Xác nhận / Hủy cho chế độ Cắt lại slide đơn
+        if (recutSlideId !== null) {
+            const recutItem = slicedImages.find(item => item.id === recutSlideId);
+            const coords = getRecutSlideCoords(recutItem);
+            if (coords) {
+                const x1 = coords.sx;
+                const y1 = coords.sy;
+                const x2 = coords.sx + coords.cropW;
+                const y2 = coords.sy + coords.cropH;
+
+                if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
+                    const btnRad = 12 / zoomScale;
+                    const btnY = y1 + 18 / zoomScale;
+                    const confirmX = x2 - 18 / zoomScale;
+                    const cancelX = x2 - 46 / zoomScale;
+
+                    ctx.save();
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    ctx.shadowBlur = 4 / zoomScale;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 2 / zoomScale;
+
+                    // Vẽ nút Hủy (Xóa màu đỏ)
+                    ctx.beginPath();
+                    ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fill();
+                    ctx.lineWidth = 1.5 / zoomScale;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.stroke();
+
+                    // Vẽ nút Xác nhận (Check màu xanh Emerald)
+                    ctx.beginPath();
+                    ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#10b981';
+                    ctx.fill();
+                    ctx.lineWidth = 1.5 / zoomScale;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.stroke();
+
+                    // Tắt shadow để vẽ chữ
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+
+                    // Vẽ chữ '✕'
+                    ctx.beginPath();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `bold ${Math.round(11 / zoomScale)}px var(--font-sans), sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('✕', cancelX, btnY + 0.5 / zoomScale);
+
+                    // Vẽ chữ '✓'
+                    ctx.beginPath();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `bold ${Math.round(12 / zoomScale)}px var(--font-sans), sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('✓', confirmX, btnY + 0.5 / zoomScale);
+
+                    ctx.restore();
+                }
+            }
+        }
 
         ctx.restore();
     }
@@ -3740,6 +3170,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset trạng thái sửa đổi ảnh đơn
         recutSlideId = null;
         updateSidebarControlsState();
+        const btnConfirmRecut = document.getElementById('btn-confirm-recut');
+        if (btnConfirmRecut) {
+            btnConfirmRecut.style.display = 'none';
+        }
 
         const offset = parseInt(inputOffset.value) || 0;
         const width = currentImage.naturalWidth;
@@ -3779,37 +3213,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 const boundariesX = [0, ...colsX, width];
                 const boundariesY = [0, ...rowsY, height];
 
-                // Tìm kích thước lớn nhất của các ô lưới để căn đều
-                let maxCropW = 0;
-                let maxCropH = 0;
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const x1 = boundariesX[c];
-                        const x2 = boundariesX[c + 1];
-                        const y1 = boundariesY[r];
-                        const y2 = boundariesY[r + 1];
-                        const cellW = x2 - x1;
-                        const cellH = y2 - y1;
-                        let cropW = cellW - 2 * offset;
-                        let cropH = cellH - 2 * offset;
-                        if (cropW <= 0) cropW = cellW;
-                        if (cropH <= 0) cropH = cellH;
-                        if (cropW > maxCropW) maxCropW = cropW;
-                        if (cropH > maxCropH) maxCropH = cropH;
-                    }
+                // Xác định kích thước canvas đích chung từ ô đầu tiên
+                const firstCellW = boundariesX[1] - boundariesX[0];
+                const firstCellH = boundariesY[1] - boundariesY[0];
+                
+                // Xén rìa ngoài cùng gấp đôi (2 * offset) để loại bỏ sạch viền trắng mép ngoài
+                const firstLeftOffset = (2 * offset);
+                const firstRightOffset = (cols === 1) ? (2 * offset) : offset;
+                const firstTopOffset = (2 * offset);
+                const firstBottomOffset = (rows === 1) ? (2 * offset) : offset;
+
+                const firstCropW = firstCellW - firstLeftOffset - firstRightOffset;
+                const firstCropH = firstCellH - firstTopOffset - firstBottomOffset;
+
+                if (firstCropW <= 0 || firstCropH <= 0) {
+                    showToast("Kích thước ô quá nhỏ. Giảm Offset!", "error");
+                    return;
                 }
 
-                const normScale = getExportScale(maxCropW);
-                let finalTargetW = Math.round(maxCropW * normScale);
-                let finalTargetH = Math.round(maxCropH * normScale);
-
-                if (lockedRatio) {
-                    if (finalTargetW / finalTargetH > lockedRatio) {
-                        finalTargetH = Math.round(finalTargetW / lockedRatio);
-                    } else {
-                        finalTargetW = Math.round(finalTargetH * lockedRatio);
-                    }
+                if (!globalTargetW || !globalTargetH) {
+                    const scale = getExportScale(firstCropW);
+                    globalTargetW = Math.round(firstCropW * scale);
+                    globalTargetH = Math.round(firstCropH * scale);
                 }
+                targetW = globalTargetW;
+                targetH = globalTargetH;
 
                 const totalNewCells = rows * cols;
                 let count = 1;
@@ -3823,29 +3251,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         const cellW = x2 - x1;
                         const cellH = y2 - y1;
 
-                        // Áp dụng offset đồng nhất cho tất cả các ô (xén đều offset ở mọi cạnh)
-                        let sx = x1 + offset;
-                        let sy = y1 + offset;
-                        let cropW = cellW - 2 * offset;
-                        let cropH = cellH - 2 * offset;
+                        // Xén rìa ngoài cùng gấp đôi (2 * offset) để loại bỏ sạch viền trắng mép ngoài
+                        const leftOffset = (c === 0) ? (2 * offset) : offset;
+                        const rightOffset = (c === cols - 1) ? (2 * offset) : offset;
+                        const topOffset = (r === 0) ? (2 * offset) : offset;
+                        const bottomOffset = (r === rows - 1) ? (2 * offset) : offset;
 
-                        if (cropW <= 0) {
-                            sx = x1;
-                            cropW = cellW;
-                        }
-                        if (cropH <= 0) {
-                            sy = y1;
-                            cropH = cellH;
-                        }
+                        const sx = x1 + leftOffset;
+                        const sy = y1 + topOffset;
+                        const cropW = cellW - leftOffset - rightOffset;
+                        const cropH = cellH - topOffset - bottomOffset;
 
-                        // Tính kích thước canvas đích riêng cho từng ô để bảo toàn tỷ lệ khung hình gốc (chống méo ảnh)
-                        const scale = getExportScale(cropW);
-                        let cellTargetW = Math.round(cropW * scale);
-                        let cellTargetH = Math.round(cropH * scale);
-
-                        if (switchNormalize && switchNormalize.checked) {
-                            cellTargetW = finalTargetW;
-                            cellTargetH = finalTargetH;
+                        if (cropW <= 0 || cropH <= 0) {
+                            showToast(`Ô [H${r+1}, C${c+1}] quá nhỏ. Giảm Offset!`, "error");
+                            return;
                         }
 
                         const resultId = resultIdCounter++;
@@ -3856,10 +3275,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             cellIndex: count - 1,
                             row: r,
                             col: c,
-                            targetW: cellTargetW,
-                            targetH: cellTargetH
+                            targetW: targetW,
+                            targetH: targetH
                         };
-                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, cellTargetW, cellTargetH, meta);
+                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
                         count++;
                     }
                 }
@@ -3871,72 +3290,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     const h1 = height * (1/3);
                     const h2 = height * (2/3);
                     
-                    const rawLargeW = midX;
-                    const rawLargeH = height;
-                    const rawSmallW = width - midX;
-                    const rawSmallH = h1;
-
-                    let largeCropW = rawLargeW - 2 * offset;
-                    let largeCropH = rawLargeH - 2 * offset;
-                    let largeSx = offset;
-                    let largeSy = offset;
-
-                    if (largeCropW <= 0) {
-                        largeSx = 0;
-                        largeCropW = rawLargeW;
-                    }
-                    if (largeCropH <= 0) {
-                        largeSy = 0;
-                        largeCropH = rawLargeH;
-                    }
-
-                    let smallCropW = rawSmallW - 2 * offset;
-                    let smallCropH = rawSmallH - 2 * offset;
-
-                    let smallSx = midX + offset;
-                    let smallSy1 = offset;
-                    let smallSy2 = h1 + offset;
-                    let smallSy3 = h2 + offset;
-
-                    if (smallCropW <= 0) {
-                        smallSx = midX;
-                        smallCropW = rawSmallW;
-                    }
-                    if (smallCropH <= 0) {
-                        smallSy1 = 0;
-                        smallSy2 = h1;
-                        smallSy3 = h2;
-                        smallCropH = rawSmallH;
-                    }
+                    const smallCropW = (width - midX) - 3 * offset;
+                    const smallCropH = h1 - 3 * offset;
 
                     // Ô 1 (to)
                     gridCells.push({ 
-                        sx: largeSx, 
-                        sy: largeSy, 
-                        cropW: largeCropW, 
-                        cropH: largeCropH, 
+                        sx: 2*offset, 
+                        sy: 2*offset, 
+                        cropW: midX - 3*offset, 
+                        cropH: height - 4*offset, 
                         isLarge: true 
                     });
                     // Ô 2 (nhỏ trên)
                     gridCells.push({ 
-                        sx: smallSx, 
-                        sy: smallSy1, 
+                        sx: midX + offset, 
+                        sy: 2*offset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
-                    // Ô 3 (nhỏ giữa)
+                    // Ô 3 (nhỏ giữa) - Dịch chuyển thông minh chống méo
                     gridCells.push({ 
-                        sx: smallSx, 
-                        sy: smallSy2, 
+                        sx: midX + offset, 
+                        sy: h1 + offset + Math.floor(offset / 2), 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
                     // Ô 4 (nhỏ dưới)
                     gridCells.push({ 
-                        sx: smallSx, 
-                        sy: smallSy3, 
+                        sx: midX + offset, 
+                        sy: h2 + offset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
@@ -3946,114 +3330,76 @@ document.addEventListener('DOMContentLoaded', () => {
                     const w1 = width * (1/3);
                     const w2 = width * (2/3);
                     
-                    const rawLargeW = width;
-                    const rawLargeH = midY;
-                    const rawSmallW = w1;
-                    const rawSmallH = height - midY;
-
-                    let largeCropW = rawLargeW - 2 * offset;
-                    let largeCropH = rawLargeH - 2 * offset;
-                    let largeSx = offset;
-                    let largeSy = offset;
-
-                    if (largeCropW <= 0) {
-                        largeSx = 0;
-                        largeCropW = rawLargeW;
-                    }
-                    if (largeCropH <= 0) {
-                        largeSy = 0;
-                        largeCropH = rawLargeH;
-                    }
-
-                    let smallCropW = rawSmallW - 2 * offset;
-                    let smallCropH = rawSmallH - 2 * offset;
-
-                    let smallSy = midY + offset;
-                    let smallSx1 = offset;
-                    let smallSx2 = w1 + offset;
-                    let smallSx3 = w2 + offset;
-
-                    if (smallCropW <= 0) {
-                        smallSx1 = 0;
-                        smallSx2 = w1;
-                        smallSx3 = w2;
-                        smallCropW = rawSmallW;
-                    }
-                    if (smallCropH <= 0) {
-                        smallSy = midY;
-                        smallCropH = rawSmallH;
-                    }
+                    const smallCropW = w1 - 3 * offset;
+                    const smallCropH = (height - midY) - 3 * offset;
 
                     // Ô 1 (to)
                     gridCells.push({ 
-                        sx: largeSx, 
-                        sy: largeSy, 
-                        cropW: largeCropW, 
-                        cropH: largeCropH, 
+                        sx: 2*offset, 
+                        sy: 2*offset, 
+                        cropW: width - 4*offset, 
+                        cropH: midY - 3*offset, 
                         isLarge: true 
                     });
                     // Ô 2 (nhỏ trái)
                     gridCells.push({ 
-                        sx: smallSx1, 
-                        sy: smallSy, 
+                        sx: 2*offset, 
+                        sy: midY + offset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
-                    // Ô 3 (nhỏ giữa)
+                    // Ô 3 (nhỏ giữa) - Dịch chuyển thông minh chống méo
                     gridCells.push({ 
-                        sx: smallSx2, 
-                        sy: smallSy, 
+                        sx: w1 + offset + Math.floor(offset / 2), 
+                        sy: midY + offset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
                     // Ô 4 (nhỏ phải)
                     gridCells.push({ 
-                        sx: smallSx3, 
-                        sy: smallSy, 
+                        sx: w2 + offset, 
+                        sy: midY + offset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
                 }
 
-                // Tính kích thước căn đều lớn nhất cho Facebook Grid
-                let maxCropW = 0;
-                let maxCropH = 0;
-                gridCells.forEach(cell => {
-                    if (cell.cropW > maxCropW) maxCropW = cell.cropW;
-                    if (cell.cropH > maxCropH) maxCropH = cell.cropH;
-                });
-                const normScale = getExportScale(maxCropW);
-                let finalTargetW = Math.round(maxCropW * normScale);
-                let finalTargetH = Math.round(maxCropH * normScale);
-                if (lockedRatio) {
-                    if (finalTargetW / finalTargetH > lockedRatio) {
-                        finalTargetH = Math.round(finalTargetW / lockedRatio);
-                    } else {
-                        finalTargetW = Math.round(finalTargetH * lockedRatio);
-                    }
+                // Tính toán kích thước canvas đích
+                // 1. Nhóm 1: Ảnh to
+                const largeCell = gridCells[0];
+                if (largeCell.cropW <= 0 || largeCell.cropH <= 0) {
+                    showToast("Ô to quá nhỏ. Giảm Offset!", "error");
+                    return;
                 }
+                const largeScale = getExportScale(largeCell.cropW);
+                const targetW_large = Math.round(largeCell.cropW * largeScale);
+                const targetH_large = Math.round(largeCell.cropH * largeScale);
 
-                // Cắt 4 slide của Facebook layout với tỷ lệ khung hình động bảo toàn (chống méo ảnh)
+                // 2. Nhóm 2: 3 Ảnh nhỏ
+                const smallCell = gridCells[1];
+                if (smallCell.cropW <= 0 || smallCell.cropH <= 0) {
+                    showToast("Ô nhỏ quá nhỏ. Giảm Offset!", "error");
+                    return;
+                }
+                const smallScale = getExportScale(smallCell.cropW);
+                const targetW_small = Math.round(smallCell.cropW * smallScale);
+                const targetH_small = Math.round(smallCell.cropH * smallScale);
+
+                // Cắt 4 slide
                 gridCells.forEach((cell, idx) => {
                     const sx = cell.sx;
                     const sy = cell.sy;
                     const cropW = cell.cropW;
                     const cropH = cell.cropH;
 
-                    const scale = getExportScale(cropW);
-                    let tW = Math.round(cropW * scale);
-                    let tH = Math.round(cropH * scale);
-
-                    if (switchNormalize && switchNormalize.checked) {
-                        tW = finalTargetW;
-                        tH = finalTargetH;
-                    }
-
                     const resultId = resultIdCounter++;
                     const sliceName = `slide_${startIndex + idx + 1}.png`;
+                    
+                    const tW = cell.isLarge ? targetW_large : targetW_small;
+                    const tH = cell.isLarge ? targetH_large : targetH_small;
 
                     const meta = {
                         slicingMode: 'grid',
@@ -4072,53 +3418,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Tìm kích thước lớn nhất của các khung cắt tự do để căn đều
-            let maxCropW = 0;
-            let maxCropH = 0;
-            selectionBoxes.forEach(box => {
-                let cropW = box.w - (2 * offset);
-                let cropH = box.h - (2 * offset);
-                if (cropW <= 0) cropW = box.w;
-                if (cropH <= 0) cropH = box.h;
-                if (cropW > maxCropW) maxCropW = cropW;
-                if (cropH > maxCropH) maxCropH = cropH;
-            });
+            // Xác định kích thước canvas đích chung từ khung đầu tiên
+            const firstBox = selectionBoxes[0];
+            const firstCropW = firstBox.w - (2 * offset);
+            const firstCropH = firstBox.h - (2 * offset);
 
-            const normScale = getExportScale(maxCropW);
-            let finalTargetW = Math.round(maxCropW * normScale);
-            let finalTargetH = Math.round(maxCropH * normScale);
-
-            if (lockedRatio) {
-                if (finalTargetW / finalTargetH > lockedRatio) {
-                    finalTargetH = Math.round(finalTargetW / lockedRatio);
-                } else {
-                    finalTargetW = Math.round(finalTargetH * lockedRatio);
-                }
+            if (firstCropW <= 0 || firstCropH <= 0) {
+                showToast("Khung vẽ quá nhỏ. Giảm Offset!", "error");
+                return;
             }
 
+            if (!globalTargetW || !globalTargetH) {
+                const scale = getExportScale(firstCropW);
+                globalTargetW = Math.round(firstCropW * scale);
+                globalTargetH = Math.round(firstCropH * scale);
+            }
+            targetW = globalTargetW;
+            targetH = globalTargetH;
+
             selectionBoxes.forEach((box, idx) => {
-                let sx = box.x + offset;
-                let sy = box.y + offset;
-                let cropW = box.w - (2 * offset);
-                let cropH = box.h - (2 * offset);
+                const sx = box.x + offset;
+                const sy = box.y + offset;
+                const cropW = box.w - (2 * offset);
+                const cropH = box.h - (2 * offset);
 
-                if (cropW <= 0) {
-                    sx = box.x;
-                    cropW = box.w;
-                }
-                if (cropH <= 0) {
-                    sy = box.y;
-                    cropH = box.h;
-                }
-
-                // Tính kích thước canvas đích riêng cho từng khung để bảo toàn tỷ lệ khung hình gốc (chống méo ảnh)
-                const scale = getExportScale(cropW);
-                let boxTargetW = Math.round(cropW * scale);
-                let boxTargetH = Math.round(cropH * scale);
-
-                if (switchNormalize && switchNormalize.checked) {
-                    boxTargetW = finalTargetW;
-                    boxTargetH = finalTargetH;
+                if (cropW <= 0 || cropH <= 0) {
+                    showToast(`Khung ${box.id} quá nhỏ. Giảm Offset!`, "error");
+                    return;
                 }
 
                 const resultId = resultIdCounter++;
@@ -4126,10 +3452,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const meta = {
                     slicingMode: 'box',
                     boxId: box.id,
-                    targetW: boxTargetW,
-                    targetH: boxTargetH
+                    targetW: targetW,
+                    targetH: targetH
                 };
-                processSlice(sx, sy, cropW, cropH, sliceName, resultId, boxTargetW, boxTargetH, meta);
+                processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
             });
         }
 
@@ -4178,56 +3504,10 @@ document.addEventListener('DOMContentLoaded', () => {
             sliceCtx.filter = 'none';
         }
 
-        // --- Căn đều slide: Chèn viền đệm tránh méo ảnh ---
-        let dx = 0;
-        let dy = 0;
-        let dw = targetW;
-        let dh = targetH;
-
-        if (switchNormalize && switchNormalize.checked) {
-            const imgRatio = cropW / cropH;
-            const canvasRatio = targetW / targetH;
-
-            if (imgRatio > canvasRatio) {
-                dw = targetW;
-                dh = targetW / imgRatio;
-                dx = 0;
-                dy = (targetH - dh) / 2;
-            } else {
-                dw = targetH * imgRatio;
-                dh = targetH;
-                dx = (targetW - dw) / 2;
-                dy = 0;
-            }
-
-            // Tô màu nền cho các phần viền trống
-            const bgType = selectNormalizeBg ? selectNormalizeBg.value : 'white';
-            if (bgType === 'white') {
-                sliceCtx.fillStyle = '#ffffff';
-                sliceCtx.fillRect(0, 0, targetW, targetH);
-            } else if (bgType === 'black') {
-                sliceCtx.fillStyle = '#000000';
-                sliceCtx.fillRect(0, 0, targetW, targetH);
-            } else if (bgType === 'transparent') {
-                sliceCtx.clearRect(0, 0, targetW, targetH);
-            } else if (bgType === 'auto') {
-                try {
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = 1;
-                    tempCanvas.height = 1;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    tempCtx.drawImage(currentImage, sx, sy, 1, 1, 0, 0, 1, 1);
-                    const pixelData = tempCtx.getImageData(0, 0, 1, 1).data;
-                    sliceCtx.fillStyle = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
-                } catch (e) {
-                    sliceCtx.fillStyle = '#ffffff';
-                }
-                sliceCtx.fillRect(0, 0, targetW, targetH);
-            }
-        }
-
-        // Vẽ chính xác trong ranh giới an toàn (sx, sy, cropW, cropH) để tuyệt đối không bị lẹm ảnh từ ô bên cạnh
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, dx, dy, dw, dh);
+        // Vẽ toàn bộ vùng ảnh gốc trong ô lưới (cropW x cropH) lên Canvas con (targetW x targetH)
+        // Trình duyệt sẽ tự động co giãn (nội suy phóng to/thu nhỏ) để lấp đầy vừa khít
+        // mà hoàn toàn không cắt bớt bất kỳ pixel nào của ảnh gốc trong vùng lưới
+        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
         
         // Reset filter sau khi vẽ xong ảnh gốc để tránh ảnh hưởng đến Watermark
         sliceCtx.filter = 'none';
@@ -4316,7 +3596,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnEdit.addEventListener('click', (e) => {
             e.stopPropagation();
             recutSlideId = resultId;
-            recutButtonsOffset = { x: 0, y: 0 };
             if (btnSlice) {
                 btnSlice.disabled = true; // Vô hiệu hóa nút cắt ảnh chính
             }
@@ -4324,6 +3603,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab('tab-live-grid');
             switchMobileTab('edit');
             drawLiveGrid();
+            showToast("Hãy điều chỉnh lưới/khung vẽ, sau đó bấm ✓ trên ảnh để lưu hoặc ✕ để hủy!", "info", 5000);
         });
         resultItem.appendChild(btnEdit);
 
@@ -4988,11 +4268,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Reset Application State ---
     function resetApp() {
         recutSlideId = null;
-        originalImage = null;
-        isPreCropping = false;
-        preCropBox = null;
-        if (preCropToolsDiv) preCropToolsDiv.style.display = 'none';
-        if (btnResetImage) btnResetImage.style.display = 'none';
         updateSidebarControlsState();
         fileInput.value = '';
         currentImage = null;
@@ -5787,6 +5062,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadProject(id) {
+        if (recutSlideId !== null) {
+            showToast("Vui lòng hoàn thành hoặc hủy cắt lại slide hiện tại trước!", "warning");
+            return;
+        }
         if (!supabase) return;
 
         try {
@@ -6063,6 +5342,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const handleImportFile = (file) => {
+        if (recutSlideId !== null) {
+            showToast("Vui lòng hoàn thành hoặc hủy cắt lại slide hiện tại trước!", "warning");
+            return;
+        }
         if (!file || !supabase) return;
         if (!syncKey) {
             showToast("Hãy đăng nhập trước khi nhập file!", "warning");
@@ -6167,8 +5450,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (recutItem.meta.slicingMode === 'grid') {
             if (recutItem.meta.gridType === 'even') {
-                const r = (recutItem.meta.row !== undefined && recutItem.meta.row !== null) ? recutItem.meta.row : 0;
-                const c = (recutItem.meta.col !== undefined && recutItem.meta.col !== null) ? recutItem.meta.col : 0;
+                const r = recutItem.meta.row;
+                const c = recutItem.meta.col;
                 const rows = parseInt(inputRows.value) || 1;
                 const cols = parseInt(inputCols.value) || 1;
 
@@ -6180,18 +5463,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const boundariesY = [0, ...rowsY, height];
 
                 // Đảm bảo chỉ số nằm trong giới hạn để tránh crash
-                const safeC = Math.max(0, Math.min(c, boundariesX.length - 2));
-                const safeR = Math.max(0, Math.min(r, boundariesY.length - 2));
+                const safeC = Math.min(c, boundariesX.length - 2);
+                const safeR = Math.min(r, boundariesY.length - 2);
 
                 x1 = boundariesX[safeC];
                 x2 = boundariesX[safeC + 1];
                 y1 = boundariesY[safeR];
                 y2 = boundariesY[safeR + 1];
 
-                const leftOffset = offset;
-                const rightOffset = offset;
-                const topOffset = offset;
-                const bottomOffset = offset;
+                const leftOffset = (safeC === 0) ? (2 * offset) : offset;
+                const rightOffset = (safeC === cols - 1) ? (2 * offset) : offset;
+                const topOffset = (safeR === 0) ? (2 * offset) : offset;
+                const bottomOffset = (safeR === rows - 1) ? (2 * offset) : offset;
 
                 sx = x1 + leftOffset;
                 sy = y1 + topOffset;
@@ -6204,69 +5487,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     const midX = width * 0.5;
                     const h1 = height * (1/3);
                     const h2 = height * (2/3);
-                    
-                    let largeCropW = midX - 2 * offset;
-                    let largeCropH = height - 2 * offset;
-                    let largeSx = offset;
-                    let largeSy = offset;
-                    if (largeCropW <= 0) { largeSx = 0; largeCropW = midX; }
-                    if (largeCropH <= 0) { largeSy = 0; largeCropH = height; }
+                    const smallCropW = (width - midX) - 3 * offset;
+                    const smallCropH = h1 - 3 * offset;
 
-                    let smallCropW = (width - midX) - 2 * offset;
-                    let smallCropH = h1 - 2 * offset;
-                    let smallSx = midX + offset;
-                    let smallSy1 = offset;
-                    let smallSy2 = h1 + offset;
-                    let smallSy3 = h2 + offset;
-                    if (smallCropW <= 0) { smallSx = midX; smallCropW = width - midX; }
-                    if (smallCropH <= 0) {
-                        smallSy1 = 0;
-                        smallSy2 = h1;
-                        smallSy3 = h2;
-                        smallCropH = h1;
-                    }
-
-                    gridCells.push({ x1: 0, y1: 0, x2: midX, y2: height, sx: largeSx, sy: largeSy, cropW: largeCropW, cropH: largeCropH });
-                    gridCells.push({ x1: midX, y1: 0, x2: width, y2: h1, sx: smallSx, sy: smallSy1, cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: midX, y1: h1, x2: width, y2: h2, sx: smallSx, sy: smallSy2, cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: midX, y1: h2, x2: width, y2: height, sx: smallSx, sy: smallSy3, cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: 0, y1: 0, x2: midX, y2: height, sx: 2*offset, sy: 2*offset, cropW: midX - 3*offset, cropH: height - 4*offset });
+                    gridCells.push({ x1: midX, y1: 0, x2: width, y2: h1, sx: midX + offset, sy: 2*offset, cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: midX, y1: h1, x2: width, y2: h2, sx: midX + offset, sy: h1 + offset + Math.floor(offset / 2), cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: midX, y1: h2, x2: width, y2: height, sx: midX + offset, sy: h2 + offset, cropW: smallCropW, cropH: smallCropH });
                 } else if (type === 'fb-1n3v') {
                     const midY = height * 0.5;
                     const w1 = width * (1/3);
                     const w2 = width * (2/3);
-                    
-                    let largeCropW = width - 2 * offset;
-                    let largeCropH = midY - 2 * offset;
-                    let largeSx = offset;
-                    let largeSy = offset;
-                    if (largeCropW <= 0) { largeSx = 0; largeCropW = width; }
-                    if (largeCropH <= 0) { largeSy = 0; largeCropH = midY; }
+                    const smallCropW = w1 - 3 * offset;
+                    const smallCropH = (height - midY) - 3 * offset;
 
-                    let smallCropW = w1 - 2 * offset;
-                    let smallCropH = (height - midY) - 2 * offset;
-                    let smallSy = midY + offset;
-                    let smallSx1 = offset;
-                    let smallSx2 = w1 + offset;
-                    let smallSx3 = w2 + offset;
-                    if (smallCropW <= 0) {
-                        smallSx1 = 0;
-                        smallSx2 = w1;
-                        smallSx3 = w2;
-                        smallCropW = w1;
-                    }
-                    if (smallCropH <= 0) {
-                        smallSy = midY;
-                        smallCropH = height - midY;
-                    }
-
-                    gridCells.push({ x1: 0, y1: 0, x2: width, y2: midY, sx: largeSx, sy: largeSy, cropW: largeCropW, cropH: largeCropH });
-                    gridCells.push({ x1: 0, y1: midY, x2: w1, y2: height, sx: smallSx1, sy: smallSy, cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: w1, y1: midY, x2: w2, y2: height, sx: smallSx2, sy: smallSy, cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: w2, y1: midY, x2: width, y2: height, sx: smallSx3, sy: smallSy, cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: 0, y1: 0, x2: width, y2: midY, sx: 2*offset, sy: 2*offset, cropW: width - 4*offset, cropH: midY - 3*offset });
+                    gridCells.push({ x1: 0, y1: midY, x2: w1, y2: height, sx: 2*offset, sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: w1, y1: midY, x2: w2, y2: height, sx: w1 + offset + Math.floor(offset / 2), sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: w2, y1: midY, x2: width, y2: height, sx: w2 + offset, sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
                 }
 
-                const cellIdx = (recutItem.meta.cellIndex !== undefined && recutItem.meta.cellIndex !== null) ? recutItem.meta.cellIndex : 0;
-                const cell = gridCells[Math.max(0, Math.min(cellIdx, gridCells.length - 1))];
+                const cell = gridCells[recutItem.meta.cellIndex];
                 if (cell) {
                     x1 = cell.x1;
                     y1 = cell.y1;
@@ -6289,38 +5530,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 sy = box.y + offset;
                 cropW = box.w - (2 * offset);
                 cropH = box.h - (2 * offset);
-            } else if (selectionBoxes.length > 0) {
-                const fallbackBox = selectionBoxes[0];
-                x1 = fallbackBox.x;
-                y1 = fallbackBox.y;
-                x2 = fallbackBox.x + fallbackBox.w;
-                y2 = fallbackBox.y + fallbackBox.h;
-                sx = fallbackBox.x + offset;
-                sy = fallbackBox.y + offset;
-                cropW = fallbackBox.w - (2 * offset);
-                cropH = fallbackBox.h - (2 * offset);
             }
         }
 
-        if (x1 === undefined || y1 === undefined || x2 === undefined || y2 === undefined) {
-            x1 = 0;
-            y1 = 0;
-            x2 = width;
-            y2 = height;
-            sx = offset;
-            sy = offset;
-            cropW = width - (2 * offset);
-            cropH = height - (2 * offset);
-        }
-
-        if (cropW <= 0) {
-            sx = x1;
-            cropW = x2 - x1;
-        }
-        if (cropH <= 0) {
-            sy = y1;
-            cropH = y2 - y1;
-        }
+        if (x1 === undefined || y1 === undefined || x2 === undefined || y2 === undefined) return null;
 
         return { x1, y1, x2, y2, sx, sy, cropW, cropH };
     }
@@ -6334,13 +5547,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const coords = getRecutSlideCoords(recutItem);
         if (!coords) return null;
 
-        const centerX = coords.sx + coords.cropW / 2 + recutButtonsOffset.x;
-        const centerY = coords.sy + coords.cropH / 2 + recutButtonsOffset.y;
+        const rx = coords.sx + coords.cropW; // Rìa phải của ô xén viền
 
-        const btnRad = 24 / zoomScale;
-        const btnY = centerY;
-        const confirmX = centerX + 30 / zoomScale;
-        const cancelX = centerX - 30 / zoomScale;
+        const btnRad = 12 / zoomScale;
+        const btnY = coords.sy + 18 / zoomScale;
+        const confirmX = rx - 18 / zoomScale;
+        const cancelX = rx - 46 / zoomScale;
 
         const distConfirm = Math.hypot(imgX - confirmX, imgY - btnY);
         const distCancel = Math.hypot(imgX - cancelX, imgY - btnY);
@@ -6359,6 +5571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!recutItem) {
             recutSlideId = null;
             if (btnSlice) btnSlice.disabled = false;
+            updateSidebarControlsState();
             return;
         }
 
@@ -6368,35 +5581,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        let { sx, sy, cropW, cropH } = coords;
+        const { sx, sy, cropW, cropH } = coords;
+        const targetW = recutItem.meta.targetW;
+        const targetH = recutItem.meta.targetH;
 
-        if (cropW <= 0) cropW = 1;
-        if (cropH <= 0) cropH = 1;
-
-        // Tính kích thước canvas đích động theo tỉ lệ ranh giới mới kéo (chống méo)
-        const getExportScale = (w) => {
-            if (exportResolution === 'original') {
-                return 1.0;
-            }
-            let targetMinW = 1080;
-            if (exportResolution === '2k') {
-                targetMinW = 2160;
-            } else if (exportResolution === '4k') {
-                targetMinW = 3840;
-            }
-            return w < targetMinW ? (targetMinW / w) : 1.0;
-        };
-
-        const isNormalizeEnabled = switchNormalize && switchNormalize.checked;
-        let targetW = recutItem.meta.targetW;
-        let targetH = recutItem.meta.targetH;
-
-        if (!isNormalizeEnabled || !targetW || !targetH) {
-            const scale = getExportScale(cropW);
-            targetW = Math.round(cropW * scale);
-            targetH = Math.round(cropH * scale);
-            recutItem.meta.targetW = targetW;
-            recutItem.meta.targetH = targetH;
+        if (cropW <= 0 || cropH <= 0) {
+            showToast("Kích thước cắt quá nhỏ. Hãy kéo rộng lưới/khung hoặc giảm xén viền!", "error");
+            return;
         }
 
         const sliceCanvas = document.createElement('canvas');
@@ -6418,56 +5609,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sliceCtx.filter = 'none';
         }
 
-        // --- Căn đều slide: Chèn viền đệm tránh méo ảnh khi Recut ---
-        let dx = 0;
-        let dy = 0;
-        let dw = targetW;
-        let dh = targetH;
-
-        if (isNormalizeEnabled) {
-            const imgRatio = cropW / cropH;
-            const canvasRatio = targetW / targetH;
-
-            if (imgRatio > canvasRatio) {
-                dw = targetW;
-                dh = targetW / imgRatio;
-                dx = 0;
-                dy = (targetH - dh) / 2;
-            } else {
-                dw = targetH * imgRatio;
-                dh = targetH;
-                dx = (targetW - dw) / 2;
-                dy = 0;
-            }
-
-            // Tô màu nền cho các phần viền trống khi recut
-            const bgType = selectNormalizeBg ? selectNormalizeBg.value : 'white';
-            if (bgType === 'white') {
-                sliceCtx.fillStyle = '#ffffff';
-                sliceCtx.fillRect(0, 0, targetW, targetH);
-            } else if (bgType === 'black') {
-                sliceCtx.fillStyle = '#000000';
-                sliceCtx.fillRect(0, 0, targetW, targetH);
-            } else if (bgType === 'transparent') {
-                sliceCtx.clearRect(0, 0, targetW, targetH);
-            } else if (bgType === 'auto') {
-                try {
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = 1;
-                    tempCanvas.height = 1;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    tempCtx.drawImage(currentImage, sx, sy, 1, 1, 0, 0, 1, 1);
-                    const pixelData = tempCtx.getImageData(0, 0, 1, 1).data;
-                    sliceCtx.fillStyle = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
-                } catch (e) {
-                    sliceCtx.fillStyle = '#ffffff';
-                }
-                sliceCtx.fillRect(0, 0, targetW, targetH);
-            }
-        }
-
-        // Vẽ chính xác trong ranh giới an toàn để tuyệt đối không bị lẹm ảnh từ ô lân cận
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, dx, dy, dw, dh);
+        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
         sliceCtx.filter = 'none';
 
         const isWatermarkEnabled = switchWatermark && switchWatermark.checked;
@@ -6531,183 +5673,22 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Đã cắt lại slide thành công!", "success");
 
         recutSlideId = null;
-        recutButtonsOffset = { x: 0, y: 0 };
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
         drawLiveGrid();
 
-        switchTab('tab-result-grid');
+        switchTab('tab-slice-results');
         switchMobileTab('result');
     };
 
     const handleCancelRecut = () => {
         recutSlideId = null;
-        recutButtonsOffset = { x: 0, y: 0 };
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
         drawLiveGrid();
         showToast("Đã hủy cắt lại", "info");
-        switchTab('tab-result-grid');
+        switchTab('tab-slice-results');
         switchMobileTab('result');
-    };
-
-    // --- Pre-crop (Dao lam xén viền ảnh gốc) Helpers ---
-    const checkPreCropInteraction = (imgX, imgY, scaleX, scaleY) => {
-        if (!isPreCropping || !preCropBox) return null;
-        const { x, y, w, h } = preCropBox;
-        
-        const handleRadius = Math.max(6, Math.floor(currentImage.naturalWidth / 150));
-        const tolX = handleRadius * scaleX * 1.5;
-        const tolY = handleRadius * scaleY * 1.5;
-
-        // Kiểm tra bấm nút xác nhận / hủy nổi ở giữa
-        const centerX = x + w / 2;
-        const centerY = y + h / 2;
-        const btnRad = 24 / zoomScale;
-        const confirmX = centerX + 30 / zoomScale;
-        const cancelX = centerX - 30 / zoomScale;
-
-        const distConfirm = Math.hypot(imgX - confirmX, imgY - centerY);
-        const distCancel = Math.hypot(imgX - cancelX, imgY - centerY);
-        if (distConfirm <= btnRad) return { type: 'button', action: 'confirm' };
-        if (distCancel <= btnRad) return { type: 'button', action: 'cancel' };
-
-        // Kiểm tra handles 4 góc
-        if (Math.abs(imgX - x) <= tolX && Math.abs(imgY - y) <= tolY) return { type: 'handle', name: 'tl' };
-        if (Math.abs(imgX - (x + w)) <= tolX && Math.abs(imgY - y) <= tolY) return { type: 'handle', name: 'tr' };
-        if (Math.abs(imgX - x) <= tolX && Math.abs(imgY - (y + h)) <= tolY) return { type: 'handle', name: 'bl' };
-        if (Math.abs(imgX - (x + w)) <= tolX && Math.abs(imgY - (y + h)) <= tolY) return { type: 'handle', name: 'br' };
-
-        // Kiểm tra handles 4 cạnh
-        if (Math.abs(imgX - (x + w / 2)) <= tolX && Math.abs(imgY - y) <= tolY) return { type: 'handle', name: 't' };
-        if (Math.abs(imgX - (x + w / 2)) <= tolX && Math.abs(imgY - (y + h)) <= tolY) return { type: 'handle', name: 'b' };
-        if (Math.abs(imgX - x) <= tolX && Math.abs(imgY - (y + h / 2)) <= tolY) return { type: 'handle', name: 'l' };
-        if (Math.abs(imgX - (x + w)) <= tolX && Math.abs(imgY - (y + h / 2)) <= tolY) return { type: 'handle', name: 'r' };
-
-        // Di chuyển toàn bộ khung xén
-        if (imgX > x && imgX < x + w && imgY > y && imgY < y + h) {
-            return { type: 'move' };
-        }
-
-        return null;
-    };
-
-    const confirmPreCrop = () => {
-        if (!currentImage || !preCropBox) return;
-
-        const { x, y, w, h } = preCropBox;
-        if (w <= 10 || h <= 10) return;
-
-        const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = w;
-        cropCanvas.height = h;
-        const cropCtx = cropCanvas.getContext('2d');
-        
-        cropCtx.drawImage(currentImage, x, y, w, h, 0, 0, w, h);
-
-        const croppedImg = new Image();
-        croppedImg.onload = () => {
-            currentImage = croppedImg;
-            isPreCropping = false;
-            preCropBox = null;
-            
-            if (btnResetImage) btnResetImage.style.display = 'inline-flex';
-            
-            resetGridToEven();
-            if (imgDimOriginal) imgDimOriginal.textContent = `${currentImage.naturalWidth}×${currentImage.naturalHeight}`;
-            
-            handleParamsChange();
-            updateSidebarControlsState();
-            drawLiveGrid();
-            
-            showToast("Đã xén ảnh gốc thành công!", "success");
-        };
-        croppedImg.src = cropCanvas.toDataURL('image/png');
-    };
-
-    const cancelPreCrop = () => {
-        isPreCropping = false;
-        preCropBox = null;
-        updateSidebarControlsState();
-        drawLiveGrid();
-        showToast("Đã hủy xén ảnh", "info");
-    };
-
-    const resetToOriginalImage = () => {
-        if (!originalImage) return;
-        currentImage = originalImage;
-        isPreCropping = false;
-        preCropBox = null;
-        if (btnResetImage) btnResetImage.style.display = 'none';
-        
-        resetGridToEven();
-        if (imgDimOriginal) imgDimOriginal.textContent = `${currentImage.naturalWidth}×${currentImage.naturalHeight}`;
-        
-        handleParamsChange();
-        updateSidebarControlsState();
-        drawLiveGrid();
-        
-        showToast("Đã khôi phục ảnh gốc ban đầu!", "success");
-    };
-
-    // --- Cập nhật vị trí của cụm nút nổi HTML/CSS ---
-    const updateFloatingActionsPosition = () => {
-        if (!floatingCanvasActions) return;
-
-        const isRecutting = (recutSlideId !== null);
-        const shouldShow = isPreCropping || isRecutting;
-
-        if (!shouldShow || !currentImage || !previewCanvas || previewCanvas.style.display === 'none') {
-            floatingCanvasActions.style.display = 'none';
-            return;
-        }
-
-        const canvasLeft = previewCanvas.offsetLeft;
-        const canvasTop = previewCanvas.offsetTop;
-        const canvasWidth = previewCanvas.offsetWidth;
-        const canvasHeight = previewCanvas.offsetHeight;
-
-        let centerX = 0;
-        let centerY = 0;
-
-        if (isPreCropping && preCropBox) {
-            centerX = preCropBox.x + preCropBox.w / 2;
-            centerY = preCropBox.y + preCropBox.h / 2;
-        } else if (isRecutting) {
-            const recutItem = slicedImages.find(item => item.id === recutSlideId);
-            if (recutItem) {
-                if (recutItem.meta && recutItem.meta.slicingMode === 'grid') {
-                    const cellIdx = recutItem.meta.cellIndex;
-                    const cell = currentGridCells && currentGridCells[cellIdx];
-                    if (cell) {
-                        centerX = cell.sx + cell.sw / 2 + recutButtonsOffset.x;
-                        centerY = cell.sy + cell.sh / 2 + recutButtonsOffset.y;
-                    }
-                } else if (recutItem.meta && recutItem.meta.slicingMode === 'box') {
-                    const boxId = recutItem.meta.boxId;
-                    const box = selectionBoxes.find(b => b.id === boxId);
-                    if (box) {
-                        centerX = box.x + box.w / 2 + recutButtonsOffset.x;
-                        centerY = box.y + box.h / 2 + recutButtonsOffset.y;
-                    }
-                }
-            }
-        }
-
-        if (centerX === 0 && centerY === 0) {
-            floatingCanvasActions.style.display = 'none';
-            return;
-        }
-
-        // Ánh xạ sang tọa độ CSS thực tế tương đối với canvas-wrapper
-        const cssX = canvasLeft + (centerX * canvasWidth / currentImage.naturalWidth);
-        const cssY = canvasTop + (centerY * canvasHeight / currentImage.naturalHeight);
-
-        // Đặt tọa độ cho cụm nút nổi (căn giữa tâm cụm nút)
-        floatingCanvasActions.style.display = 'flex';
-        floatingCanvasActions.style.left = cssX + 'px';
-        floatingCanvasActions.style.top = cssY + 'px';
-        floatingCanvasActions.style.transform = 'translate(-50%, -50%)';
     };
 
     // --- Password Gate Security ---
@@ -6827,7 +5808,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         if (currentImage) {
-            drawLiveGrid();
+            updateCanvasDisplaySize();
         }
     });
 

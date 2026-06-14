@@ -4538,6 +4538,107 @@ input[type="number"] {
     transform: scale(0.95);
 }
 
+/* --- Canvas Floating Toolbar --- */
+.canvas-floating-toolbar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    height: 32px;
+    pointer-events: auto;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.btn-toolbar-action {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.78rem;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: var(--border-radius-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    outline: none;
+    white-space: nowrap;
+}
+
+.btn-toolbar-action i {
+    font-size: 0.85rem;
+}
+
+.btn-toolbar-action span {
+    display: inline-block;
+}
+
+.btn-toolbar-action:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.btn-toolbar-action:active {
+    transform: scale(0.95);
+}
+
+.btn-toolbar-action.btn-danger-hover:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 4px;
+}
+
+.toolbar-zoom-text {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 42px;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Ẩn text trên các màn hình di động nhỏ để toolbar luôn vừa vặn */
+@media (max-width: 640px) {
+    .btn-toolbar-action span {
+        display: none;
+    }
+    .canvas-floating-toolbar {
+        top: 8px;
+        right: 8px;
+        padding: 4px 6px;
+    }
+}
+
+/* Vô hiệu hóa điều khiển trực quan khi đang trong chế độ Recut */
+.disabled-controls {
+    opacity: 0.55 !important;
+    pointer-events: none !important;
+    user-select: none !important;
+    filter: grayscale(20%) !important;
+}
+
 
 
 
