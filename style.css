@@ -3077,7 +3077,7 @@ input[type="number"] {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 4px;
-    padding: 0 12px;
+    padding: 0 23px 0 9px; /* Thẳng hàng với checkbox và các nút xóa của item ở dưới */
 }
 
 /* Project History Floating Helper (PC Only) */
@@ -3668,6 +3668,7 @@ input[type="number"] {
     min-height: 0;
     max-height: none !important; /* Loại bỏ giới hạn cứng để tự động co giãn hết chiều cao popup */
     overflow-y: auto;
+    scrollbar-gutter: stable; /* Luôn giữ khoảng trống scrollbar cố định để căn thẳng hàng nút xóa */
 }
 .history-popup .history-list {
     max-height: none !important;
