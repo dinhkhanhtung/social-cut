@@ -206,6 +206,58 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Custom Confirm Modal System ---
+    function showConfirm(message, onConfirm, onCancel = null) {
+        let container = document.querySelector('.custom-confirm-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'custom-confirm-container';
+            container.innerHTML = `
+                <div class="custom-confirm-backdrop"></div>
+                <div class="custom-confirm-box">
+                    <div class="custom-confirm-content">
+                        <i class="fa-solid fa-circle-question custom-confirm-icon"></i>
+                        <div class="custom-confirm-message"></div>
+                    </div>
+                    <div class="custom-confirm-actions">
+                        <button class="custom-confirm-btn custom-confirm-cancel">Hủy</button>
+                        <button class="custom-confirm-btn custom-confirm-ok">Đồng ý</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(container);
+        }
+
+        const msgEl = container.querySelector('.custom-confirm-message');
+        msgEl.textContent = message;
+
+        const btnCancel = container.querySelector('.custom-confirm-cancel');
+        const btnOk = container.querySelector('.custom-confirm-ok');
+
+        const hideConfirm = () => {
+            container.classList.remove('active');
+        };
+
+        const handleCancel = () => {
+            hideConfirm();
+            if (onCancel) onCancel();
+        };
+
+        const handleOk = () => {
+            hideConfirm();
+            if (onConfirm) onConfirm();
+        };
+
+        // Remove old listeners to avoid stacking
+        btnCancel.onclick = handleCancel;
+        btnOk.onclick = handleOk;
+        container.querySelector('.custom-confirm-backdrop').onclick = handleCancel;
+
+        // Force reflow and show
+        container.offsetHeight;
+        container.classList.add('active');
+    }
+
     // --- Drag and Drop Events for Upload ---
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, (e) => {
@@ -3466,8 +3518,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Clear All Results ---
     if (btnClearResults) {
         btnClearResults.addEventListener('click', () => {
-            const conf = confirm("Bạn có chắc chắn muốn xóa tất cả các slide ảnh kết quả hiện tại?");
-            if (conf) {
+            showConfirm("Bạn có chắc chắn muốn xóa tất cả các slide ảnh kết quả hiện tại?", () => {
                 slicedImages = [];
                 slicedBlobs = [];
                 resultGrid.innerHTML = '';
@@ -3483,7 +3534,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnMobilePreview) btnMobilePreview.style.display = 'none';
                 globalTargetW = null;
                 globalTargetH = null;
-            }
+            });
         });
     }
 
@@ -3492,11 +3543,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btnRenumberResults.addEventListener('click', () => {
             if (slicedImages.length === 0) return;
             
-            const conf = confirm("Bạn có chắc chắn muốn đổi tên và đánh số lại toàn bộ các slide kết quả hiện tại theo thứ tự từ 1 đến " + slicedImages.length + "?");
-            if (!conf) return;
-
-            // Đọc thứ tự thực tế trong DOM
-            const orderedItems = Array.from(resultGrid.children);
+            showConfirm("Bạn có chắc chắn muốn đổi tên và đánh số lại toàn bộ các slide kết quả hiện tại theo thứ tự từ 1 đến " + slicedImages.length + "?", () => {
+                // Đọc thứ tự thực tế trong DOM
+                const orderedItems = Array.from(resultGrid.children);
             
             orderedItems.forEach((resultItem, index) => {
                 const resultId = parseInt(resultItem.dataset.id);
@@ -3532,6 +3581,7 @@ document.addEventListener('DOMContentLoaded', () => {
             syncArraysOrder();
 
             showToast("Đã đánh số lại các slide!", "success");
+            });
         });
     }
 
@@ -4152,12 +4202,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Xử lý Đăng xuất
     function performLogout() {
-        if (confirm("Bạn có chắc chắn muốn đăng xuất tài khoản?")) {
+        showConfirm("Bạn có chắc chắn muốn đăng xuất tài khoản?", () => {
             syncKey = '';
             localStorage.removeItem('carousel_logged_user');
             updateAuthUI();
             loadHistoryFromDB();
-        }
+        });
     }
 
     // Quản lý chế độ Auth PC (Đăng nhập / Đăng ký)
@@ -4362,16 +4412,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 rows: parseInt(inputRows.value) || 1,
                 cols: parseInt(inputCols.value) || 1,
                 ratio: selectRatio.value,
-                scale: 'auto',
+                scale: JSON.stringify({
+                    scale: 'auto',
+                    grid_line_color: gridLineColor,
+                    export_resolution: exportResolution,
+                    export_sharpness: exportSharpness
+                }),
                 offset_val: parseInt(inputOffset.value) || 0,
                 selection_boxes: selectionBoxes,
                 switch_uniform: switchUniform.checked,
                 switch_snap: switchSnap ? switchSnap.checked : true,
                 cols_x: colsX,
                 rows_y: rowsY,
-                grid_line_color: gridLineColor,
-                export_resolution: exportResolution,
-                export_sharpness: exportSharpness,
                 image_url: publicUrl
             };
 
@@ -4504,9 +4556,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     item.querySelector('.history-btn-del').addEventListener('click', (ev) => {
                         ev.stopPropagation();
-                        if (confirm(`Bạn có chắc chắn muốn xóa dự án "${proj.name}" khỏi lịch sử đám mây?`)) {
+                        showConfirm(`Bạn có chắc chắn muốn xóa dự án "${proj.name}" khỏi lịch sử đám mây?`, () => {
                             deleteProject(proj.id);
-                        }
+                        });
                     });
 
                     container.appendChild(item);
@@ -4566,10 +4618,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputOffset.value = proj.offset_val || 0;
                 if (offsetNumberVal) offsetNumberVal.value = proj.offset_val || 0;
             }
-            gridLineColor = proj.grid_line_color || '#06b6d4';
+            let loadedGridLineColor = proj.grid_line_color || '#06b6d4';
+            let loadedExportResolution = proj.export_resolution || 'auto';
+            let loadedExportSharpness = proj.export_sharpness || 'off';
+
+            if (proj.scale && proj.scale.startsWith('{')) {
+                try {
+                    const parsedScale = JSON.parse(proj.scale);
+                    loadedGridLineColor = parsedScale.grid_line_color || loadedGridLineColor;
+                    loadedExportResolution = parsedScale.export_resolution || loadedExportResolution;
+                    loadedExportSharpness = parsedScale.export_sharpness || loadedExportSharpness;
+                } catch (e) {
+                    console.error("Lỗi parse JSON scale:", e);
+                }
+            }
+
+            gridLineColor = loadedGridLineColor;
             updateColorPickerUI(gridLineColor);
-            exportResolution = proj.export_resolution || 'auto';
-            exportSharpness = proj.export_sharpness || 'off';
+            exportResolution = loadedExportResolution;
+            exportSharpness = loadedExportSharpness;
             if (selectExportResolution) selectExportResolution.value = exportResolution;
             if (selectExportSharpness) selectExportSharpness.value = exportSharpness;
             if (switchUniform) {
@@ -4690,6 +4757,23 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (ev) => {
                 const base64Data = ev.target.result;
                 
+                let scaleVal = proj.scale;
+                let loadedGridLineColor = proj.grid_line_color || '#06b6d4';
+                let loadedExportResolution = proj.export_resolution || 'auto';
+                let loadedExportSharpness = proj.export_sharpness || 'off';
+
+                if (proj.scale && proj.scale.startsWith('{')) {
+                    try {
+                        const parsedScale = JSON.parse(proj.scale);
+                        scaleVal = parsedScale.scale || 'auto';
+                        loadedGridLineColor = parsedScale.grid_line_color || loadedGridLineColor;
+                        loadedExportResolution = parsedScale.export_resolution || loadedExportResolution;
+                        loadedExportSharpness = parsedScale.export_sharpness || loadedExportSharpness;
+                    } catch (e) {
+                        console.error("Lỗi parse JSON scale khi xuất:", e);
+                    }
+                }
+
                 const exportData = {
                     version: "1.0",
                     name: proj.name,
@@ -4698,16 +4782,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     rows: proj.rows,
                     cols: proj.cols,
                     ratio: proj.ratio,
-                    scale: proj.scale,
+                    scale: scaleVal,
                     offset: proj.offset_val || 0,
                     selectionBoxes: proj.selection_boxes,
                     switchUniform: proj.switch_uniform,
                     switchSnap: proj.switch_snap,
                     colsX: proj.cols_x,
                     rowsY: proj.rows_y,
-                    gridLineColor: proj.grid_line_color || '#06b6d4',
-                    exportResolution: proj.export_resolution || 'auto',
-                    exportSharpness: proj.export_sharpness || 'off',
+                    gridLineColor: loadedGridLineColor,
+                    exportResolution: loadedExportResolution,
+                    exportSharpness: loadedExportSharpness,
                     imageBase64: base64Data
                 };
 
@@ -4774,16 +4858,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     rows: parseInt(data.rows) || 1,
                     cols: parseInt(data.cols) || 1,
                     ratio: data.ratio || 'free',
-                    scale: data.scale || '3',
+                    scale: JSON.stringify({
+                        scale: data.scale || '3',
+                        grid_line_color: data.gridLineColor || '#06b6d4',
+                        export_resolution: data.exportResolution || 'auto',
+                        export_sharpness: data.exportSharpness || 'off'
+                    }),
                     offset_val: parseInt(data.offset) || 0,
                     selection_boxes: data.selectionBoxes || [],
                     switch_uniform: data.switchUniform !== undefined ? data.switchUniform : false,
                     switch_snap: data.switchSnap !== undefined ? data.switchSnap : true,
                     cols_x: data.colsX || [],
                     rows_y: data.rowsY || [],
-                    grid_line_color: data.gridLineColor || '#06b6d4',
-                    export_resolution: data.exportResolution || 'auto',
-                    export_sharpness: data.exportSharpness || 'off',
                     image_url: publicUrl
                 };
 
