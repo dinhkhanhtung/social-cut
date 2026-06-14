@@ -113,6 +113,15 @@
                                 <input type="file" id="import-project-input" accept=".ccut" style="display: none;">
                             </div>
                         </div>
+                        <!-- Bulk actions row on Mobile -->
+                        <div class="history-bulk-actions-bar" id="mobile-bulk-actions-bar" style="display: none;">
+                            <label class="history-select-all-label">
+                                <input type="checkbox" id="chk-mobile-select-all"> <span>Chọn tất cả</span>
+                            </label>
+                            <button type="button" id="btn-mobile-bulk-delete" class="btn-bulk-delete" disabled>
+                                <i class="fa-solid fa-trash-can"></i> Xóa (0)
+                            </button>
+                        </div>
                         <div class="history-list" id="history-list">
                             <!-- Dynamic history items will be inserted here -->
                             <div class="history-empty">Chưa có dự án nào được lưu đám mây.</div>
@@ -643,6 +652,7 @@
         <button class="btn-history-toggle" id="btn-history-toggle" title="Lịch sử dự án đã lưu & Đồng bộ">
             <i class="fa-solid fa-clock-rotate-left"></i>
         </button>
+        <div class="history-backdrop" id="history-backdrop"></div>
         <div class="history-popup" id="history-popup">
             <div class="history-popup-header">
                 <h3><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử & Đồng Bộ</h3>
@@ -664,6 +674,16 @@
                     </div>
                 </div>
                 
+                <!-- Bulk actions row on PC -->
+                <div class="history-bulk-actions-bar" id="pc-bulk-actions-bar" style="display: none;">
+                    <label class="history-select-all-label">
+                        <input type="checkbox" id="chk-pc-select-all"> <span>Chọn tất cả</span>
+                    </label>
+                    <button type="button" id="btn-pc-bulk-delete" class="btn-bulk-delete" disabled>
+                        <i class="fa-solid fa-trash-can"></i> Xóa đã chọn (0)
+                    </button>
+                </div>
+
                 <div class="history-list-container">
                     <div class="history-list" id="pc-history-list">
                         <div class="history-empty">Chưa có dự án nào được lưu đám mây.</div>

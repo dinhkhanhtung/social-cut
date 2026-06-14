@@ -4389,11 +4389,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnHistoryToggle = document.getElementById('btn-history-toggle');
     const btnCloseHistory = document.getElementById('btn-close-history');
     const historyPopup = document.getElementById('history-popup');
+    const historyBackdrop = document.getElementById('history-backdrop');
 
     if (btnHistoryToggle && historyPopup) {
         btnHistoryToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             historyPopup.classList.toggle('active');
+            if (historyBackdrop) historyBackdrop.classList.toggle('active');
             if (historyPopup.classList.contains('active')) {
                 loadHistoryFromDB();
             }
@@ -4404,17 +4406,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseHistory.addEventListener('click', (e) => {
             e.stopPropagation();
             historyPopup.classList.remove('active');
+            if (historyBackdrop) historyBackdrop.classList.remove('active');
         });
     }
 
-    // Đóng popup lịch sử khi click ra ngoài
-    document.addEventListener('click', (e) => {
-        if (historyPopup && historyPopup.classList.contains('active')) {
-            if (!historyPopup.contains(e.target) && e.target !== btnHistoryToggle && !btnHistoryToggle.contains(e.target)) {
-                historyPopup.classList.remove('active');
-            }
-        }
-    });
+    // Đóng popup lịch sử khi click ra ngoài hoặc click vào backdrop
+    if (historyBackdrop) {
+        historyBackdrop.addEventListener('click', (e) => {
+            e.stopPropagation();
+            historyPopup.classList.remove('active');
+            historyBackdrop.classList.remove('active');
+        });
+    }
 
     // Sự kiện làm mới đồng bộ lịch sử dự án đám mây
     const triggerSyncRefresh = async (btnId) => {
@@ -4572,13 +4575,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (error) throw error;
 
-            const renderList = (container) => {
+            const renderList = (container, isPc = true) => {
                 if (!container) return;
-                
+
+                const bulkBar = document.getElementById(isPc ? 'pc-bulk-actions-bar' : 'mobile-bulk-actions-bar');
+                const chkSelectAll = document.getElementById(isPc ? 'chk-pc-select-all' : 'chk-mobile-select-all');
+                const btnBulkDelete = document.getElementById(isPc ? 'btn-pc-bulk-delete' : 'btn-mobile-bulk-delete');
+
+                // Ẩn thanh chọn nhiều trước khi load
+                if (bulkBar) bulkBar.style.display = 'none';
+                if (chkSelectAll) chkSelectAll.checked = false;
+                if (btnBulkDelete) {
+                    btnBulkDelete.disabled = true;
+                    btnBulkDelete.innerHTML = isPc ? '<i class="fa-solid fa-trash-can"></i> Xóa đã chọn (0)' : '<i class="fa-solid fa-trash-can"></i> Xóa (0)';
+                }
+
                 if (!projects || projects.length === 0) {
                     container.innerHTML = '<div class="history-empty">Chưa có dự án nào được lưu đám mây.</div>';
                     return;
                 }
+
+                // Hiển thị thanh chọn nhiều nếu có dự án
+                if (bulkBar) bulkBar.style.display = 'flex';
 
                 container.innerHTML = '';
                 projects.forEach((proj) => {
@@ -4587,6 +4605,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.dataset.id = proj.id;
 
                     item.innerHTML = `
+                        <input type="checkbox" class="history-item-checkbox" data-id="${proj.id}">
                         <img class="history-thumb" src="${proj.image_url}" alt="Thumbnail" crossOrigin="anonymous">
                         <div class="history-info">
                             <div class="history-name" title="${proj.name}">${proj.name}</div>
@@ -4605,10 +4624,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
 
+                    // Stop propagation khi bấm checkbox để tránh click nhầm vào item
+                    const chkItem = item.querySelector('.history-item-checkbox');
+                    if (chkItem) {
+                        chkItem.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            updateBulkUI();
+                        });
+                    }
+
                     item.querySelector('.history-btn-load').addEventListener('click', (ev) => {
                         ev.stopPropagation();
                         loadProject(proj.id);
-                        if (historyPopup) historyPopup.classList.remove('active');
+                        if (historyPopup) {
+                            historyPopup.classList.remove('active');
+                            if (historyBackdrop) historyBackdrop.classList.remove('active');
+                        }
                     });
 
                     item.querySelector('.history-btn-export').addEventListener('click', (ev) => {
@@ -4625,10 +4656,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     container.appendChild(item);
                 });
+
+                // Cập nhật số lượng và trạng thái nút xóa hàng loạt
+                const updateBulkUI = () => {
+                    const checkedItems = container.querySelectorAll('.history-item-checkbox:checked');
+                    const totalItems = container.querySelectorAll('.history-item-checkbox');
+                    const count = checkedItems.length;
+
+                    if (btnBulkDelete) {
+                        btnBulkDelete.disabled = count === 0;
+                        btnBulkDelete.innerHTML = isPc
+                            ? `<i class="fa-solid fa-trash-can"></i> Xóa đã chọn (${count})`
+                            : `<i class="fa-solid fa-trash-can"></i> Xóa (${count})`;
+                    }
+
+                    if (chkSelectAll) {
+                        chkSelectAll.checked = count === totalItems.length && totalItems.length > 0;
+                    }
+                };
+
+                // Xử lý chọn tất cả
+                if (chkSelectAll) {
+                    const newChkSelectAll = chkSelectAll.cloneNode(true);
+                    chkSelectAll.parentNode.replaceChild(newChkSelectAll, chkSelectAll);
+
+                    newChkSelectAll.addEventListener('change', (ev) => {
+                        const checked = ev.target.checked;
+                        container.querySelectorAll('.history-item-checkbox').forEach(chk => {
+                            chk.checked = checked;
+                        });
+                        updateBulkUI();
+                    });
+                }
+
+                // Xử lý xóa hàng loạt
+                if (btnBulkDelete) {
+                    const newBtnBulkDelete = btnBulkDelete.cloneNode(true);
+                    btnBulkDelete.parentNode.replaceChild(newBtnBulkDelete, btnBulkDelete);
+
+                    newBtnBulkDelete.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const checkedItems = container.querySelectorAll('.history-item-checkbox:checked');
+                        const ids = Array.from(checkedItems).map(chk => chk.dataset.id);
+                        if (ids.length === 0) return;
+
+                        showConfirm(`Bạn có chắc chắn muốn xóa ${ids.length} dự án đã chọn khỏi lịch sử đám mây?`, () => {
+                            deleteProjectsBulk(ids);
+                        });
+                    });
+                }
             };
 
-            renderList(pcList);
-            renderList(mobileList);
+            renderList(pcList, true);
+            renderList(mobileList, false);
 
         } catch (err) {
             console.error("Lỗi khi load danh sách lịch sử:", err);
@@ -4796,6 +4876,43 @@ document.addEventListener('DOMContentLoaded', () => {
             loadHistoryFromDB();
         } catch (err) {
             console.error("Lỗi khi xóa dự án:", err);
+            showToast("Xóa dự án thất bại!", "error");
+        }
+    }
+
+    async function deleteProjectsBulk(ids) {
+        if (!supabase || !ids || ids.length === 0) return;
+        try {
+            // Lấy thông tin URL ảnh gốc của tất cả các dự án cần xóa để xóa tệp trên Storage
+            const { data: projs, error: fetchErr } = await supabase
+                .from('projects')
+                .select('image_url')
+                .in('id', ids);
+            
+            if (!fetchErr && projs) {
+                const filePaths = [];
+                const bucketPart = 'project-images/';
+                projs.forEach(proj => {
+                    const index = proj.image_url.indexOf(bucketPart);
+                    if (index !== -1) {
+                        const filePath = decodeURIComponent(proj.image_url.substring(index + bucketPart.length));
+                        filePaths.push(filePath);
+                    }
+                });
+                if (filePaths.length > 0) {
+                    await supabase.storage.from('project-images').remove(filePaths);
+                }
+            }
+
+            // Xóa các bản ghi dự án trong cơ sở dữ liệu
+            const { error: delErr } = await supabase.from('projects').delete().in('id', ids);
+            if (delErr) throw delErr;
+
+            console.log("Đã xóa hàng loạt dự án khỏi Supabase.");
+            showToast(`Đã xóa thành công ${ids.length} dự án!`, "success");
+            loadHistoryFromDB();
+        } catch (err) {
+            console.error("Lỗi khi xóa hàng loạt dự án:", err);
             showToast("Xóa dự án thất bại!", "error");
         }
     }
