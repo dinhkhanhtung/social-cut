@@ -2925,19 +2925,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const centerX = x1 + coords.cropW / 2;
                     const centerY = y1 + coords.cropH / 2;
 
-                    const btnRad = 16 / zoomScale;
-                    const btnY = centerY - 6 / zoomScale;
-                    const confirmX = centerX + 26 / zoomScale;
-                    const cancelX = centerX - 26 / zoomScale;
+                    const btnRad = 20 / zoomScale;
+                    const btnY = centerY;
+                    const confirmX = centerX + 25 / zoomScale;
+                    const cancelX = centerX - 25 / zoomScale;
 
                     ctx.save();
                     
                     // Vẽ nền Pill
-                    const pillW = 120 / zoomScale;
-                    const pillH = 56 / zoomScale;
+                    const pillW = 108 / zoomScale;
+                    const pillH = 50 / zoomScale;
                     const pillX = centerX - pillW / 2;
                     const pillY = centerY - pillH / 2;
-                    const pillRad = 10 / zoomScale;
+                    const pillRad = 12 / zoomScale;
 
                     ctx.beginPath();
                     ctx.moveTo(pillX + pillRad, pillY);
@@ -2988,9 +2988,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Vẽ dấu nhân '✕' bằng nét vẽ (path) đẹp mắt
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 2.5 / zoomScale;
+                    ctx.lineWidth = 3 / zoomScale;
                     ctx.lineCap = 'round';
-                    const crossSz = 4.5 / zoomScale;
+                    const crossSz = 5.5 / zoomScale;
                     ctx.moveTo(cancelX - crossSz, btnY - crossSz);
                     ctx.lineTo(cancelX + crossSz, btnY + crossSz);
                     ctx.moveTo(cancelX + crossSz, btnY - crossSz);
@@ -3000,65 +3000,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Vẽ dấu tích '✓' bằng nét vẽ (path) chuẩn FontAwesome
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 2.5 / zoomScale;
+                    ctx.lineWidth = 3 / zoomScale;
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
-                    ctx.moveTo(confirmX - 5.5 / zoomScale, btnY - 0.5 / zoomScale);
-                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 3.5 / zoomScale);
-                    ctx.lineTo(confirmX + 5.5 / zoomScale, btnY - 3.5 / zoomScale);
+                    ctx.moveTo(confirmX - 6.5 / zoomScale, btnY - 0.5 / zoomScale);
+                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 4.5 / zoomScale);
+                    ctx.lineTo(confirmX + 6.5 / zoomScale, btnY - 4.5 / zoomScale);
                     ctx.stroke();
 
-                    // Vẽ label chữ bên dưới
-                    ctx.fillStyle = 'rgba(243, 244, 246, 0.9)'; // gray-100
-                    ctx.font = `bold ${Math.round(9 / zoomScale)}px var(--font-sans), sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('Hủy', cancelX, btnY + btnRad + 10 / zoomScale);
-                    ctx.fillText('Lưu', confirmX, btnY + btnRad + 10 / zoomScale);
-
                     ctx.restore();
-
-                    // Vẽ banner thông báo recut
-                    const recutItemForBanner = slicedImages.find(item => item.id === recutSlideId);
-                    if (recutItemForBanner) {
-                        const slideNumber = slicedImages.indexOf(recutItemForBanner) + 1;
-                        const bannerText = `🔄 Đang cắt lại Slide #${slideNumber} — Kéo lưới/khung để chỉnh, bấm ✓ lưu hoặc ✕ hủy (Esc)`;
-                        const bannerFontSize = Math.round(Math.max(11, 13 / zoomScale));
-                        ctx.save();
-                        ctx.font = `bold ${bannerFontSize}px var(--font-sans), sans-serif`;
-                        const textWidth = ctx.measureText(bannerText).width;
-                        const bannerPadX = 14 / zoomScale;
-                        const bannerPadY = 8 / zoomScale;
-                        const bannerH = bannerFontSize + bannerPadY * 2;
-                        const bannerW = textWidth + bannerPadX * 2;
-                        const bannerX = (x1 + x2) / 2 - bannerW / 2;
-
-                        let bannerY = pillY - bannerH - 8 / zoomScale;
-                        if (bannerY < 4 / zoomScale) {
-                            bannerY = pillY + pillH + 8 / zoomScale;
-                        }
-
-                        // Background pill
-                        ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
-                        const pillRad = bannerH / 2;
-                        ctx.beginPath();
-                        ctx.moveTo(bannerX + pillRad, bannerY);
-                        ctx.lineTo(bannerX + bannerW - pillRad, bannerY);
-                        ctx.arcTo(bannerX + bannerW, bannerY, bannerX + bannerW, bannerY + pillRad, pillRad);
-                        ctx.arcTo(bannerX + bannerW, bannerY + bannerH, bannerX + bannerW - pillRad, bannerY + bannerH, pillRad);
-                        ctx.lineTo(bannerX + pillRad, bannerY + bannerH);
-                        ctx.arcTo(bannerX, bannerY + bannerH, bannerX, bannerY + bannerH - pillRad, pillRad);
-                        ctx.arcTo(bannerX, bannerY, bannerX + pillRad, bannerY, pillRad);
-                        ctx.closePath();
-                        ctx.fill();
-
-                        // Text
-                        ctx.fillStyle = '#ffffff';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(bannerText, (x1 + x2) / 2, bannerY + bannerH / 2);
-                        ctx.restore();
-                    }
                 }
             }
         }
