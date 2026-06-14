@@ -615,6 +615,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Auto Detect Optimal Grid Rows/Cols based on standard aspect ratios ---
+    const autoDetectOptimalGrid = (width, height) => {
+        const imgRatio = width / height;
+        
+        // Standard cell aspect ratios (width / height)
+        const targetRatios = [1.0, 0.8, 0.75, 1.91, 0.5625];
+        
+        let bestCols = 3;
+        let bestRows = 1;
+        let minDiff = Infinity;
+        
+        if (width >= height) {
+            // Horizontal panorama: rows = 1, cols = N
+            bestRows = 1;
+            for (const target of targetRatios) {
+                const cols = Math.max(1, Math.min(10, Math.round(imgRatio / target)));
+                const cellRatio = imgRatio / cols;
+                const diff = Math.abs(cellRatio - target);
+                
+                if (diff < minDiff - 0.01) {
+                    minDiff = diff;
+                    bestCols = cols;
+                }
+            }
+            
+            // If the image is close to square, force 1x1
+            if (Math.abs(imgRatio - 1.0) < 0.05) {
+                bestCols = 1;
+                bestRows = 1;
+            }
+        } else {
+            // Vertical panorama: cols = 1, rows = N
+            bestCols = 1;
+            for (const target of targetRatios) {
+                const rows = Math.max(1, Math.min(10, Math.round(target / imgRatio)));
+                const cellRatio = imgRatio * rows;
+                const diff = Math.abs(cellRatio - target);
+                
+                if (diff < minDiff - 0.01) {
+                    minDiff = diff;
+                    bestRows = rows;
+                }
+            }
+            
+            // If the image is close to square, force 1x1
+            if (Math.abs(imgRatio - 1.0) < 0.05) {
+                bestCols = 1;
+                bestRows = 1;
+            }
+        }
+        
+        // Special case: standard single landscape (like 16:9) should not default to too many columns
+        if (imgRatio > 1.2 && imgRatio < 2.0 && bestCols > 2) {
+            if (Math.abs(imgRatio - 1.7778) < 0.1) {
+                bestCols = 2; // Split into two 1.1:1 parts
+            }
+        }
+        
+        return { cols: bestCols, rows: bestRows };
+    };
+
     // --- Initialize Grid Lines (Evenly Distributed) ---
     const resetGridToEven = () => {
         if (!currentImage) return;
@@ -713,6 +774,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             handleParamsChange();
+        });
+    }
+
+    if (gridModeText) {
+        gridModeText.style.cursor = 'pointer';
+        gridModeText.title = "Click để đặt lại lưới chia đều";
+        gridModeText.addEventListener('click', () => {
+            if (slicingMode === 'grid' && (isCustomGrid || gridType !== 'even')) {
+                if (selectGridType) {
+                    selectGridType.value = 'even';
+                    gridType = 'even';
+                    if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
+                }
+                resetGridToEven();
+                handleParamsChange();
+                showToast("Đã đặt lại lưới chia đều!", "success");
+            }
         });
     }
 
@@ -1606,8 +1684,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!currentImage) return;
 
-        // Ignore shortcuts if user is typing in inputs or select options
-        if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT') {
+        // Ignore shortcuts if user is typing in text-entry inputs or select options
+        const activeEl = document.activeElement;
+        const isTyping = activeEl && (
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.tagName === 'SELECT' ||
+            (activeEl.tagName === 'INPUT' && ['text', 'password', 'number', 'email', 'search', 'tel', 'url'].includes(activeEl.type))
+        );
+        if (isTyping) {
             return;
         }
 
@@ -1744,6 +1828,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('File ảnh không hợp lệ!', 'warning');
             return;
         }
+
+        // Blur any active element (like file input) to prevent keyboard shortcut conflicts
+        if (document.activeElement) {
+            document.activeElement.blur();
+        }
+
         currentOriginalFile = file;
 
         // Xóa sạch kết quả cũ khi tải ảnh mới lên để tránh trộn lẫn và lệch kích thước
@@ -1794,6 +1884,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnAutoDetect) btnAutoDetect.disabled = false;
                 btnGenBoxes.disabled = false;
                 btnClearBoxes.disabled = false;
+                
+                // Tự động tối ưu hóa số lượng hàng/cột của lưới dựa theo tỷ lệ ảnh chuẩn
+                const optimalGrid = autoDetectOptimalGrid(img.naturalWidth, img.naturalHeight);
+                inputCols.value = optimalGrid.cols;
+                inputRows.value = optimalGrid.rows;
                 
                 resetGridToEven();
                 
