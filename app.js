@@ -2235,6 +2235,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Xử lý phím tắt đặc biệt khi đang trong chế độ Cắt lại slide đơn (Recut)
+        if (recutSlideId !== null) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                showConfirm("Bạn có chắc chắn muốn lưu thay đổi cắt lại cho slide này?", () => {
+                    handleConfirmRecut();
+                });
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                handleCancelRecut();
+                return;
+            }
+        }
+
         // Toggle Keyboard Shortcuts Panel with '?'
         if (e.key === '?') {
             e.preventDefault();
