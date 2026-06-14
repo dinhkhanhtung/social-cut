@@ -922,7 +922,6 @@ input[type="number"] {
 .canvas-wrapper {
     flex-grow: 1;
     min-height: 0;
-    background: rgba(17, 24, 39, 0.4);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     display: flex;
@@ -934,6 +933,19 @@ input[type="number"] {
     position: relative;
     user-select: none;
     -webkit-user-select: none;
+    background-color: #18181b; /* Nền tối nhẹ cho các ô vuông caro */
+    background-image: linear-gradient(45deg, #1f2937 25%, transparent 25%), 
+                      linear-gradient(-45deg, #1f2937 25%, transparent 25%), 
+                      linear-gradient(45deg, transparent 75%, #1f2937 75%), 
+                      linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    transition: background-color 0.3s ease, background-image 0.3s ease;
+}
+
+.canvas-wrapper.bg-solid {
+    background-image: none !important;
+    background-color: rgba(17, 24, 39, 0.4) !important; /* Trở về nền tối sẫm trơn như ban đầu */
 }
 
 /* Canvas stretches to full height and enables horizontal scrolling */
@@ -945,25 +957,16 @@ input[type="number"] {
     margin: auto;
     border-radius: 4px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    background-color: #18181b; /* Nền tối nhẹ cho các ô vuông caro */
-    background-image: linear-gradient(45deg, #1f2937 25%, transparent 25%), 
-                      linear-gradient(-45deg, #1f2937 25%, transparent 25%), 
-                      linear-gradient(45deg, transparent 75%, #1f2937 75%), 
-                      linear-gradient(-45deg, transparent 75%, #1f2937 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    transition: background-color 0.3s ease;
-}
-
-#preview-canvas.bg-solid {
-    background-image: none !important;
-    background-color: #111827 !important; /* Trở về nền trơn tối sẫm đồng nhất */
+    background: transparent; /* Trong suốt để lộ nền của wrapper ở dưới */
 }
 
 #canvas-bg-mode-text {
     cursor: pointer;
     user-select: none;
     transition: all 0.2s ease;
+    display: inline-block;
+    width: 36px; /* Cố định chiều rộng để khi thay đổi chữ không bị giật lề */
+    text-align: left; /* Căn lề trái */
 }
 
 #canvas-bg-mode-text:hover {

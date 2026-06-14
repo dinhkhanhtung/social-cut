@@ -947,13 +947,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let canvasBgMode = localStorage.getItem('canvas_bg_mode') || 'checkerboard';
 
     const updateCanvasBgDisplay = () => {
-        if (!previewCanvas || !canvasBgModeText) return;
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        if (!canvasWrapper || !canvasBgModeText) return;
         if (canvasBgMode === 'solid') {
-            previewCanvas.classList.add('bg-solid');
+            canvasWrapper.classList.add('bg-solid');
             canvasBgModeText.textContent = 'Trơn';
             canvasBgModeText.style.color = 'var(--text-secondary)';
         } else {
-            previewCanvas.classList.remove('bg-solid');
+            canvasWrapper.classList.remove('bg-solid');
             canvasBgModeText.textContent = 'Caro';
             canvasBgModeText.style.color = 'var(--accent)';
         }
