@@ -801,10 +801,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- Update Grid Smartly (Keep custom spacing if custom grid) ---
+    const updateGridParamsSmart = (type) => {
+        if (!currentImage) return;
+        const width = currentImage.naturalWidth;
+        const height = currentImage.naturalHeight;
+
+        if (type === 'cols') {
+            const cols = parseInt(inputCols.value) || 1;
+            const targetLen = cols - 1;
+
+            // Đảm bảo colsX được sắp xếp tăng dần
+            colsX.sort((a, b) => a - b);
+
+            if (colsX.length > targetLen) {
+                // Giảm cột: Cắt bỏ các cột dư ở cuối
+                colsX.splice(targetLen);
+            } else if (colsX.length < targetLen) {
+                // Thêm cột: Chèn cột mới vào khoảng trống lớn nhất
+                while (colsX.length < targetLen) {
+                    const temp = [0, ...colsX, width];
+                    let maxDist = -1;
+                    let insertIdx = -1;
+                    let insertVal = 0;
+
+                    for (let i = 0; i < temp.length - 1; i++) {
+                        const dist = temp[i+1] - temp[i];
+                        if (dist > maxDist) {
+                            maxDist = dist;
+                            insertIdx = i;
+                            insertVal = Math.round((temp[i] + temp[i+1]) / 2);
+                        }
+                    }
+
+                    if (insertIdx !== -1) {
+                        colsX.push(insertVal);
+                        colsX.sort((a, b) => a - b);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        } else if (type === 'rows') {
+            const rows = parseInt(inputRows.value) || 1;
+            const targetLen = rows - 1;
+
+            // Đảm bảo rowsY được sắp xếp tăng dần
+            rowsY.sort((a, b) => a - b);
+
+            if (rowsY.length > targetLen) {
+                // Giảm hàng: Cắt bỏ hàng dư ở cuối
+                rowsY.splice(targetLen);
+            } else if (rowsY.length < targetLen) {
+                // Thêm hàng: Chèn hàng mới vào khoảng trống lớn nhất
+                while (rowsY.length < targetLen) {
+                    const temp = [0, ...rowsY, height];
+                    let maxDist = -1;
+                    let insertIdx = -1;
+                    let insertVal = 0;
+
+                    for (let i = 0; i < temp.length - 1; i++) {
+                        const dist = temp[i+1] - temp[i];
+                        if (dist > maxDist) {
+                            maxDist = dist;
+                            insertIdx = i;
+                            insertVal = Math.round((temp[i] + temp[i+1]) / 2);
+                        }
+                    }
+
+                    if (insertIdx !== -1) {
+                        rowsY.push(insertVal);
+                        rowsY.sort((a, b) => a - b);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+    };
+
     // --- Parameter Control Events ---
     const handleParamsChange = (e) => {
         if (slicingMode === 'grid' && e && (e.target.id === 'input-rows' || e.target.id === 'input-cols')) {
-            resetGridToEven();
+            if (isCustomGrid) {
+                updateGridParamsSmart(e.target.id === 'input-rows' ? 'rows' : 'cols');
+            } else {
+                resetGridToEven();
+            }
         }
 
         if (currentImage) {
