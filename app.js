@@ -183,17 +183,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let exportFormat = 'image/png';
     let exportScale = 2; // Default to 2x for HD quality
 
-    // --- Collapsible Panels Handler ---
+    // --- Collapsible Panels Handler (Accordion & Auto Scroll) ---
     const collapsibles = document.querySelectorAll('.collapsible-header');
     collapsibles.forEach(header => {
         header.addEventListener('click', () => {
             const group = header.parentElement;
             const content = group.querySelector('.collapsible-content');
+            const isOpen = group.classList.contains('open');
             
-            group.classList.toggle('open');
+            // Đóng tất cả các panel khác
+            collapsibles.forEach(otherHeader => {
+                const otherGroup = otherHeader.parentElement;
+                const otherContent = otherGroup.querySelector('.collapsible-content');
+                if (otherGroup !== group) {
+                    otherGroup.classList.remove('open');
+                    otherContent.style.maxHeight = null;
+                }
+            });
             
-            if (group.classList.contains('open')) {
+            // Toggle panel hiện tại
+            group.classList.toggle('open', !isOpen);
+            if (!isOpen) {
                 content.style.maxHeight = (content.scrollHeight + 50) + "px"; // padding buffer
+                
+                // Tự động cuộn mượt mà đưa panel vừa mở hiển thị tối ưu trong tầm mắt
+                setTimeout(() => {
+                    group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 200); // Đợi hiệu ứng transition bắt đầu
             } else {
                 content.style.maxHeight = null;
             }

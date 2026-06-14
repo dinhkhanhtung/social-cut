@@ -80,9 +80,10 @@
                         <input type="file" id="file-input" accept="image/*" class="file-input">
                         <div class="dropzone-prompt" id="dropzone-prompt">
                             <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                            <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
-                            <p class="dropzone-text-sub">hoặc nhấp chuột để chọn từ máy tính</p>
-                            <span class="file-format-badge">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
+                            <div class="dropzone-text-group">
+                                <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
+                                <p class="dropzone-text-sub">hoặc nhấp chuột để chọn</p>
+                            </div>
                         </div>
                         <!-- Mini Preview when file selected -->
                         <div class="dropzone-file-info" id="file-info" style="display: none;">
@@ -162,7 +163,7 @@
                     </div>
 
                     <!-- Grid Layout & Ratio selectors in one row -->
-                    <div class="control-group-grid grid-ratio-group" style="margin-bottom: 12px;">
+                    <div class="control-group-grid grid-ratio-group">
                         <div class="control-item" id="grid-type-control-item">
                             <label for="select-grid-type">
                                 <i class="fa-solid fa-table-cells" style="color: #06b6d4;"></i> Bố cục lưới
@@ -188,7 +189,7 @@
                     </div>
 
                     <!-- Quick Presets -->
-                    <div class="control-item" style="margin-bottom: 12px;">
+                    <div class="control-item">
                         <label><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> Preset MXH nhanh</label>
                         <div class="preset-buttons-group">
                             <button type="button" class="btn-preset" data-preset="ig-1-1" title="Instagram 1:1 (Lưới 3 cột, Cắt đều)">
@@ -207,7 +208,7 @@
                     </div>
 
                     <!-- Global Slider (Applies to both modes) -->
-                    <div class="control-item" style="margin-bottom: 12px;">
+                    <div class="control-item">
                         <div class="label-with-value">
                             <label for="input-offset">
                                 <i class="fa-solid fa-border-none"></i> Xén viền ô (Offset Padding)
@@ -224,7 +225,7 @@
                     </div>
 
                     <!-- Uniform constraints & Snap switchers in one row -->
-                    <div class="control-group-grid snap-uniform-group" style="margin-top: 4px; margin-bottom: 12px;">
+                    <div class="control-group-grid snap-uniform-group">
                         <div class="control-item">
                             <div class="switch-inline-container">
                                 <label for="switch-uniform" class="label-switch">
