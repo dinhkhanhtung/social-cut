@@ -3084,11 +3084,14 @@ input[type="number"] {
     color: #fff;
 }
 
-/* Mobile specific styling for auth */
+/* Mobile specific styling for auth and history */
 @media (max-width: 768px) {
     .mobile-auth-section {
         margin: 6px 12px 10px 12px;
         padding: 12px;
+    }
+    .history-header {
+        padding: 0 13px 0 8px !important; /* Căn thẳng hàng nút X xóa trên dưới */
     }
 }
 
@@ -3266,6 +3269,7 @@ input[type="number"] {
     align-items: center;
     gap: 4px;
     transition: var(--transition-smooth);
+    position: relative;
 }
 
 .btn-history-action:hover {
@@ -4385,15 +4389,23 @@ input[type="number"] {
 
 /* Badge số lượng chọn cho nút bulk delete */
 .selected-badge {
-    background: var(--danger);
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ef4444;
     color: #fff;
-    font-size: 0.62rem;
-    padding: 1px 4px;
-    border-radius: 8px;
+    font-size: 0.55rem;
+    padding: 0;
+    border-radius: 50%;
+    min-width: 14px;
+    height: 14px;
     font-weight: 700;
-    margin-left: 5px;
-    line-height: 1;
-    display: inline-block;
+    line-height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #0b0f19;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* Nút hành động Lịch sử có trạng thái nguy hiểm (Xóa) */
