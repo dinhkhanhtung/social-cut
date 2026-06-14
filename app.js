@@ -4578,16 +4578,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const renderList = (container, isPc = true) => {
                 if (!container) return;
 
-                const bulkBar = document.getElementById(isPc ? 'pc-bulk-actions-bar' : 'mobile-bulk-actions-bar');
-                const chkSelectAll = document.getElementById(isPc ? 'chk-pc-select-all' : 'chk-mobile-select-all');
+                const btnSelectAll = document.getElementById(isPc ? 'btn-pc-select-all-toggle' : 'btn-mobile-select-all-toggle');
                 const btnBulkDelete = document.getElementById(isPc ? 'btn-pc-bulk-delete' : 'btn-mobile-bulk-delete');
+                const badge = document.getElementById(isPc ? 'pc-selected-count' : 'mobile-selected-count');
 
-                // Ẩn thanh chọn nhiều trước khi load
-                if (bulkBar) bulkBar.style.display = 'none';
-                if (chkSelectAll) chkSelectAll.checked = false;
+                // Ẩn các nút trong header trước khi load
+                if (btnSelectAll) {
+                    btnSelectAll.style.display = 'none';
+                    btnSelectAll.classList.remove('active');
+                }
                 if (btnBulkDelete) {
                     btnBulkDelete.disabled = true;
-                    btnBulkDelete.innerHTML = isPc ? '<i class="fa-solid fa-trash-can"></i> Xóa đã chọn (0)' : '<i class="fa-solid fa-trash-can"></i> Xóa (0)';
+                    btnBulkDelete.style.display = 'none';
+                }
+                if (badge) {
+                    badge.style.display = 'none';
+                    badge.textContent = '0';
                 }
 
                 if (!projects || projects.length === 0) {
@@ -4595,8 +4601,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Hiển thị thanh chọn nhiều nếu có dự án
-                if (bulkBar) bulkBar.style.display = 'flex';
+                // Hiển thị các nút trong header nếu có dự án
+                if (btnSelectAll) btnSelectAll.style.display = 'inline-flex';
+                if (btnBulkDelete) btnBulkDelete.style.display = 'inline-flex';
 
                 container.innerHTML = '';
                 projects.forEach((proj) => {
@@ -4665,25 +4672,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (btnBulkDelete) {
                         btnBulkDelete.disabled = count === 0;
-                        btnBulkDelete.innerHTML = isPc
-                            ? `<i class="fa-solid fa-trash-can"></i> Xóa đã chọn (${count})`
-                            : `<i class="fa-solid fa-trash-can"></i> Xóa (${count})`;
                     }
 
-                    if (chkSelectAll) {
-                        chkSelectAll.checked = count === totalItems.length && totalItems.length > 0;
+                    if (badge) {
+                        badge.textContent = count;
+                        badge.style.display = count > 0 ? 'inline-block' : 'none';
+                    }
+
+                    if (btnSelectAll) {
+                        if (count === totalItems.length && totalItems.length > 0) {
+                            btnSelectAll.classList.add('active');
+                            btnSelectAll.title = "Bỏ chọn tất cả";
+                        } else {
+                            btnSelectAll.classList.remove('active');
+                            btnSelectAll.title = "Chọn tất cả dự án";
+                        }
                     }
                 };
 
-                // Xử lý chọn tất cả
-                if (chkSelectAll) {
-                    const newChkSelectAll = chkSelectAll.cloneNode(true);
-                    chkSelectAll.parentNode.replaceChild(newChkSelectAll, chkSelectAll);
+                // Xử lý chọn tất cả bằng nút icon toggle
+                if (btnSelectAll) {
+                    const newBtnSelectAll = btnSelectAll.cloneNode(true);
+                    btnSelectAll.parentNode.replaceChild(newBtnSelectAll, btnSelectAll);
 
-                    newChkSelectAll.addEventListener('change', (ev) => {
-                        const checked = ev.target.checked;
-                        container.querySelectorAll('.history-item-checkbox').forEach(chk => {
-                            chk.checked = checked;
+                    newBtnSelectAll.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const totalItems = container.querySelectorAll('.history-item-checkbox');
+                        const checkedItems = container.querySelectorAll('.history-item-checkbox:checked');
+                        
+                        const shouldCheck = (checkedItems.length < totalItems.length);
+                        totalItems.forEach(chk => {
+                            chk.checked = shouldCheck;
                         });
                         updateBulkUI();
                     });
