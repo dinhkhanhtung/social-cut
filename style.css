@@ -4481,6 +4481,61 @@ input[type="number"] {
     border-color: transparent !important;
 }
 
+/* Floating Canvas Action Buttons */
+.canvas-wrapper {
+    position: relative;
+}
+
+.floating-canvas-actions {
+    position: absolute;
+    z-index: 100;
+    display: flex;
+    gap: 16px;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.btn-floating-action {
+    pointer-events: auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #ffffff;
+    outline: none;
+}
+
+.btn-floating-cancel {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+}
+
+.btn-floating-cancel:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    transform: scale(1.1) rotate(-90deg);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.btn-floating-confirm {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.btn-floating-confirm:hover {
+    background: linear-gradient(135deg, #10b981, #059669);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.btn-floating-action:active {
+    transform: scale(0.95);
+}
+
 
 
 

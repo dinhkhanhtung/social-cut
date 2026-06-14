@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPreCrop = document.getElementById('btn-pre-crop');
     const btnResetImage = document.getElementById('btn-reset-image');
     
+    const floatingCanvasActions = document.getElementById('floating-canvas-actions');
+    const btnFloatingConfirm = document.getElementById('btn-floating-confirm');
+    const btnFloatingCancel = document.getElementById('btn-floating-cancel');
+    
     const modeGridBtn = document.getElementById('mode-grid');
     const modeBoxBtn = document.getElementById('mode-box');
     const controlsGridMode = document.getElementById('controls-grid-mode');
@@ -236,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mode 2: Box Mode Variables ---
     let selectionBoxes = []; // Array of { id, x, y, w, h } in original image space
+    let currentGridCells = []; // Danh sách các ô grid vẽ thực tế trên canvas để đồng bộ vị trí nút nổi
     let nextBoxId = 1;
     let isDrawingNewBox = false;
     let newBoxStart = { x: 0, y: 0 };
@@ -489,6 +494,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnResetImage) {
         btnResetImage.addEventListener('click', () => {
             resetToOriginalImage();
+        });
+    }
+
+    if (btnFloatingConfirm) {
+        btnFloatingConfirm.addEventListener('click', () => {
+            if (isPreCropping) {
+                confirmPreCrop();
+            } else if (recutSlideId !== null) {
+                showConfirm("Bạn có chắc chắn muốn lưu thay đổi cắt lại cho slide này?", () => {
+                    handleConfirmRecut();
+                });
+            }
+        });
+    }
+
+    if (btnFloatingCancel) {
+        btnFloatingCancel.addEventListener('click', () => {
+            if (isPreCropping) {
+                cancelPreCrop();
+            } else if (recutSlideId !== null) {
+                handleCancelRecut();
+            }
         });
     }
 
@@ -2497,9 +2524,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnToggleSidebar) btnToggleSidebar.click();
         }
 
-        // C or Enter to Slice or Confirm Recut
+        // C or Enter to Slice, Confirm Pre-crop or Confirm Recut
         if (e.key.toLowerCase() === 'c' || e.key === 'Enter') {
             e.preventDefault();
+            if (isPreCropping) {
+                confirmPreCrop();
+                return;
+            }
             if (recutSlideId !== null) {
                 showConfirm("Bạn có chắc chắn muốn lưu thay đổi cắt lại cho slide này?", () => {
                     handleConfirmRecut();
@@ -2594,6 +2625,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Global shortcuts for escape
         if (e.key === 'Escape') {
+            if (isPreCropping) {
+                cancelPreCrop();
+                return;
+            }
             if (recutSlideId !== null) {
                 handleCancelRecut();
                 return;
@@ -2896,69 +2931,6 @@ document.addEventListener('DOMContentLoaded', () => {
             drawHandle(x, y + h / 2); // L
             drawHandle(x + w, y + h / 2); // R
 
-            // 4. Vẽ cụm nút Xác nhận / Hủy ở giữa khung cắt
-            const centerX = x + w / 2;
-            const centerY = y + h / 2;
-            const btnRad = 24 / zoomScale;
-            const confirmX = centerX + 30 / zoomScale;
-            const cancelX = centerX - 30 / zoomScale;
-
-            ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-            ctx.shadowBlur = 8 / zoomScale;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 3 / zoomScale;
-
-            // Nút Hủy (Đỏ)
-            const cancelGrad = ctx.createLinearGradient(cancelX - btnRad, centerY - btnRad, cancelX + btnRad, centerY + btnRad);
-            cancelGrad.addColorStop(0, '#f87171');
-            cancelGrad.addColorStop(1, '#dc2626');
-            ctx.beginPath();
-            ctx.arc(cancelX, centerY, btnRad, 0, 2 * Math.PI);
-            ctx.fillStyle = cancelGrad;
-            ctx.fill();
-            ctx.lineWidth = 1.5 / zoomScale;
-            ctx.strokeStyle = '#ffffff';
-            ctx.stroke();
-
-            // Nút Xác nhận (Xanh Emerald)
-            const confirmGrad = ctx.createLinearGradient(confirmX - btnRad, centerY - btnRad, confirmX + btnRad, centerY + btnRad);
-            confirmGrad.addColorStop(0, '#34d399');
-            confirmGrad.addColorStop(1, '#059669');
-            ctx.beginPath();
-            ctx.arc(confirmX, centerY, btnRad, 0, 2 * Math.PI);
-            ctx.fillStyle = confirmGrad;
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-
-            // Vẽ dấu nhân '✕'
-            ctx.beginPath();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3 / zoomScale;
-            ctx.lineCap = 'round';
-            const crossSz = 5.5 / zoomScale;
-            ctx.moveTo(cancelX - crossSz, centerY - crossSz);
-            ctx.lineTo(cancelX + crossSz, centerY + crossSz);
-            ctx.moveTo(cancelX + crossSz, centerY - crossSz);
-            ctx.lineTo(cancelX - crossSz, centerY + crossSz);
-            ctx.stroke();
-
-            // Vẽ dấu tích '✓'
-            ctx.beginPath();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3 / zoomScale;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.moveTo(confirmX - 6.5 / zoomScale, centerY - 0.5 / zoomScale);
-            ctx.lineTo(confirmX - 1.5 / zoomScale, centerY + 4.5 / zoomScale);
-            ctx.lineTo(confirmX + 6.5 / zoomScale, centerY - 4.5 / zoomScale);
-            ctx.stroke();
-
-            ctx.restore();
             ctx.restore();
             return;
         }
@@ -3254,7 +3226,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+            currentGridCells = cells;
         } else {
+            currentGridCells = [];
             selectionBoxes.forEach((box, idx) => {
                 const x = box.x;
                 const y = box.y;
@@ -3442,91 +3416,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Vẽ nút điều khiển Xác nhận / Hủy cho chế độ Cắt lại slide đơn
-        if (recutSlideId !== null) {
-            const recutItem = slicedImages.find(item => item.id === recutSlideId);
-            const coords = getRecutSlideCoords(recutItem);
-            if (coords) {
-                const x1 = coords.sx;
-                const y1 = coords.sy;
-                const x2 = coords.sx + coords.cropW;
-                const y2 = coords.sy + coords.cropH;
-
-                if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
-                    const centerX = x1 + coords.cropW / 2 + recutButtonsOffset.x;
-                    const centerY = y1 + coords.cropH / 2 + recutButtonsOffset.y;
-
-                    const btnRad = 24 / zoomScale;
-                    const btnY = centerY;
-                    const confirmX = centerX + 30 / zoomScale;
-                    const cancelX = centerX - 30 / zoomScale;
-
-                    ctx.save();
-                    
-                    // Shadow cho các nút tròn lơ lửng thêm mịn màng
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-                    ctx.shadowBlur = 8 / zoomScale;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 3 / zoomScale;
-
-                    // Vẽ nút Hủy (Gradient đỏ cao cấp)
-                    const cancelGrad = ctx.createLinearGradient(cancelX - btnRad, btnY - btnRad, cancelX + btnRad, btnY + btnRad);
-                    cancelGrad.addColorStop(0, '#f87171');
-                    cancelGrad.addColorStop(1, '#dc2626');
-
-                    ctx.beginPath();
-                    ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
-                    ctx.fillStyle = cancelGrad;
-                    ctx.fill();
-                    ctx.lineWidth = 1.5 / zoomScale;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.stroke();
-
-                    // Vẽ nút Xác nhận (Gradient xanh Emerald cao cấp)
-                    const confirmGrad = ctx.createLinearGradient(confirmX - btnRad, btnY - btnRad, confirmX + btnRad, btnY + btnRad);
-                    confirmGrad.addColorStop(0, '#34d399');
-                    confirmGrad.addColorStop(1, '#059669');
-
-                    ctx.beginPath();
-                    ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
-                    ctx.fillStyle = confirmGrad;
-                    ctx.fill();
-                    ctx.lineWidth = 1.5 / zoomScale;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.stroke();
-
-                    // Tắt shadow để vẽ icon paths sắc nét
-                    ctx.shadowBlur = 0;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 0;
-
-                    // Vẽ dấu nhân '✕' thanh thoát hiện đại
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3 / zoomScale;
-                    ctx.lineCap = 'round';
-                    const crossSz = 5.5 / zoomScale;
-                    ctx.moveTo(cancelX - crossSz, btnY - crossSz);
-                    ctx.lineTo(cancelX + crossSz, btnY + crossSz);
-                    ctx.moveTo(cancelX + crossSz, btnY - crossSz);
-                    ctx.lineTo(cancelX - crossSz, btnY + crossSz);
-                    ctx.stroke();
-
-                    // Vẽ dấu tích '✓' chuẩn tỉ lệ vàng, mảnh dẻ tinh tế
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3 / zoomScale;
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-                    ctx.moveTo(confirmX - 6.5 / zoomScale, btnY - 0.5 / zoomScale);
-                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 4.5 / zoomScale);
-                    ctx.lineTo(confirmX + 6.5 / zoomScale, btnY - 4.5 / zoomScale);
-                    ctx.stroke();
-
-                    ctx.restore();
-                }
-            }
-        }
+        // Tự động cập nhật vị trí của cụm nút nổi HTML/CSS (Recut hoặc Pre-crop)
+        updateFloatingActionsPosition();
 
         ctx.restore();
     }
@@ -6594,6 +6485,66 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Đã khôi phục ảnh gốc ban đầu!", "success");
     };
 
+    // --- Cập nhật vị trí của cụm nút nổi HTML/CSS ---
+    const updateFloatingActionsPosition = () => {
+        if (!floatingCanvasActions) return;
+
+        const isRecutting = (recutSlideId !== null);
+        const shouldShow = isPreCropping || isRecutting;
+
+        if (!shouldShow || !currentImage || !previewCanvas || previewCanvas.style.display === 'none') {
+            floatingCanvasActions.style.display = 'none';
+            return;
+        }
+
+        const canvasLeft = previewCanvas.offsetLeft;
+        const canvasTop = previewCanvas.offsetTop;
+        const canvasWidth = previewCanvas.offsetWidth;
+        const canvasHeight = previewCanvas.offsetHeight;
+
+        let centerX = 0;
+        let centerY = 0;
+
+        if (isPreCropping && preCropBox) {
+            centerX = preCropBox.x + preCropBox.w / 2;
+            centerY = preCropBox.y + preCropBox.h / 2;
+        } else if (isRecutting) {
+            const recutItem = slicedImages.find(item => item.id === recutSlideId);
+            if (recutItem) {
+                if (recutItem.meta && recutItem.meta.slicingMode === 'grid') {
+                    const cellIdx = recutItem.meta.cellIndex;
+                    const cell = currentGridCells && currentGridCells[cellIdx];
+                    if (cell) {
+                        centerX = cell.sx + cell.sw / 2 + recutButtonsOffset.x;
+                        centerY = cell.sy + cell.sh / 2 + recutButtonsOffset.y;
+                    }
+                } else if (recutItem.meta && recutItem.meta.slicingMode === 'box') {
+                    const boxId = recutItem.meta.boxId;
+                    const box = selectionBoxes.find(b => b.id === boxId);
+                    if (box) {
+                        centerX = box.x + box.w / 2 + recutButtonsOffset.x;
+                        centerY = box.y + box.h / 2 + recutButtonsOffset.y;
+                    }
+                }
+            }
+        }
+
+        if (centerX === 0 && centerY === 0) {
+            floatingCanvasActions.style.display = 'none';
+            return;
+        }
+
+        // Ánh xạ sang tọa độ CSS thực tế tương đối với canvas-wrapper
+        const cssX = canvasLeft + (centerX * canvasWidth / currentImage.naturalWidth);
+        const cssY = canvasTop + (centerY * canvasHeight / currentImage.naturalHeight);
+
+        // Đặt tọa độ cho cụm nút nổi (căn giữa tâm cụm nút)
+        floatingCanvasActions.style.display = 'flex';
+        floatingCanvasActions.style.left = cssX + 'px';
+        floatingCanvasActions.style.top = cssY + 'px';
+        floatingCanvasActions.style.transform = 'translate(-50%, -50%)';
+    };
+
     // --- Password Gate Security ---
     const CORRECT_PASSWORD = 'carousel2026';
 
@@ -6711,7 +6662,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         if (currentImage) {
-            updateCanvasDisplaySize();
+            drawLiveGrid();
         }
     });
 

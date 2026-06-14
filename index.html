@@ -504,6 +504,16 @@
                             </div>
                             <!-- Canvas containing image and grid lines -->
                             <canvas id="preview-canvas" style="display: none;"></canvas>
+                            
+                            <!-- Cụm nút nổi Xác nhận / Hủy (HTML/CSS) -->
+                            <div id="floating-canvas-actions" class="floating-canvas-actions" style="display: none;">
+                                <button type="button" id="btn-floating-cancel" class="btn-floating-action btn-floating-cancel" title="Hủy thao tác (Phím Esc)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                <button type="button" id="btn-floating-confirm" class="btn-floating-action btn-floating-confirm" title="Xác nhận thao tác (Phím Enter)">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="image-meta-info" id="image-meta" style="display: none;">
                             <span><i class="fa-solid fa-expand"></i> Cỡ: <strong id="img-dim-original">-</strong></span>
