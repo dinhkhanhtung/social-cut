@@ -187,35 +187,34 @@
                         </div>
                     </div>
 
-                    <!-- Global Slider (Applies to both modes) -->
-                    <!-- Global Offset Spinner & Grid Color Selector -->
-                    <div class="control-item" style="margin-bottom: 12px;">
-                        <div class="label-with-value">
+                    <!-- Global Offset Spinner & Grid Color Selector (Side by side) -->
+                    <div class="control-group-grid" style="margin-bottom: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+                        <div class="control-item">
                             <label for="input-offset-number">
-                                <i class="fa-solid fa-border-none"></i> Xén viền ô (Offset Padding)
+                                <i class="fa-solid fa-border-none"></i> Xén viền ô
                             </label>
-                        </div>
-                        <div class="offset-control-group" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px;">
-                            <!-- Grid color options -->
-                            <div class="grid-color-picker" style="display: flex; align-items: center; gap: 8px;">
-                                <span class="color-picker-label" style="font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
-                                    <i class="fa-solid fa-palette"></i> Màu:
-                                </span>
-                                <div class="color-options" style="display: flex; gap: 6px;">
-                                    <span class="color-dot active" data-color="#06b6d4" style="background-color: #06b6d4; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Xanh Cyan"></span>
-                                    <span class="color-dot" data-color="#ef4444" style="background-color: #ef4444; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Đỏ"></span>
-                                    <span class="color-dot" data-color="#eab308" style="background-color: #eab308; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Vàng"></span>
-                                    <span class="color-dot" data-color="#10b981" style="background-color: #10b981; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Xanh lá"></span>
-                                    <span class="color-dot" data-color="#a855f7" style="background-color: #a855f7; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Tím"></span>
-                                    <span class="color-dot" data-color="#ffffff" style="background-color: #ffffff; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Trắng"></span>
-                                    <span class="color-dot" data-color="#000000" style="background-color: #000000; width: 16px; height: 16px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid #374151; transition: all 0.2s;" title="Đen"></span>
-                                </div>
-                            </div>
-                            <!-- Offset spinner -->
-                            <div class="input-number-group offset-spinner">
+                            <div class="input-number-group">
                                 <button type="button" class="btn-spinner btn-minus" data-target="input-offset-number"><i class="fa-solid fa-minus"></i></button>
                                 <input type="number" id="input-offset-number" min="0" max="50" value="0">
                                 <button type="button" class="btn-spinner btn-plus" data-target="input-offset-number"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <label>
+                                <i class="fa-solid fa-palette"></i> Màu lưới
+                            </label>
+                            <div class="color-picker-wrapper" style="display: flex; align-items: center; justify-content: space-between; background: rgba(17, 24, 39, 0.5); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); height: 38px; box-sizing: border-box; overflow: hidden; padding: 0 4px; position: relative;">
+                                <button type="button" class="btn-color-nav btn-color-prev" style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; width: 24px; height: 100%; display: flex; align-items: center; justify-content: center; outline: none; transition: all 0.2s;" title="Trước"><i class="fa-solid fa-chevron-left" style="font-size: 0.75rem;"></i></button>
+                                <div class="color-options-scroll" style="display: flex; gap: 8px; overflow-x: auto; scroll-behavior: smooth; width: 80px; height: 100%; align-items: center; scrollbar-width: none; -ms-overflow-style: none;">
+                                    <span class="color-dot active" data-color="#06b6d4" style="background-color: #06b6d4; width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Xanh Cyan"></span>
+                                    <span class="color-dot" data-color="#ef4444" style="background-color: #ef4444; width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Đỏ"></span>
+                                    <span class="color-dot" data-color="#eab308" style="background-color: #eab308; width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Vàng"></span>
+                                    <span class="color-dot" data-color="#10b981" style="background-color: #10b981; width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Xanh lá"></span>
+                                    <span class="color-dot" data-color="#a855f7" style="background-color: #a855f7; width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Tím"></span>
+                                    <span class="color-dot" data-color="#ffffff" style="background-color: #ffffff; width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" title="Trắng"></span>
+                                    <span class="color-dot" data-color="#000000" style="background-color: #000000; width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; cursor: pointer; border: 2px solid #374151; transition: all 0.2s;" title="Đen"></span>
+                                </div>
+                                <button type="button" class="btn-color-nav btn-color-next" style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; width: 24px; height: 100%; display: flex; align-items: center; justify-content: center; outline: none; transition: all 0.2s;" title="Sau"><i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></button>
                             </div>
                         </div>
                     </div>
@@ -246,135 +245,138 @@
                         </div>
                     </div>
 
-                    <!-- Collapsible Watermark Panel -->
-                    <div class="collapsible-panel" id="panel-watermark">
-                        <div class="collapsible-header" id="header-watermark">
-                            <span class="collapsible-title">
-                                <i class="fa-solid fa-copyright" style="color: #f59e0b;"></i> Đóng dấu (Watermark)
-                            </span>
-                            <i class="fa-solid fa-chevron-down collapsible-arrow"></i>
+                    <!-- Collapsible Panels side-by-side -->
+                    <div class="collapsible-panels-row" style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <!-- Collapsible Watermark Panel -->
+                        <div class="collapsible-panel" id="panel-watermark" style="margin-bottom: 0; position: static; overflow: visible;">
+                            <div class="collapsible-header" id="header-watermark" style="height: 38px; box-sizing: border-box; padding: 0 10px;">
+                                <span class="collapsible-title" style="font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <i class="fa-solid fa-copyright" style="color: #f59e0b; font-size: 0.85rem;"></i> Đóng dấu
+                                </span>
+                                <i class="fa-solid fa-chevron-down collapsible-arrow" style="font-size: 0.75rem;"></i>
+                            </div>
+                            <div class="collapsible-content" id="content-watermark" style="display: none;">
+                                <!-- Checkbox bật tắt watermark -->
+                                <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
+                                    <div class="switch-inline-container">
+                                        <label for="switch-watermark" class="label-switch">
+                                            <i class="fa-solid fa-square-check" style="color: #10b981;"></i> Bật đóng dấu
+                                        </label>
+                                        <div class="switch-wrapper">
+                                            <input type="checkbox" id="switch-watermark" class="switch-checkbox">
+                                            <label for="switch-watermark" class="switch-label-btn"></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="watermark-options-container" style="display: none;">
+                                    <!-- Dropdown chọn loại đóng dấu (Chữ / Ảnh) -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <label for="select-watermark-type" style="font-size: 0.8rem; color: var(--text-secondary);">Loại đóng dấu</label>
+                                        <select id="select-watermark-type" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                            <option value="text" selected>Dạng chữ (Text)</option>
+                                            <option value="image">Dạng ảnh logo (Image)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Cấu hình Watermark Chữ -->
+                                    <div id="watermark-text-config" style="display: block;">
+                                        <!-- Input text -->
+                                        <div class="control-item" style="margin-bottom: 12px;">
+                                            <label for="input-watermark-text" style="font-size: 0.8rem; color: var(--text-secondary);">Nội dung chữ</label>
+                                            <input type="text" id="input-watermark-text" placeholder="Ví dụ: @username" value="@SocialCut" class="text-input" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                        </div>
+
+                                        <!-- Slider size chữ -->
+                                        <div class="control-item" style="margin-bottom: 12px;">
+                                            <div class="label-with-value">
+                                                <label for="input-watermark-size">Cỡ chữ (px)</label>
+                                                <span class="value-display" id="watermark-size-val">24</span>
+                                            </div>
+                                            <input type="range" id="input-watermark-size" min="12" max="64" value="24" step="1" class="slider" style="width: 100%; margin-top: 4px;">
+                                        </div>
+                                    </div>
+
+                                    <!-- Cấu hình Watermark Ảnh -->
+                                    <div id="watermark-image-config" style="display: none;">
+                                        <!-- Input file -->
+                                        <div class="control-item" style="margin-bottom: 12px;">
+                                            <label for="input-watermark-image" style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tải ảnh logo</label>
+                                            <input type="file" id="input-watermark-image" accept="image/*" style="width: 100%; font-size: 0.8rem; color: var(--text-secondary);">
+                                            <div id="watermark-image-preview-info" style="font-size: 0.72rem; color: var(--success); margin-top: 4px; display: none;">
+                                                <i class="fa-solid fa-circle-check"></i> Đã tải logo thành công
+                                            </div>
+                                        </div>
+
+                                        <!-- Slider size ảnh logo -->
+                                        <div class="control-item" style="margin-bottom: 12px;">
+                                            <div class="label-with-value">
+                                                <label for="input-watermark-image-scale">Kích thước logo (%)</label>
+                                                <span class="value-display" id="watermark-image-scale-val">20</span>
+                                            </div>
+                                            <input type="range" id="input-watermark-image-scale" min="5" max="60" value="20" step="1" class="slider" style="width: 100%; margin-top: 4px;">
+                                        </div>
+                                    </div>
+
+                                    <!-- Cấu hình chung cho cả 2 loại -->
+                                    <!-- Select vị trí -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <label for="select-watermark-position" style="font-size: 0.8rem; color: var(--text-secondary);">Vị trí đóng dấu</label>
+                                        <select id="select-watermark-position" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                            <option value="bottom-right" selected>Dưới cùng bên phải</option>
+                                            <option value="bottom-left">Dưới cùng bên trái</option>
+                                            <option value="top-right">Trên cùng bên phải</option>
+                                            <option value="top-left">Trên cùng bên trái</option>
+                                            <option value="center">Ở giữa</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Slider opacity -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <div class="label-with-value">
+                                            <label for="input-watermark-opacity">Độ mờ dấu (%)</label>
+                                            <span class="value-display" id="watermark-opacity-val">50</span>
+                                        </div>
+                                        <input type="range" id="input-watermark-opacity" min="10" max="100" value="50" step="5" class="slider" style="width: 100%; margin-top: 4px;">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="collapsible-content" id="content-watermark" style="display: none;">
-                            <!-- Checkbox bật tắt watermark -->
-                            <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
-                                <div class="switch-inline-container">
-                                    <label for="switch-watermark" class="label-switch">
-                                        <i class="fa-solid fa-square-check" style="color: #10b981;"></i> Bật đóng dấu
+
+                        <!-- Collapsible Panel: Export Settings (Cấu hình xuất ảnh) -->
+                        <div class="collapsible-panel" id="panel-export-settings" style="margin-bottom: 0; position: static; overflow: visible;">
+                            <div class="collapsible-header" id="header-export-settings" style="height: 38px; box-sizing: border-box; padding: 0 10px;">
+                                <span class="collapsible-title" style="font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <i class="fa-solid fa-download" style="color: #10b981; font-size: 0.85rem;"></i> Cấu hình xuất
+                                </span>
+                                <i class="fa-solid fa-chevron-down collapsible-arrow" style="font-size: 0.75rem;"></i>
+                            </div>
+                            <div class="collapsible-content" id="content-export-settings" style="display: none;">
+                                <!-- Dropdown chọn độ phân giải -->
+                                <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
+                                    <label for="select-export-resolution" style="font-size: 0.8rem; color: var(--text-secondary);">
+                                        <i class="fa-solid fa-expand" style="margin-right: 4px;"></i>Độ phân giải xuất (Resolution)
                                     </label>
-                                    <div class="switch-wrapper">
-                                        <input type="checkbox" id="switch-watermark" class="switch-checkbox">
-                                        <label for="switch-watermark" class="switch-label-btn"></label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="watermark-options-container" style="display: none;">
-                                <!-- Dropdown chọn loại đóng dấu (Chữ / Ảnh) -->
-                                <div class="control-item" style="margin-bottom: 12px;">
-                                    <label for="select-watermark-type" style="font-size: 0.8rem; color: var(--text-secondary);">Loại đóng dấu</label>
-                                    <select id="select-watermark-type" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                        <option value="text" selected>Dạng chữ (Text)</option>
-                                        <option value="image">Dạng ảnh logo (Image)</option>
+                                    <select id="select-export-resolution" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                        <option value="auto" selected>Tự động (Tối thiểu 1080px)</option>
+                                        <option value="original">Gốc (Không tự động phóng to)</option>
+                                        <option value="2k">Phóng đại 2K (Tối thiểu 2160px)</option>
+                                        <option value="4k">Phóng đại 4K (Tối thiểu 3840px)</option>
                                     </select>
                                 </div>
 
-                                <!-- Cấu hình Watermark Chữ -->
-                                <div id="watermark-text-config" style="display: block;">
-                                    <!-- Input text -->
-                                    <div class="control-item" style="margin-bottom: 12px;">
-                                        <label for="input-watermark-text" style="font-size: 0.8rem; color: var(--text-secondary);">Nội dung chữ</label>
-                                        <input type="text" id="input-watermark-text" placeholder="Ví dụ: @username" value="@SocialCut" class="text-input" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                    </div>
-
-                                    <!-- Slider size chữ -->
-                                    <div class="control-item" style="margin-bottom: 12px;">
-                                        <div class="label-with-value">
-                                            <label for="input-watermark-size">Cỡ chữ (px)</label>
-                                            <span class="value-display" id="watermark-size-val">24</span>
-                                        </div>
-                                        <input type="range" id="input-watermark-size" min="12" max="64" value="24" step="1" class="slider" style="width: 100%; margin-top: 4px;">
-                                    </div>
-                                </div>
-
-                                <!-- Cấu hình Watermark Ảnh -->
-                                <div id="watermark-image-config" style="display: none;">
-                                    <!-- Input file -->
-                                    <div class="control-item" style="margin-bottom: 12px;">
-                                        <label for="input-watermark-image" style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tải ảnh logo</label>
-                                        <input type="file" id="input-watermark-image" accept="image/*" style="width: 100%; font-size: 0.8rem; color: var(--text-secondary);">
-                                        <div id="watermark-image-preview-info" style="font-size: 0.72rem; color: var(--success); margin-top: 4px; display: none;">
-                                            <i class="fa-solid fa-circle-check"></i> Đã tải logo thành công
-                                        </div>
-                                    </div>
-
-                                    <!-- Slider size ảnh logo -->
-                                    <div class="control-item" style="margin-bottom: 12px;">
-                                        <div class="label-with-value">
-                                            <label for="input-watermark-image-scale">Kích thước logo (%)</label>
-                                            <span class="value-display" id="watermark-image-scale-val">20</span>
-                                        </div>
-                                        <input type="range" id="input-watermark-image-scale" min="5" max="60" value="20" step="1" class="slider" style="width: 100%; margin-top: 4px;">
-                                    </div>
-                                </div>
-
-                                <!-- Cấu hình chung cho cả 2 loại -->
-                                <!-- Select vị trí -->
+                                <!-- Dropdown chọn độ sắc nét -->
                                 <div class="control-item" style="margin-bottom: 12px;">
-                                    <label for="select-watermark-position" style="font-size: 0.8rem; color: var(--text-secondary);">Vị trí đóng dấu</label>
-                                    <select id="select-watermark-position" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                        <option value="bottom-right" selected>Dưới cùng bên phải</option>
-                                        <option value="bottom-left">Dưới cùng bên trái</option>
-                                        <option value="top-right">Trên cùng bên phải</option>
-                                        <option value="top-left">Trên cùng bên trái</option>
-                                        <option value="center">Ở giữa</option>
+                                    <label for="select-export-sharpness" style="font-size: 0.8rem; color: var(--text-secondary);">
+                                        <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 4px;"></i>Độ sắc nét AI (Sharpening)
+                                    </label>
+                                    <select id="select-export-sharpness" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                        <option value="off" selected>Tắt (Mặc định)</option>
+                                        <option value="light">Nhẹ (Light)</option>
+                                        <option value="medium">Vừa (Medium)</option>
+                                        <option value="strong">Mạnh (Strong)</option>
                                     </select>
                                 </div>
-
-                                <!-- Slider opacity -->
-                                <div class="control-item" style="margin-bottom: 12px;">
-                                    <div class="label-with-value">
-                                        <label for="input-watermark-opacity">Độ mờ dấu (%)</label>
-                                        <span class="value-display" id="watermark-opacity-val">50</span>
-                                    </div>
-                                    <input type="range" id="input-watermark-opacity" min="10" max="100" value="50" step="5" class="slider" style="width: 100%; margin-top: 4px;">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Collapsible Panel: Export Settings (Cấu hình xuất ảnh) -->
-                    <div class="collapsible-panel" id="panel-export-settings">
-                        <div class="collapsible-header" id="header-export-settings">
-                            <span class="collapsible-title">
-                                <i class="fa-solid fa-download" style="color: #10b981;"></i> Cấu hình xuất ảnh
-                            </span>
-                            <i class="fa-solid fa-chevron-down collapsible-arrow"></i>
-                        </div>
-                        <div class="collapsible-content" id="content-export-settings" style="display: none;">
-                            <!-- Dropdown chọn độ phân giải -->
-                            <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
-                                <label for="select-export-resolution" style="font-size: 0.8rem; color: var(--text-secondary);">
-                                    <i class="fa-solid fa-expand" style="margin-right: 4px;"></i>Độ phân giải xuất (Resolution)
-                                </label>
-                                <select id="select-export-resolution" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                    <option value="auto" selected>Tự động (Tối thiểu 1080px)</option>
-                                    <option value="original">Gốc (Không tự động phóng to)</option>
-                                    <option value="2k">Phóng đại 2K (Tối thiểu 2160px)</option>
-                                    <option value="4k">Phóng đại 4K (Tối thiểu 3840px)</option>
-                                </select>
-                            </div>
-
-                            <!-- Dropdown chọn độ sắc nét -->
-                            <div class="control-item" style="margin-bottom: 12px;">
-                                <label for="select-export-sharpness" style="font-size: 0.8rem; color: var(--text-secondary);">
-                                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 4px;"></i>Độ sắc nét AI (Sharpening)
-                                </label>
-                                <select id="select-export-sharpness" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
-                                    <option value="off" selected>Tắt (Mặc định)</option>
-                                    <option value="light">Nhẹ (Light)</option>
-                                    <option value="medium">Vừa (Medium)</option>
-                                    <option value="strong">Mạnh (Strong)</option>
-                                </select>
                             </div>
                         </div>
                     </div>

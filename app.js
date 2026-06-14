@@ -278,6 +278,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 panelWatermark.classList.add('expanded');
                 contentWatermark.style.display = 'block';
+                // Close export settings
+                if (panelExportSettings && contentExportSettings) {
+                    panelExportSettings.classList.remove('expanded');
+                    contentExportSettings.style.display = 'none';
+                }
             }
         });
     }
@@ -292,6 +297,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 panelExportSettings.classList.add('expanded');
                 contentExportSettings.style.display = 'block';
+                // Close watermark
+                if (panelWatermark && contentWatermark) {
+                    panelWatermark.classList.remove('expanded');
+                    contentWatermark.style.display = 'none';
+                }
             }
         });
     }
@@ -848,6 +858,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    const btnColorPrev = document.querySelector('.btn-color-prev');
+    const btnColorNext = document.querySelector('.btn-color-next');
+    const colorOptionsScroll = document.querySelector('.color-options-scroll');
+
+    if (btnColorPrev && colorOptionsScroll) {
+        btnColorPrev.addEventListener('click', (e) => {
+            e.stopPropagation();
+            colorOptionsScroll.scrollBy({ left: -40, behavior: 'smooth' });
+        });
+    }
+
+    if (btnColorNext && colorOptionsScroll) {
+        btnColorNext.addEventListener('click', (e) => {
+            e.stopPropagation();
+            colorOptionsScroll.scrollBy({ left: 40, behavior: 'smooth' });
+        });
+    }
 
     function updateColorPickerUI(color) {
         document.querySelectorAll('.color-dot').forEach(dot => {
