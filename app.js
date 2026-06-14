@@ -3753,7 +3753,6 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab('tab-live-grid');
             switchMobileTab('edit');
             drawLiveGrid();
-            showToast("Hãy điều chỉnh lưới/khung vẽ, sau đó bấm ✓ trên ảnh để lưu hoặc ✕ để hủy!", "info", 5000);
         });
         resultItem.appendChild(btnEdit);
 
