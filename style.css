@@ -4289,7 +4289,7 @@ input[type="number"] {
 .result-item-btn-edit {
     position: absolute;
     top: 6px;
-    left: 6px;
+    left: 36px; /* Cách ra để tránh đè lên nút grip kéo thả */
     background: rgba(6, 182, 212, 0.85); /* Màu Cyan */
     border: 1px solid rgba(255, 255, 255, 0.25);
     color: #000;
@@ -4313,4 +4313,14 @@ input[type="number"] {
     background: #00f2fe;
     transform: scale(1.15);
 }
+
+/* Hiển thị nút trên giao diện di động (do không có sự kiện hover) */
+@media (max-width: 768px) {
+    .result-item .result-item-btn-edit {
+        opacity: 1 !important;
+        left: 44px !important; /* Dịch sang phải để tránh đè lên nút grip (size lớn) trên di động */
+        top: 6px !important;
+    }
+}
+
 
