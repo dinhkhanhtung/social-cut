@@ -1113,17 +1113,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const scaleX = currentImage.naturalWidth / actualRenderedW;
         const scaleY = currentImage.naturalHeight / actualRenderedH;
 
-        const canvasX = relativeX * scaleX;
-        const canvasY = relativeY * scaleY;
-
-        const imgX = (canvasX - panX) / zoomScale;
-        const imgY = (canvasY - panY) / zoomScale;
+        const imgX = relativeX * scaleX;
+        const imgY = relativeY * scaleY;
 
         return { 
             x: imgX, 
             y: imgY, 
-            scaleX: scaleX / zoomScale, 
-            scaleY: scaleY / zoomScale 
+            scaleX: scaleX, 
+            scaleY: scaleY 
         };
     };
 
@@ -1217,13 +1214,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const dy = e.clientY - panStart.y;
             panStart = { x: e.clientX, y: e.clientY };
 
-            const rect = previewCanvas.getBoundingClientRect();
-            const scaleX = currentImage.naturalWidth / rect.width;
-            const scaleY = currentImage.naturalHeight / rect.height;
-
-            panX += dx * scaleX;
-            panY += dy * scaleY;
-            drawLiveGrid();
+            const canvasWrapper = document.querySelector('.canvas-wrapper');
+            if (canvasWrapper) {
+                canvasWrapper.scrollLeft -= dx;
+                canvasWrapper.scrollTop -= dy;
+            }
             return;
         }
 
@@ -1574,55 +1569,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const dx = currentCenter.x - touchStartCenter.x;
             const dy = currentCenter.y - touchStartCenter.y;
             
-            const rect = previewCanvas.getBoundingClientRect();
-            const scaleX = currentImage.naturalWidth / rect.width;
-            const scaleY = currentImage.naturalHeight / rect.height;
-            
-            let tempPanX = touchStartPanX + dx * scaleX;
-            let tempPanY = touchStartPanY + dy * scaleY;
-            
             const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             if (touchStartDist > 0 && currentDist > 0) {
                 const factor = currentDist / touchStartDist;
                 const newZoomScale = Math.max(0.05, Math.min(10.0, startZoomScale * factor));
                 
-                const mouseX = currentCenter.x - rect.left;
-                const mouseY = currentCenter.y - rect.top;
-                
-                const imgRatio = currentImage.naturalWidth / currentImage.naturalHeight;
-                const canvasW = rect.width;
-                const canvasH = rect.height;
-                const canvasRatio = canvasW / canvasH;
-                
-                let actualRenderedW = canvasW;
-                let actualRenderedH = canvasH;
-                let offsetX = 0;
-                let offsetY = 0;
-                
-                if (canvasRatio > imgRatio) {
-                    actualRenderedW = canvasH * imgRatio;
-                    offsetX = (canvasW - actualRenderedW) / 2;
-                } else {
-                    actualRenderedH = canvasW / imgRatio;
-                    offsetY = (canvasH - actualRenderedH) / 2;
+                const wrapper = document.querySelector('.canvas-wrapper');
+                if (wrapper) {
+                    const wrapperRect = wrapper.getBoundingClientRect();
+                    const centerX = currentCenter.x - wrapperRect.left;
+                    const centerY = currentCenter.y - wrapperRect.top;
+                    
+                    const zoomRatio = newZoomScale / zoomScale;
+                    
+                    zoomScale = newZoomScale;
+                    updateCanvasDisplaySize();
+                    
+                    wrapper.scrollLeft = (wrapper.scrollLeft + centerX) * zoomRatio - centerX;
+                    wrapper.scrollTop = (wrapper.scrollTop + centerY) * zoomRatio - centerY;
                 }
-                
-                const relativeX = mouseX - offsetX;
-                const relativeY = mouseY - offsetY;
-                
-                const sX = currentImage.naturalWidth / actualRenderedW;
-                const sY = currentImage.naturalHeight / actualRenderedH;
-                
-                const canvasX = relativeX * sX;
-                const canvasY = relativeY * sY;
-                
-                panX = canvasX - (canvasX - tempPanX) * (newZoomScale / startZoomScale);
-                panY = canvasY - (canvasY - tempPanY) * (newZoomScale / startZoomScale);
-                zoomScale = newZoomScale;
-            } else {
-                panX = tempPanX;
-                panY = tempPanY;
             }
+            
+            if (dx !== 0 || dy !== 0) {
+                const wrapper = document.querySelector('.canvas-wrapper');
+                if (wrapper) {
+                    wrapper.scrollLeft -= dx;
+                    wrapper.scrollTop -= dy;
+                }
+            }
+            
+            touchStartCenter = currentCenter;
+            touchStartDist = currentDist;
+            startZoomScale = zoomScale;
             
             drawLiveGrid();
         }
@@ -1649,90 +1627,59 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentImage) return;
         e.preventDefault();
 
-        const rect = previewCanvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const wrapper = document.querySelector('.canvas-wrapper');
+        if (!wrapper) return;
 
-        const canvasW = rect.width;
-        const canvasH = rect.height;
-        const imgRatio = currentImage.naturalWidth / currentImage.naturalHeight;
-        const canvasRatio = canvasW / canvasH;
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const cursorX = e.clientX - wrapperRect.left;
+        const cursorY = e.clientY - wrapperRect.top;
 
-        let actualRenderedW = canvasW;
-        let actualRenderedH = canvasH;
-        let offsetX = 0;
-        let offsetY = 0;
-
-        if (canvasRatio > imgRatio) {
-            actualRenderedW = canvasH * imgRatio;
-            offsetX = (canvasW - actualRenderedW) / 2;
-        } else {
-            actualRenderedH = canvasW / imgRatio;
-            offsetY = (canvasH - actualRenderedH) / 2;
-        }
-
-        const relativeX = mouseX - offsetX;
-        const relativeY = mouseY - offsetY;
-
-        const scaleX = currentImage.naturalWidth / actualRenderedW;
-        const scaleY = currentImage.naturalHeight / actualRenderedH;
-
-        const canvasX = relativeX * scaleX;
-        const canvasY = relativeY * scaleY;
-
-        // Zoom factor: 1.15 for zoom in, 0.85 for zoom out
         const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
         const newZoomScale = Math.max(0.05, Math.min(10.0, zoomScale * zoomFactor));
 
-        // Adjust pan offsets to keep point under cursor stable
-        panX = canvasX - (canvasX - panX) * (newZoomScale / zoomScale);
-        panY = canvasY - (canvasY - panY) * (newZoomScale / zoomScale);
-        zoomScale = newZoomScale;
+        if (newZoomScale !== zoomScale) {
+            const oldScrollLeft = wrapper.scrollLeft;
+            const oldScrollTop = wrapper.scrollTop;
 
-        drawLiveGrid();
+            const zoomRatio = newZoomScale / zoomScale;
+
+            zoomScale = newZoomScale;
+            updateCanvasDisplaySize();
+
+            wrapper.scrollLeft = (oldScrollLeft + cursorX) * zoomRatio - cursorX;
+            wrapper.scrollTop = (oldScrollTop + cursorY) * zoomRatio - cursorY;
+
+            drawLiveGrid();
+        }
     }, { passive: false });
 
     // Programmatic Zoom Helper (Zoom from Center)
     const triggerProgrammaticZoom = (factor) => {
         if (!currentImage) return;
-        const rect = previewCanvas.getBoundingClientRect();
-        const mouseX = rect.width / 2;
-        const mouseY = rect.height / 2;
-        
-        const imgRatio = currentImage.naturalWidth / currentImage.naturalHeight;
-        const canvasW = rect.width;
-        const canvasH = rect.height;
-        const canvasRatio = canvasW / canvasH;
 
-        let actualRenderedW = canvasW;
-        let actualRenderedH = canvasH;
-        let offsetX = 0;
-        let offsetY = 0;
+        const wrapper = document.querySelector('.canvas-wrapper');
+        if (!wrapper) return;
 
-        if (canvasRatio > imgRatio) {
-            actualRenderedW = canvasH * imgRatio;
-            offsetX = (canvasW - actualRenderedW) / 2;
-        } else {
-            actualRenderedH = canvasW / imgRatio;
-            offsetY = (canvasH - actualRenderedH) / 2;
-        }
-
-        const relativeX = mouseX - offsetX;
-        const relativeY = mouseY - offsetY;
-
-        const scaleX = currentImage.naturalWidth / actualRenderedW;
-        const scaleY = currentImage.naturalHeight / actualRenderedH;
-
-        const canvasX = relativeX * scaleX;
-        const canvasY = relativeY * scaleY;
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const cursorX = wrapperRect.width / 2;
+        const cursorY = wrapperRect.height / 2;
 
         const newZoomScale = Math.max(0.05, Math.min(10.0, zoomScale * factor));
 
-        panX = canvasX - (canvasX - panX) * (newZoomScale / zoomScale);
-        panY = canvasY - (canvasY - panY) * (newZoomScale / zoomScale);
-        zoomScale = newZoomScale;
+        if (newZoomScale !== zoomScale) {
+            const oldScrollLeft = wrapper.scrollLeft;
+            const oldScrollTop = wrapper.scrollTop;
 
-        drawLiveGrid();
+            const zoomRatio = newZoomScale / zoomScale;
+
+            zoomScale = newZoomScale;
+            updateCanvasDisplaySize();
+
+            wrapper.scrollLeft = (oldScrollLeft + cursorX) * zoomRatio - cursorX;
+            wrapper.scrollTop = (oldScrollTop + cursorY) * zoomRatio - cursorY;
+
+            drawLiveGrid();
+        }
     };
 
     // Helper to change input grid values (rows/cols) via keyboard
@@ -1842,8 +1789,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (e.key === '0') {
             e.preventDefault();
             zoomScale = 1.0;
-            panX = 0;
-            panY = 0;
+            const canvasWrapper = document.querySelector('.canvas-wrapper');
+            if (canvasWrapper) {
+                canvasWrapper.scrollLeft = 0;
+                canvasWrapper.scrollTop = 0;
+            }
             drawLiveGrid();
         }
 
@@ -1965,6 +1915,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 zoomScale = 1.0;
                 panX = 0;
                 panY = 0;
+                const canvasWrapper = document.querySelector('.canvas-wrapper');
+                if (canvasWrapper) {
+                    canvasWrapper.scrollLeft = 0;
+                    canvasWrapper.scrollTop = 0;
+                }
                 selectedBoxIdx = -1;
                 
                 canvasPlaceholder.style.display = 'none';
@@ -2100,9 +2055,25 @@ document.addEventListener('DOMContentLoaded', () => {
         targetCtx.restore();
     }
 
+    function updateCanvasDisplaySize() {
+        if (!currentImage || !previewCanvas) return;
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        if (!canvasWrapper) return;
+
+        const rect = canvasWrapper.getBoundingClientRect();
+        const padding = 32; // 16px top & bottom
+        const initialHeight = Math.max(200, rect.height - padding);
+        const initialWidth = initialHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
+
+        previewCanvas.style.height = (initialHeight * zoomScale) + 'px';
+        previewCanvas.style.width = (initialWidth * zoomScale) + 'px';
+    }
+
     // --- Draw Live Preview Grid & Selection Boxes ---
     function drawLiveGrid() {
         if (!currentImage) return;
+
+        updateCanvasDisplaySize();
 
         previewCanvas.width = currentImage.naturalWidth;
         previewCanvas.height = currentImage.naturalHeight;
@@ -2115,9 +2086,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         ctx.save();
-        ctx.translate(panX, panY);
-        ctx.scale(zoomScale, zoomScale);
-
         ctx.drawImage(currentImage, 0, 0);
 
         const width = currentImage.naturalWidth;
@@ -4966,6 +4934,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!pcAuthPopup.contains(e.target) && e.target !== sidebarAccountPanel && !sidebarAccountPanel.contains(e.target)) {
                 pcAuthPopup.classList.remove('active');
             }
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (currentImage) {
+            updateCanvasDisplaySize();
         }
     });
 
