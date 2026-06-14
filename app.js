@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let slicedImages = []; // Array of { name, dataUrl }
     let slicedBlobs = [];  // Array of { name, blob }
     let recutSlideId = null; // ID of the slice being recut (single edit mode)
+    let recutBoxId = null; // ID of the box being recut
     
     // --- Helper to toggle Sidebar Controls when Recutting ---
     const updateSidebarControlsState = () => {
@@ -1783,64 +1784,31 @@ document.addEventListener('DOMContentLoaded', () => {
             // Box Mode
             const interaction = getBoxInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
             
-            if (recutSlideId !== null) {
-                // Đang trong chế độ cắt lại slide đơn
-                const recutItem = slicedImages.find(item => item.id === recutSlideId);
-                const activeBoxId = recutItem?.meta?.boxId;
-                
-                if (interaction) {
-                    const interactingBox = selectionBoxes[interaction.boxIndex];
-                    if (interactingBox && interactingBox.id === activeBoxId) {
-                        if (interaction.actionType === 'delete') {
-                            showToast("Không thể xóa khung vẽ đang trong chế độ cắt lại!", "warning");
-                            return;
-                        }
-                        
-                        selectedBoxIdx = interaction.boxIndex;
-                        const box = selectionBoxes[interaction.boxIndex];
-                        dragBoxTarget = {
-                            boxIndex: interaction.boxIndex,
-                            actionType: interaction.actionType,
-                            startX: imgX,
-                            startY: imgY,
-                            originalBox: { x: box.x, y: box.y, w: box.w, h: box.h }
-                        };
-                        drawLiveGrid();
-                    } else {
-                        showToast("Vui lòng chỉ thao tác trên khung vẽ đang được cắt lại (màu xanh lá)!", "warning");
-                    }
+            // Chế độ bình thường (không recut hoặc đã được chặn xử lý recut ở trên)
+            if (interaction) {
+                selectedBoxIdx = interaction.boxIndex;
+                if (interaction.actionType === 'delete') {
+                    selectionBoxes.splice(interaction.boxIndex, 1);
+                    selectionBoxes.forEach((box, idx) => {
+                        box.id = idx + 1;
+                    });
+                    nextBoxId = selectionBoxes.length + 1;
+                    selectedBoxIdx = -1;
+                    gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
+                    handleParamsChange();
+                    drawLiveGrid();
                 } else {
-                    // Click ra ngoài: Chuyển sang di chuyển (panning) màn hình, KHÔNG vẽ box mới
-                    isPanning = true;
-                    previewCanvas.style.cursor = 'grabbing';
-                    panStart = { x: e.clientX, y: e.clientY };
+                    const box = selectionBoxes[interaction.boxIndex];
+                    dragBoxTarget = {
+                        boxIndex: interaction.boxIndex,
+                        actionType: interaction.actionType,
+                        startX: imgX,
+                        startY: imgY,
+                        originalBox: { x: box.x, y: box.y, w: box.w, h: box.h }
+                    };
+                    drawLiveGrid(); // Redraw to show yellow highlight border
                 }
             } else {
-                // Chế độ bình thường (không recut)
-                if (interaction) {
-                    selectedBoxIdx = interaction.boxIndex;
-                    if (interaction.actionType === 'delete') {
-                        selectionBoxes.splice(interaction.boxIndex, 1);
-                        selectionBoxes.forEach((box, idx) => {
-                            box.id = idx + 1;
-                        });
-                        nextBoxId = selectionBoxes.length + 1;
-                        selectedBoxIdx = -1;
-                        gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
-                        handleParamsChange();
-                        drawLiveGrid();
-                    } else {
-                        const box = selectionBoxes[interaction.boxIndex];
-                        dragBoxTarget = {
-                            boxIndex: interaction.boxIndex,
-                            actionType: interaction.actionType,
-                            startX: imgX,
-                            startY: imgY,
-                            originalBox: { x: box.x, y: box.y, w: box.w, h: box.h }
-                        };
-                        drawLiveGrid(); // Redraw to show yellow highlight border
-                    }
-                } else {
                     selectedBoxIdx = -1;
                     isDrawingNewBox = true;
                     newBoxStart = { x: imgX, y: imgY };
@@ -1863,7 +1831,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
                     drawLiveGrid();
                 }
-            }
         }
     });
 
@@ -2720,9 +2687,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else {
             selectionBoxes.forEach((box, idx) => {
-                const isRecutting = (recutSlideId !== null && slicedImages.find(item => item.id === recutSlideId)?.meta?.boxId === box.id);
+                const isRecutting = (recutSlideId !== null && recutBoxId === box.id);
                 if (isRecutting) {
-                    return; // Skip vẽ box đang recut vì sẽ vẽ recutTempCoords màu vàng
+                    return; // Skip vẽ box đang recut vì sẽ vẽ recutTempCoords màu vàng/xanh
                 }
                 const x = box.x;
                 const y = box.y;
@@ -2908,24 +2875,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Vẽ khung đứt nét màu vàng, 8 handles và 2 nút Xác nhận / Hủy cho chế độ Cắt lại slide đơn
+        // Vẽ khung đứt nét màu vàng (Grid Mode) hoặc màu xanh lá (Box Mode), 8 handles và 2 nút Xác nhận / Hủy cho chế độ Cắt lại slide đơn
         if (recutSlideId !== null && recutTempCoords) {
             const { sx, sy, cropW, cropH } = recutTempCoords;
 
+            const recutItem = slicedImages.find(item => item.id === recutSlideId);
+            const isBoxModeRecut = (recutItem?.meta?.slicingMode === 'box');
+            const recutColor = isBoxModeRecut ? '#10b981' : '#eab308'; // Màu xanh Emerald cho Box Mode, màu vàng cho Grid Mode
+            const recutBgColor = isBoxModeRecut ? 'rgba(16, 185, 129, 0.12)' : 'rgba(234, 179, 8, 0.12)';
+
             ctx.save();
-            // 1. Vẽ khung viền đứt nét màu vàng
-            ctx.strokeStyle = '#eab308'; // Màu vàng ấm rực rỡ
+            // 1. Vẽ khung viền đứt nét
+            ctx.strokeStyle = recutColor;
             ctx.lineWidth = Math.max(3, Math.floor(width / 350));
             ctx.setLineDash([8, 4]);
             ctx.strokeRect(sx, sy, cropW, cropH);
 
-            // Đổ màu vàng nhạt bán trong suốt vào bên trong
-            ctx.fillStyle = 'rgba(234, 179, 8, 0.12)';
+            // Đổ màu nhạt bán trong suốt vào bên trong
+            ctx.fillStyle = recutBgColor;
             ctx.fillRect(sx, sy, cropW, cropH);
 
             // 2. Vẽ 8 handles cho khung crop
             const handleSize = Math.max(8, Math.floor(width / 180));
-            ctx.fillStyle = '#eab308';
+            ctx.fillStyle = recutColor;
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 1.5;
 
@@ -2954,7 +2926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.stroke();
             });
 
-            // 3. Vẽ 2 nút điều khiển Xác nhận (Check xanh) và Hủy (X đỏ) nằm chính giữa cạnh dưới khung màu vàng
+            // 3. Vẽ 2 nút điều khiển Xác nhận (Check xanh) và Hủy (X đỏ) nằm chính giữa cạnh dưới khung màu vàng/xanh
             const centerX = sx + cropW / 2;
             const btnRad = 18 / zoomScale; // Tăng kích thước nút từ 12 thành 18
             const btnY = sy + cropH - 25 / zoomScale; // Căn giữa cạnh dưới, thụt vào trong 25px
@@ -2984,26 +2956,32 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.strokeStyle = '#ffffff';
             ctx.stroke();
 
-            // Tắt shadow để vẽ chữ
+            // Tắt shadow để vẽ dấu check và dấu x bằng canvas path sắc nét
             ctx.shadowBlur = 0;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
 
-            // Vẽ chữ '✕'
+            // Vẽ dấu '✕' bằng canvas path sắc nét, bo tròn (đồng bộ bộ icon)
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3.0 / zoomScale;
+            ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `bold ${Math.round(15 / zoomScale)}px var(--font-sans), sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('✕', cancelX, btnY + 0.5 / zoomScale);
+            ctx.moveTo(cancelX - 5 / zoomScale, btnY - 5 / zoomScale);
+            ctx.lineTo(cancelX + 5 / zoomScale, btnY + 5 / zoomScale);
+            ctx.moveTo(cancelX + 5 / zoomScale, btnY - 5 / zoomScale);
+            ctx.lineTo(cancelX - 5 / zoomScale, btnY + 5 / zoomScale);
+            ctx.stroke();
 
-            // Vẽ chữ '✓'
+            // Vẽ dấu '✓' bằng canvas path sắc nét, bo tròn (đồng bộ bộ icon)
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3.0 / zoomScale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             ctx.beginPath();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `bold ${Math.round(17 / zoomScale)}px var(--font-sans), sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('✓', confirmX, btnY + 0.5 / zoomScale);
+            ctx.moveTo(confirmX - 6 / zoomScale, btnY);
+            ctx.lineTo(confirmX - 2 / zoomScale, btnY + 5 / zoomScale);
+            ctx.lineTo(confirmX + 6 / zoomScale, btnY - 5 / zoomScale);
+            ctx.stroke();
 
             ctx.restore();
         }
@@ -3318,6 +3296,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reset trạng thái sửa đổi ảnh đơn
         recutSlideId = null;
+        recutBoxId = null;
         updateSidebarControlsState();
         const btnConfirmRecut = document.getElementById('btn-confirm-recut');
         if (btnConfirmRecut) {
@@ -3734,6 +3713,7 @@ document.addEventListener('DOMContentLoaded', () => {
             recutSlideId = resultId;
             const recutItem = slicedImages.find(item => item.id === resultId);
             if (recutItem) {
+                recutBoxId = (recutItem.meta && recutItem.meta.slicingMode === 'box') ? recutItem.meta.boxId : null;
                 const coords = getRecutSlideCoords(recutItem);
                 if (coords) {
                     recutTempCoords = {
@@ -4416,6 +4396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Reset Application State ---
     function resetApp() {
         recutSlideId = null;
+        recutBoxId = null;
         updateSidebarControlsState();
         fileInput.value = '';
         currentImage = null;
@@ -5761,6 +5742,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const recutItem = slicedImages.find(item => item.id === recutSlideId);
         if (!recutItem) {
             recutSlideId = null;
+            recutBoxId = null;
             recutTempCoords = null;
             if (btnSlice) btnSlice.disabled = false;
             updateSidebarControlsState();
@@ -5882,6 +5864,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Đã cắt lại slide thành công!", "success");
 
         recutSlideId = null;
+        recutBoxId = null;
         recutTempCoords = null;
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
@@ -5893,6 +5876,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handleCancelRecut = () => {
         recutSlideId = null;
+        recutBoxId = null;
         recutTempCoords = null;
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
