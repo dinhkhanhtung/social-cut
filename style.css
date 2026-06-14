@@ -330,6 +330,8 @@ body {
     cursor: default;
     border-style: solid;
     background: rgba(17, 24, 39, 0.5);
+    height: auto !important;
+    padding: 8px !important;
 }
 
 .dropzone.has-image .file-input {
