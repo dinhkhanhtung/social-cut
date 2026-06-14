@@ -3656,11 +3656,22 @@ input[type="number"] {
 }
 
 /* PC history-popup adjustments */
+.history-popup-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+    gap: 16px;
+}
 .history-popup .history-list-container {
     flex-grow: 1;
     min-height: 0;
-    max-height: 480px !important; /* Tăng chiều cao danh sách hiển thị */
+    max-height: none !important; /* Loại bỏ giới hạn cứng để tự động co giãn hết chiều cao popup */
     overflow-y: auto;
+}
+.history-popup .history-list {
+    max-height: none !important;
+    overflow-y: visible !important;
 }
 
 /* Mobile specific overrides */

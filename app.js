@@ -4634,7 +4634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Stop propagation khi bấm checkbox để tránh click nhầm vào item
                     const chkItem = item.querySelector('.history-item-checkbox');
                     if (chkItem) {
-                        chkItem.addEventListener('click', (ev) => {
+                        chkItem.addEventListener('change', (ev) => {
                             ev.stopPropagation();
                             updateBulkUI();
                         });
