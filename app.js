@@ -2067,7 +2067,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Vẽ các nét đứt phân cách cyan gốc (hiển thị vô cực từ trong ảnh ra toàn khung làm việc)
+            // Vẽ các nét đứt phân cách cyan gốc (chỉ hiển thị trong phạm vi ảnh)
             ctx.strokeStyle = '#06b6d4';
             ctx.lineWidth = Math.max(2, Math.floor(width / 600));
             ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
@@ -2075,14 +2075,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gridType === 'even') {
                 colsX.forEach(x => {
                     ctx.beginPath();
-                    ctx.moveTo(x, -1000000);
-                    ctx.lineTo(x, 1000000);
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
                     ctx.stroke();
                 });
                 rowsY.forEach(y => {
                     ctx.beginPath();
-                    ctx.moveTo(-1000000, y);
-                    ctx.lineTo(1000000, y);
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
                     ctx.stroke();
                 });
             } else if (gridType === 'fb-1d3v') {
@@ -2091,18 +2091,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const h2 = height * (2/3);
                 
                 ctx.beginPath();
-                ctx.moveTo(midX, -1000000);
-                ctx.lineTo(midX, 1000000);
+                ctx.moveTo(midX, 0);
+                ctx.lineTo(midX, height);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(midX, h1);
-                ctx.lineTo(1000000, h1);
+                ctx.lineTo(width, h1);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(midX, h2);
-                ctx.lineTo(1000000, h2);
+                ctx.lineTo(width, h2);
                 ctx.stroke();
             } else if (gridType === 'fb-1n3v') {
                 const midY = height * 0.5;
@@ -2110,18 +2110,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const w2 = width * (2/3);
                 
                 ctx.beginPath();
-                ctx.moveTo(-1000000, midY);
-                ctx.lineTo(1000000, midY);
+                ctx.moveTo(0, midY);
+                ctx.lineTo(width, midY);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(w1, midY);
-                ctx.lineTo(w1, 1000000);
+                ctx.lineTo(w1, height);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(w2, midY);
-                ctx.lineTo(w2, 1000000);
+                ctx.lineTo(w2, height);
                 ctx.stroke();
             }
 
