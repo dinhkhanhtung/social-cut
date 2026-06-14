@@ -2695,12 +2695,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         const topOffset = (r === 0) ? (2 * offset) : offset;
                         const bottomOffset = (r === totalRows - 1) ? (2 * offset) : offset;
                         
+                        let sx = x1 + leftOffset;
+                        let sy = y1 + topOffset;
+                        let sw = (x2 - x1) - leftOffset - rightOffset;
+                        let sh = (y2 - y1) - topOffset - bottomOffset;
+
+                        if (sw <= 0) {
+                            sx = x1;
+                            sw = x2 - x1;
+                        }
+                        if (sh <= 0) {
+                            sy = y1;
+                            sh = y2 - y1;
+                        }
+
                         cells.push({
                             x1: x1, y1: y1, x2: x2, y2: y2,
-                            sx: x1 + leftOffset,
-                            sy: y1 + topOffset,
-                            sw: (x2 - x1) - leftOffset - rightOffset,
-                            sh: (y2 - y1) - topOffset - bottomOffset
+                            sx: sx,
+                            sy: sy,
+                            sw: sw,
+                            sh: sh
                         });
                     }
                 }
@@ -2709,38 +2723,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 const h1 = height * (1/3);
                 const h2 = height * (2/3);
                 
-                const smallCropW = (width - midX) - 3 * offset;
-                const smallCropH = h1 - 3 * offset;
-                
+                const rawLargeW = midX;
+                const rawLargeH = height;
+                const rawSmallW = width - midX;
+                const rawSmallH = h1;
+
+                let largeCropW = rawLargeW - 3 * offset;
+                let largeCropH = rawLargeH - 4 * offset;
+                let largeSx = 2 * offset;
+                let largeSy = 2 * offset;
+
+                if (largeCropW <= 0) {
+                    largeSx = 0;
+                    largeCropW = rawLargeW;
+                }
+                if (largeCropH <= 0) {
+                    largeSy = 0;
+                    largeCropH = rawLargeH;
+                }
+
+                let smallCropW = rawSmallW - 3 * offset;
+                let smallCropH = rawSmallH - 3 * offset;
+                let smallSxOffset = offset;
+                let smallSyOffsetTop = 2 * offset;
+                let smallSyOffsetMid = offset + Math.floor(offset / 2);
+                let smallSyOffsetBot = offset;
+
+                if (smallCropW <= 0) {
+                    smallSxOffset = 0;
+                    smallCropW = rawSmallW;
+                }
+                if (smallCropH <= 0) {
+                    smallSyOffsetTop = 0;
+                    smallSyOffsetMid = 0;
+                    smallSyOffsetBot = 0;
+                    smallCropH = rawSmallH;
+                }
+
                 // Ô 1 (dọc trái)
                 cells.push({
                     x1: 0, y1: 0, x2: midX, y2: height,
-                    sx: 2 * offset,
-                    sy: 2 * offset,
-                    sw: midX - 3 * offset,
-                    sh: height - 4 * offset
+                    sx: largeSx,
+                    sy: largeSy,
+                    sw: largeCropW,
+                    sh: largeCropH
                 });
                 // Ô 2 (nhỏ trên phải)
                 cells.push({
                     x1: midX, y1: 0, x2: width, y2: h1,
-                    sx: midX + offset,
-                    sy: 2 * offset,
+                    sx: midX + smallSxOffset,
+                    sy: smallSyOffsetTop,
                     sw: smallCropW,
                     sh: smallCropH
                 });
                 // Ô 3 (nhỏ giữa phải) - Dịch chuyển thông minh chống méo
                 cells.push({
                     x1: midX, y1: h1, x2: width, y2: h2,
-                    sx: midX + offset,
-                    sy: h1 + offset + Math.floor(offset / 2),
+                    sx: midX + smallSxOffset,
+                    sy: h1 + smallSyOffsetMid,
                     sw: smallCropW,
                     sh: smallCropH
                 });
                 // Ô 4 (nhỏ dưới phải)
                 cells.push({
                     x1: midX, y1: h2, x2: width, y2: height,
-                    sx: midX + offset,
-                    sy: h2 + offset,
+                    sx: midX + smallSxOffset,
+                    sy: h2 + smallSyOffsetBot,
                     sw: smallCropW,
                     sh: smallCropH
                 });
@@ -2749,38 +2797,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 const w1 = width * (1/3);
                 const w2 = width * (2/3);
                 
-                const smallCropW = w1 - 3 * offset;
-                const smallCropH = (height - midY) - 3 * offset;
-                
+                const rawLargeW = width;
+                const rawLargeH = midY;
+                const rawSmallW = w1;
+                const rawSmallH = height - midY;
+
+                let largeCropW = rawLargeW - 4 * offset;
+                let largeCropH = rawLargeH - 3 * offset;
+                let largeSx = 2 * offset;
+                let largeSy = 2 * offset;
+
+                if (largeCropW <= 0) {
+                    largeSx = 0;
+                    largeCropW = rawLargeW;
+                }
+                if (largeCropH <= 0) {
+                    largeSy = 0;
+                    largeCropH = rawLargeH;
+                }
+
+                let smallCropW = rawSmallW - 3 * offset;
+                let smallCropH = rawSmallH - 3 * offset;
+                let smallSxOffsetLeft = 2 * offset;
+                let smallSxOffsetMid = offset + Math.floor(offset / 2);
+                let smallSxOffsetRight = offset;
+                let smallSyOffset = offset;
+
+                if (smallCropW <= 0) {
+                    smallSxOffsetLeft = 0;
+                    smallSxOffsetMid = 0;
+                    smallSxOffsetRight = 0;
+                    smallCropW = rawSmallW;
+                }
+                if (smallCropH <= 0) {
+                    smallSyOffset = 0;
+                    smallCropH = rawSmallH;
+                }
+
                 // Ô 1 (ngang trên)
                 cells.push({
                     x1: 0, y1: 0, x2: width, y2: midY,
-                    sx: 2 * offset,
-                    sy: 2 * offset,
-                    sw: width - 4 * offset,
-                    sh: midY - 3 * offset
+                    sx: largeSx,
+                    sy: largeSy,
+                    sw: largeCropW,
+                    sh: largeCropH
                 });
                 // Ô 2 (nhỏ trái dưới)
                 cells.push({
                     x1: 0, y1: midY, x2: w1, y2: height,
-                    sx: 2 * offset,
-                    sy: midY + offset,
+                    sx: smallSxOffsetLeft,
+                    sy: midY + smallSyOffset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
                 // Ô 3 (nhỏ giữa dưới) - Dịch chuyển thông minh chống méo
                 cells.push({
                     x1: w1, y1: midY, x2: w2, y2: height,
-                    sx: w1 + offset + Math.floor(offset / 2),
-                    sy: midY + offset,
+                    sx: w1 + smallSxOffsetMid,
+                    sy: midY + smallSyOffset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
                 // Ô 4 (nhỏ phải dưới)
                 cells.push({
                     x1: w2, y1: midY, x2: width, y2: height,
-                    sx: w2 + offset,
-                    sy: midY + offset,
+                    sx: w2 + smallSxOffsetRight,
+                    sy: midY + smallSyOffset,
                     sw: smallCropW,
                     sh: smallCropH
                 });
@@ -3091,56 +3173,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     ctx.save();
                     
-                    // Shadow cho các nút tròn lơ lửng
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-                    ctx.shadowBlur = 6 / zoomScale;
+                    // Shadow cho các nút tròn lơ lửng thêm mịn màng
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+                    ctx.shadowBlur = 8 / zoomScale;
                     ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 2 / zoomScale;
+                    ctx.shadowOffsetY = 3 / zoomScale;
 
-                    // Vẽ nút Hủy (Xóa màu đỏ)
+                    // Vẽ nút Hủy (Gradient đỏ cao cấp)
+                    const cancelGrad = ctx.createLinearGradient(cancelX - btnRad, btnY - btnRad, cancelX + btnRad, btnY + btnRad);
+                    cancelGrad.addColorStop(0, '#f87171');
+                    cancelGrad.addColorStop(1, '#dc2626');
+
                     ctx.beginPath();
                     ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#ef4444';
+                    ctx.fillStyle = cancelGrad;
                     ctx.fill();
-                    ctx.lineWidth = 2 / zoomScale;
+                    ctx.lineWidth = 1.5 / zoomScale;
                     ctx.strokeStyle = '#ffffff';
                     ctx.stroke();
 
-                    // Vẽ nút Xác nhận (Check màu xanh Emerald)
+                    // Vẽ nút Xác nhận (Gradient xanh Emerald cao cấp)
+                    const confirmGrad = ctx.createLinearGradient(confirmX - btnRad, btnY - btnRad, confirmX + btnRad, btnY + btnRad);
+                    confirmGrad.addColorStop(0, '#34d399');
+                    confirmGrad.addColorStop(1, '#059669');
+
                     ctx.beginPath();
                     ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#10b981';
+                    ctx.fillStyle = confirmGrad;
                     ctx.fill();
-                    ctx.lineWidth = 2 / zoomScale;
+                    ctx.lineWidth = 1.5 / zoomScale;
                     ctx.strokeStyle = '#ffffff';
                     ctx.stroke();
 
-                    // Tắt shadow để vẽ icon paths
+                    // Tắt shadow để vẽ icon paths sắc nét
                     ctx.shadowBlur = 0;
                     ctx.shadowOffsetX = 0;
                     ctx.shadowOffsetY = 0;
 
-                    // Vẽ dấu nhân '✕' bằng nét vẽ (path) đẹp mắt
+                    // Vẽ dấu nhân '✕' thanh thoát hiện đại
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3.5 / zoomScale;
+                    ctx.lineWidth = 3 / zoomScale;
                     ctx.lineCap = 'round';
-                    const crossSz = 6.5 / zoomScale;
+                    const crossSz = 5.5 / zoomScale;
                     ctx.moveTo(cancelX - crossSz, btnY - crossSz);
                     ctx.lineTo(cancelX + crossSz, btnY + crossSz);
                     ctx.moveTo(cancelX + crossSz, btnY - crossSz);
                     ctx.lineTo(cancelX - crossSz, btnY + crossSz);
                     ctx.stroke();
 
-                    // Vẽ dấu tích '✓' bằng nét vẽ (path) chuẩn FontAwesome
+                    // Vẽ dấu tích '✓' chuẩn tỉ lệ vàng, mảnh dẻ tinh tế
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3.5 / zoomScale;
+                    ctx.lineWidth = 3 / zoomScale;
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
-                    ctx.moveTo(confirmX - 7.5 / zoomScale, btnY - 0.5 / zoomScale);
-                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 5.5 / zoomScale);
-                    ctx.lineTo(confirmX + 7.5 / zoomScale, btnY - 5.5 / zoomScale);
+                    ctx.moveTo(confirmX - 6.5 / zoomScale, btnY - 0.5 / zoomScale);
+                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 4.5 / zoomScale);
+                    ctx.lineTo(confirmX + 6.5 / zoomScale, btnY - 4.5 / zoomScale);
                     ctx.stroke();
 
                     ctx.restore();
@@ -3508,12 +3598,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const firstTopOffset = (2 * offset);
                 const firstBottomOffset = (rows === 1) ? (2 * offset) : offset;
 
-                const firstCropW = firstCellW - firstLeftOffset - firstRightOffset;
-                const firstCropH = firstCellH - firstTopOffset - firstBottomOffset;
+                let firstCropW = firstCellW - firstLeftOffset - firstRightOffset;
+                let firstCropH = firstCellH - firstTopOffset - firstBottomOffset;
 
-                if (firstCropW <= 0 || firstCropH <= 0) {
-                    showToast("Kích thước ô quá nhỏ. Giảm Offset!", "error");
-                    return;
+                if (firstCropW <= 0) {
+                    firstCropW = firstCellW;
+                }
+                if (firstCropH <= 0) {
+                    firstCropH = firstCellH;
                 }
 
                 if (!globalTargetW || !globalTargetH) {
@@ -3542,14 +3634,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         const topOffset = (r === 0) ? (2 * offset) : offset;
                         const bottomOffset = (r === rows - 1) ? (2 * offset) : offset;
 
-                        const sx = x1 + leftOffset;
-                        const sy = y1 + topOffset;
-                        const cropW = cellW - leftOffset - rightOffset;
-                        const cropH = cellH - topOffset - bottomOffset;
+                        let sx = x1 + leftOffset;
+                        let sy = y1 + topOffset;
+                        let cropW = cellW - leftOffset - rightOffset;
+                        let cropH = cellH - topOffset - bottomOffset;
 
-                        if (cropW <= 0 || cropH <= 0) {
-                            showToast(`Ô [H${r+1}, C${c+1}] quá nhỏ. Giảm Offset!`, "error");
-                            return;
+                        if (cropW <= 0) {
+                            sx = x1;
+                            cropW = cellW;
+                        }
+                        if (cropH <= 0) {
+                            sy = y1;
+                            cropH = cellH;
                         }
 
                         const resultId = resultIdCounter++;
@@ -3575,37 +3671,71 @@ document.addEventListener('DOMContentLoaded', () => {
                     const h1 = height * (1/3);
                     const h2 = height * (2/3);
                     
-                    const smallCropW = (width - midX) - 3 * offset;
-                    const smallCropH = h1 - 3 * offset;
+                    const rawLargeW = midX;
+                    const rawLargeH = height;
+                    const rawSmallW = width - midX;
+                    const rawSmallH = h1;
+
+                    let largeCropW = rawLargeW - 3 * offset;
+                    let largeCropH = rawLargeH - 4 * offset;
+                    let largeSx = 2 * offset;
+                    let largeSy = 2 * offset;
+
+                    if (largeCropW <= 0) {
+                        largeSx = 0;
+                        largeCropW = rawLargeW;
+                    }
+                    if (largeCropH <= 0) {
+                        largeSy = 0;
+                        largeCropH = rawLargeH;
+                    }
+
+                    let smallCropW = rawSmallW - 3 * offset;
+                    let smallCropH = rawSmallH - 3 * offset;
+                    let smallSxOffset = offset;
+                    let smallSyOffsetTop = 2 * offset;
+                    let smallSyOffsetMid = offset + Math.floor(offset / 2);
+                    let smallSyOffsetBot = offset;
+
+                    if (smallCropW <= 0) {
+                        smallSxOffset = 0;
+                        smallCropW = rawSmallW;
+                    }
+                    if (smallCropH <= 0) {
+                        smallSyOffsetTop = 0;
+                        smallSyOffsetMid = 0;
+                        smallSyOffsetBot = 0;
+                        smallCropH = rawSmallH;
+                    }
 
                     // Ô 1 (to)
                     gridCells.push({ 
-                        sx: 2*offset, 
-                        sy: 2*offset, 
-                        cropW: midX - 3*offset, 
-                        cropH: height - 4*offset, 
+                        sx: largeSx, 
+                        sy: largeSy, 
+                        cropW: largeCropW, 
+                        cropH: largeCropH, 
                         isLarge: true 
                     });
                     // Ô 2 (nhỏ trên)
                     gridCells.push({ 
-                        sx: midX + offset, 
-                        sy: 2*offset, 
+                        sx: midX + smallSxOffset, 
+                        sy: smallSyOffsetTop, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
                     // Ô 3 (nhỏ giữa) - Dịch chuyển thông minh chống méo
                     gridCells.push({ 
-                        sx: midX + offset, 
-                        sy: h1 + offset + Math.floor(offset / 2), 
+                        sx: midX + smallSxOffset, 
+                        sy: h1 + smallSyOffsetMid, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
                     // Ô 4 (nhỏ dưới)
                     gridCells.push({ 
-                        sx: midX + offset, 
-                        sy: h2 + offset, 
+                        sx: midX + smallSxOffset, 
+                        sy: h2 + smallSyOffsetBot, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
@@ -3615,37 +3745,71 @@ document.addEventListener('DOMContentLoaded', () => {
                     const w1 = width * (1/3);
                     const w2 = width * (2/3);
                     
-                    const smallCropW = w1 - 3 * offset;
-                    const smallCropH = (height - midY) - 3 * offset;
+                    const rawLargeW = width;
+                    const rawLargeH = midY;
+                    const rawSmallW = w1;
+                    const rawSmallH = height - midY;
+
+                    let largeCropW = rawLargeW - 4 * offset;
+                    let largeCropH = rawLargeH - 3 * offset;
+                    let largeSx = 2 * offset;
+                    let largeSy = 2 * offset;
+
+                    if (largeCropW <= 0) {
+                        largeSx = 0;
+                        largeCropW = rawLargeW;
+                    }
+                    if (largeCropH <= 0) {
+                        largeSy = 0;
+                        largeCropH = rawLargeH;
+                    }
+
+                    let smallCropW = rawSmallW - 3 * offset;
+                    let smallCropH = rawSmallH - 3 * offset;
+                    let smallSxOffsetLeft = 2 * offset;
+                    let smallSxOffsetMid = offset + Math.floor(offset / 2);
+                    let smallSxOffsetRight = offset;
+                    let smallSyOffset = offset;
+
+                    if (smallCropW <= 0) {
+                        smallSxOffsetLeft = 0;
+                        smallSxOffsetMid = 0;
+                        smallSxOffsetRight = 0;
+                        smallCropW = rawSmallW;
+                    }
+                    if (smallCropH <= 0) {
+                        smallSyOffset = 0;
+                        smallCropH = rawSmallH;
+                    }
 
                     // Ô 1 (to)
                     gridCells.push({ 
-                        sx: 2*offset, 
-                        sy: 2*offset, 
-                        cropW: width - 4*offset, 
-                        cropH: midY - 3*offset, 
+                        sx: largeSx, 
+                        sy: largeSy, 
+                        cropW: largeCropW, 
+                        cropH: largeCropH, 
                         isLarge: true 
                     });
                     // Ô 2 (nhỏ trái)
                     gridCells.push({ 
-                        sx: 2*offset, 
-                        sy: midY + offset, 
+                        sx: smallSxOffsetLeft, 
+                        sy: midY + smallSyOffset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
                     // Ô 3 (nhỏ giữa) - Dịch chuyển thông minh chống méo
                     gridCells.push({ 
-                        sx: w1 + offset + Math.floor(offset / 2), 
-                        sy: midY + offset, 
+                        sx: w1 + smallSxOffsetMid, 
+                        sy: midY + smallSyOffset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
                     });
                     // Ô 4 (nhỏ phải)
                     gridCells.push({ 
-                        sx: w2 + offset, 
-                        sy: midY + offset, 
+                        sx: w2 + smallSxOffsetRight, 
+                        sy: midY + smallSyOffset, 
                         cropW: smallCropW, 
                         cropH: smallCropH, 
                         isLarge: false 
@@ -3655,20 +3819,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Tính toán kích thước canvas đích
                 // 1. Nhóm 1: Ảnh to
                 const largeCell = gridCells[0];
-                if (largeCell.cropW <= 0 || largeCell.cropH <= 0) {
-                    showToast("Ô to quá nhỏ. Giảm Offset!", "error");
-                    return;
-                }
                 const largeScale = getExportScale(largeCell.cropW);
                 const targetW_large = Math.round(largeCell.cropW * largeScale);
                 const targetH_large = Math.round(largeCell.cropH * largeScale);
 
                 // 2. Nhóm 2: 3 Ảnh nhỏ
                 const smallCell = gridCells[1];
-                if (smallCell.cropW <= 0 || smallCell.cropH <= 0) {
-                    showToast("Ô nhỏ quá nhỏ. Giảm Offset!", "error");
-                    return;
-                }
                 const smallScale = getExportScale(smallCell.cropW);
                 const targetW_small = Math.round(smallCell.cropW * smallScale);
                 const targetH_small = Math.round(smallCell.cropH * smallScale);
@@ -3705,12 +3861,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Xác định kích thước canvas đích chung từ khung đầu tiên
             const firstBox = selectionBoxes[0];
-            const firstCropW = firstBox.w - (2 * offset);
-            const firstCropH = firstBox.h - (2 * offset);
+            let firstCropW = firstBox.w - (2 * offset);
+            let firstCropH = firstBox.h - (2 * offset);
 
-            if (firstCropW <= 0 || firstCropH <= 0) {
-                showToast("Khung vẽ quá nhỏ. Giảm Offset!", "error");
-                return;
+            if (firstCropW <= 0) {
+                firstCropW = firstBox.w;
+            }
+            if (firstCropH <= 0) {
+                firstCropH = firstBox.h;
             }
 
             if (!globalTargetW || !globalTargetH) {
@@ -3722,14 +3880,18 @@ document.addEventListener('DOMContentLoaded', () => {
             targetH = globalTargetH;
 
             selectionBoxes.forEach((box, idx) => {
-                const sx = box.x + offset;
-                const sy = box.y + offset;
-                const cropW = box.w - (2 * offset);
-                const cropH = box.h - (2 * offset);
+                let sx = box.x + offset;
+                let sy = box.y + offset;
+                let cropW = box.w - (2 * offset);
+                let cropH = box.h - (2 * offset);
 
-                if (cropW <= 0 || cropH <= 0) {
-                    showToast(`Khung ${box.id} quá nhỏ. Giảm Offset!`, "error");
-                    return;
+                if (cropW <= 0) {
+                    sx = box.x;
+                    cropW = box.w;
+                }
+                if (cropH <= 0) {
+                    sy = box.y;
+                    cropH = box.h;
                 }
 
                 const resultId = resultIdCounter++;
@@ -5832,6 +5994,15 @@ document.addEventListener('DOMContentLoaded', () => {
             cropH = height - (2 * offset);
         }
 
+        if (cropW <= 0) {
+            sx = x1;
+            cropW = x2 - x1;
+        }
+        if (cropH <= 0) {
+            sy = y1;
+            cropH = y2 - y1;
+        }
+
         return { x1, y1, x2, y2, sx, sy, cropW, cropH };
     }
 
@@ -5878,14 +6049,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const { sx, sy, cropW, cropH } = coords;
+        let { sx, sy, cropW, cropH } = coords;
         const targetW = recutItem.meta.targetW;
         const targetH = recutItem.meta.targetH;
 
-        if (cropW <= 0 || cropH <= 0) {
-            showToast("Kích thước cắt quá nhỏ. Hãy kéo rộng lưới/khung hoặc giảm xén viền!", "error");
-            return;
-        }
+        if (cropW <= 0) cropW = 1;
+        if (cropH <= 0) cropH = 1;
 
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
