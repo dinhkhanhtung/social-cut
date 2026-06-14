@@ -4006,6 +4006,11 @@ input[type="number"] {
     transition: var(--transition-smooth);
 }
 
+#panel-watermark {
+    position: relative;
+    overflow: visible; /* Cho phép popup bật lên trên */
+}
+
 .collapsible-header {
     display: flex;
     justify-content: space-between;
@@ -4050,6 +4055,23 @@ input[type="number"] {
     padding: 12px;
     border-top: 1px solid var(--border-color);
     background: rgba(0, 0, 0, 0.2);
+}
+
+#panel-watermark .collapsible-content {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 999;
 }
 
 /* Slider styling */
