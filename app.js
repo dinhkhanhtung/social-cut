@@ -2334,8 +2334,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.stroke();
             }
 
-            }
-
             // Nổi bật ô đang được cắt lại (recut highlight) nếu đang ở chế độ chỉnh sửa ảnh đơn
             if (recutSlideId !== null) {
                 const recutItem = slicedImages.find(item => item.id === recutSlideId);
