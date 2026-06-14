@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnResetImage = document.getElementById('btn-reset-image');
     
     const floatingCanvasActions = document.getElementById('floating-canvas-actions');
+    const switchNormalize = document.getElementById('switch-normalize');
+    const selectNormalizeBg = document.getElementById('select-normalize-bg');
     const btnFloatingConfirm = document.getElementById('btn-floating-confirm');
     const btnFloatingCancel = document.getElementById('btn-floating-cancel');
     
@@ -516,6 +518,14 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (recutSlideId !== null) {
                 handleCancelRecut();
             }
+        });
+    }
+
+    if (switchNormalize && selectNormalizeBg) {
+        switchNormalize.addEventListener('change', () => {
+            selectNormalizeBg.disabled = !switchNormalize.checked;
+            selectNormalizeBg.style.opacity = switchNormalize.checked ? '1' : '0.5';
+            selectNormalizeBg.style.pointerEvents = switchNormalize.checked ? 'auto' : 'none';
         });
     }
 
@@ -3769,19 +3779,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 const boundariesX = [0, ...colsX, width];
                 const boundariesY = [0, ...rowsY, height];
 
-                // Xác định kích thước canvas đích chung từ ô đầu tiên
-                const firstCellW = boundariesX[1] - boundariesX[0];
-                const firstCellH = boundariesY[1] - boundariesY[0];
-                
-                // Áp dụng offset đồng nhất (xén đều offset ở mọi cạnh của ô lưới)
-                let firstCropW = firstCellW - 2 * offset;
-                let firstCropH = firstCellH - 2 * offset;
-
-                if (firstCropW <= 0) {
-                    firstCropW = firstCellW;
+                // Tìm kích thước lớn nhất của các ô lưới để căn đều
+                let maxCropW = 0;
+                let maxCropH = 0;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const x1 = boundariesX[c];
+                        const x2 = boundariesX[c + 1];
+                        const y1 = boundariesY[r];
+                        const y2 = boundariesY[r + 1];
+                        const cellW = x2 - x1;
+                        const cellH = y2 - y1;
+                        let cropW = cellW - 2 * offset;
+                        let cropH = cellH - 2 * offset;
+                        if (cropW <= 0) cropW = cellW;
+                        if (cropH <= 0) cropH = cellH;
+                        if (cropW > maxCropW) maxCropW = cropW;
+                        if (cropH > maxCropH) maxCropH = cropH;
+                    }
                 }
-                if (firstCropH <= 0) {
-                    firstCropH = firstCellH;
+
+                const normScale = getExportScale(maxCropW);
+                let finalTargetW = Math.round(maxCropW * normScale);
+                let finalTargetH = Math.round(maxCropH * normScale);
+
+                if (lockedRatio) {
+                    if (finalTargetW / finalTargetH > lockedRatio) {
+                        finalTargetH = Math.round(finalTargetW / lockedRatio);
+                    } else {
+                        finalTargetW = Math.round(finalTargetH * lockedRatio);
+                    }
                 }
 
                 const totalNewCells = rows * cols;
@@ -3813,8 +3840,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Tính kích thước canvas đích riêng cho từng ô để bảo toàn tỷ lệ khung hình gốc (chống méo ảnh)
                         const scale = getExportScale(cropW);
-                        const cellTargetW = Math.round(cropW * scale);
-                        const cellTargetH = Math.round(cropH * scale);
+                        let cellTargetW = Math.round(cropW * scale);
+                        let cellTargetH = Math.round(cropH * scale);
+
+                        if (switchNormalize && switchNormalize.checked) {
+                            cellTargetW = finalTargetW;
+                            cellTargetH = finalTargetH;
+                        }
 
                         const resultId = resultIdCounter++;
                         const sliceName = `slide_${startIndex + count}.png`;
@@ -3986,6 +4018,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
+                // Tính kích thước căn đều lớn nhất cho Facebook Grid
+                let maxCropW = 0;
+                let maxCropH = 0;
+                gridCells.forEach(cell => {
+                    if (cell.cropW > maxCropW) maxCropW = cell.cropW;
+                    if (cell.cropH > maxCropH) maxCropH = cell.cropH;
+                });
+                const normScale = getExportScale(maxCropW);
+                let finalTargetW = Math.round(maxCropW * normScale);
+                let finalTargetH = Math.round(maxCropH * normScale);
+                if (lockedRatio) {
+                    if (finalTargetW / finalTargetH > lockedRatio) {
+                        finalTargetH = Math.round(finalTargetW / lockedRatio);
+                    } else {
+                        finalTargetW = Math.round(finalTargetH * lockedRatio);
+                    }
+                }
+
                 // Cắt 4 slide của Facebook layout với tỷ lệ khung hình động bảo toàn (chống méo ảnh)
                 gridCells.forEach((cell, idx) => {
                     const sx = cell.sx;
@@ -3994,8 +4044,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cropH = cell.cropH;
 
                     const scale = getExportScale(cropW);
-                    const tW = Math.round(cropW * scale);
-                    const tH = Math.round(cropH * scale);
+                    let tW = Math.round(cropW * scale);
+                    let tH = Math.round(cropH * scale);
+
+                    if (switchNormalize && switchNormalize.checked) {
+                        tW = finalTargetW;
+                        tH = finalTargetH;
+                    }
 
                     const resultId = resultIdCounter++;
                     const sliceName = `slide_${startIndex + idx + 1}.png`;
@@ -4017,25 +4072,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Xác định kích thước canvas đích chung từ khung đầu tiên
-            const firstBox = selectionBoxes[0];
-            let firstCropW = firstBox.w - (2 * offset);
-            let firstCropH = firstBox.h - (2 * offset);
+            // Tìm kích thước lớn nhất của các khung cắt tự do để căn đều
+            let maxCropW = 0;
+            let maxCropH = 0;
+            selectionBoxes.forEach(box => {
+                let cropW = box.w - (2 * offset);
+                let cropH = box.h - (2 * offset);
+                if (cropW <= 0) cropW = box.w;
+                if (cropH <= 0) cropH = box.h;
+                if (cropW > maxCropW) maxCropW = cropW;
+                if (cropH > maxCropH) maxCropH = cropH;
+            });
 
-            if (firstCropW <= 0) {
-                firstCropW = firstBox.w;
-            }
-            if (firstCropH <= 0) {
-                firstCropH = firstBox.h;
-            }
+            const normScale = getExportScale(maxCropW);
+            let finalTargetW = Math.round(maxCropW * normScale);
+            let finalTargetH = Math.round(maxCropH * normScale);
 
-            if (!globalTargetW || !globalTargetH) {
-                const scale = getExportScale(firstCropW);
-                globalTargetW = Math.round(firstCropW * scale);
-                globalTargetH = Math.round(firstCropH * scale);
+            if (lockedRatio) {
+                if (finalTargetW / finalTargetH > lockedRatio) {
+                    finalTargetH = Math.round(finalTargetW / lockedRatio);
+                } else {
+                    finalTargetW = Math.round(finalTargetH * lockedRatio);
+                }
             }
-            targetW = globalTargetW;
-            targetH = globalTargetH;
 
             selectionBoxes.forEach((box, idx) => {
                 let sx = box.x + offset;
@@ -4054,8 +4113,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Tính kích thước canvas đích riêng cho từng khung để bảo toàn tỷ lệ khung hình gốc (chống méo ảnh)
                 const scale = getExportScale(cropW);
-                const boxTargetW = Math.round(cropW * scale);
-                const boxTargetH = Math.round(cropH * scale);
+                let boxTargetW = Math.round(cropW * scale);
+                let boxTargetH = Math.round(cropH * scale);
+
+                if (switchNormalize && switchNormalize.checked) {
+                    boxTargetW = finalTargetW;
+                    boxTargetH = finalTargetH;
+                }
 
                 const resultId = resultIdCounter++;
                 const sliceName = `slide_${startIndex + idx + 1}.png`;
@@ -4114,8 +4178,56 @@ document.addEventListener('DOMContentLoaded', () => {
             sliceCtx.filter = 'none';
         }
 
+        // --- Căn đều slide: Chèn viền đệm tránh méo ảnh ---
+        let dx = 0;
+        let dy = 0;
+        let dw = targetW;
+        let dh = targetH;
+
+        if (switchNormalize && switchNormalize.checked) {
+            const imgRatio = cropW / cropH;
+            const canvasRatio = targetW / targetH;
+
+            if (imgRatio > canvasRatio) {
+                dw = targetW;
+                dh = targetW / imgRatio;
+                dx = 0;
+                dy = (targetH - dh) / 2;
+            } else {
+                dw = targetH * imgRatio;
+                dh = targetH;
+                dx = (targetW - dw) / 2;
+                dy = 0;
+            }
+
+            // Tô màu nền cho các phần viền trống
+            const bgType = selectNormalizeBg ? selectNormalizeBg.value : 'white';
+            if (bgType === 'white') {
+                sliceCtx.fillStyle = '#ffffff';
+                sliceCtx.fillRect(0, 0, targetW, targetH);
+            } else if (bgType === 'black') {
+                sliceCtx.fillStyle = '#000000';
+                sliceCtx.fillRect(0, 0, targetW, targetH);
+            } else if (bgType === 'transparent') {
+                sliceCtx.clearRect(0, 0, targetW, targetH);
+            } else if (bgType === 'auto') {
+                try {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = 1;
+                    tempCanvas.height = 1;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(currentImage, sx, sy, 1, 1, 0, 0, 1, 1);
+                    const pixelData = tempCtx.getImageData(0, 0, 1, 1).data;
+                    sliceCtx.fillStyle = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
+                } catch (e) {
+                    sliceCtx.fillStyle = '#ffffff';
+                }
+                sliceCtx.fillRect(0, 0, targetW, targetH);
+            }
+        }
+
         // Vẽ chính xác trong ranh giới an toàn (sx, sy, cropW, cropH) để tuyệt đối không bị lẹm ảnh từ ô bên cạnh
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, dx, dy, dw, dh);
         
         // Reset filter sau khi vẽ xong ảnh gốc để tránh ảnh hưởng đến Watermark
         sliceCtx.filter = 'none';
@@ -6275,12 +6387,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return w < targetMinW ? (targetMinW / w) : 1.0;
         };
 
-        const scale = getExportScale(cropW);
-        const targetW = Math.round(cropW * scale);
-        const targetH = Math.round(cropH * scale);
+        const isNormalizeEnabled = switchNormalize && switchNormalize.checked;
+        let targetW = recutItem.meta.targetW;
+        let targetH = recutItem.meta.targetH;
 
-        recutItem.meta.targetW = targetW;
-        recutItem.meta.targetH = targetH;
+        if (!isNormalizeEnabled || !targetW || !targetH) {
+            const scale = getExportScale(cropW);
+            targetW = Math.round(cropW * scale);
+            targetH = Math.round(cropH * scale);
+            recutItem.meta.targetW = targetW;
+            recutItem.meta.targetH = targetH;
+        }
 
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
@@ -6301,8 +6418,56 @@ document.addEventListener('DOMContentLoaded', () => {
             sliceCtx.filter = 'none';
         }
 
+        // --- Căn đều slide: Chèn viền đệm tránh méo ảnh khi Recut ---
+        let dx = 0;
+        let dy = 0;
+        let dw = targetW;
+        let dh = targetH;
+
+        if (isNormalizeEnabled) {
+            const imgRatio = cropW / cropH;
+            const canvasRatio = targetW / targetH;
+
+            if (imgRatio > canvasRatio) {
+                dw = targetW;
+                dh = targetW / imgRatio;
+                dx = 0;
+                dy = (targetH - dh) / 2;
+            } else {
+                dw = targetH * imgRatio;
+                dh = targetH;
+                dx = (targetW - dw) / 2;
+                dy = 0;
+            }
+
+            // Tô màu nền cho các phần viền trống khi recut
+            const bgType = selectNormalizeBg ? selectNormalizeBg.value : 'white';
+            if (bgType === 'white') {
+                sliceCtx.fillStyle = '#ffffff';
+                sliceCtx.fillRect(0, 0, targetW, targetH);
+            } else if (bgType === 'black') {
+                sliceCtx.fillStyle = '#000000';
+                sliceCtx.fillRect(0, 0, targetW, targetH);
+            } else if (bgType === 'transparent') {
+                sliceCtx.clearRect(0, 0, targetW, targetH);
+            } else if (bgType === 'auto') {
+                try {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = 1;
+                    tempCanvas.height = 1;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(currentImage, sx, sy, 1, 1, 0, 0, 1, 1);
+                    const pixelData = tempCtx.getImageData(0, 0, 1, 1).data;
+                    sliceCtx.fillStyle = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
+                } catch (e) {
+                    sliceCtx.fillStyle = '#ffffff';
+                }
+                sliceCtx.fillRect(0, 0, targetW, targetH);
+            }
+        }
+
         // Vẽ chính xác trong ranh giới an toàn để tuyệt đối không bị lẹm ảnh từ ô lân cận
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, dx, dy, dw, dh);
         sliceCtx.filter = 'none';
 
         const isWatermarkEnabled = switchWatermark && switchWatermark.checked;

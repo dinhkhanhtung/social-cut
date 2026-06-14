@@ -205,6 +205,32 @@
                         </div>
                     </div>
 
+                    <!-- Cấu hình căn đều slide (Giúp đồng bộ kích thước xuất các slide) -->
+                    <div class="control-group-grid" style="margin-bottom: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+                        <div class="control-item" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
+                            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; width: 100%; margin: 0; user-select: none;">
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    <i class="fa-solid fa-expand"></i> Căn đều slide
+                                </span>
+                                <div class="switch-container">
+                                    <input type="checkbox" id="switch-normalize" checked>
+                                    <span class="slider"></span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="control-item" id="normalize-bg-item">
+                            <label for="select-normalize-bg">
+                                <i class="fa-solid fa-fill-drip"></i> Màu viền đệm
+                            </label>
+                            <select id="select-normalize-bg" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                <option value="white" selected>Trắng (Mặc định)</option>
+                                <option value="black">Đen</option>
+                                <option value="transparent">Trong suốt</option>
+                                <option value="auto">Tự hút màu</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Global Offset Spinner & Grid Color Selector (Side by side) -->
                     <div class="control-group-grid" style="margin-bottom: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
                         <div class="control-item">
