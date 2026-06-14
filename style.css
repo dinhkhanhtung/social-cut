@@ -150,9 +150,7 @@ body {
                 margin 0.3s ease;
     width: 100%;
     opacity: 1;
-    overflow: hidden !important;
-    display: flex;
-    flex-direction: column;
+    overflow-y: auto;
 }
 
 /* Nút ẩn/hiện Sidebar lơ lửng */
@@ -3504,18 +3502,14 @@ input[type="number"] {
 
 /* --- PC Sidebar layout adjustment for Account Panel --- */
 #sidebar {
-    overflow: hidden !important; /* Khóa cuộn dọc toàn bộ sidebar để cố định nút ở đáy */
+    overflow: visible !important;
 }
 
 #sidebar .sidebar-scroll-content {
-    flex: 1 1 0% !important;
-    min-height: 0 !important;
+    flex: 1 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding-right: 4px !important;
-    display: flex;
-    flex-direction: column;
-    gap: 12px; /* Đồng bộ khoảng cách giữa các khối cấu hình */
 }
 
 /* Sidebar Account Panel (PC Only) */
@@ -4002,6 +3996,104 @@ input[type="number"] {
     }
 }
 
+/* --- Collapsible Panel for Watermark --- */
+.collapsible-panel {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+}
+
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition-smooth);
+}
+
+.collapsible-header:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.collapsible-header:hover .collapsible-title {
+    color: var(--accent);
+}
+
+.collapsible-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+}
+
+.collapsible-arrow {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+
+.collapsible-panel.expanded .collapsible-arrow {
+    transform: rotate(180deg);
+    color: var(--accent);
+}
+
+.collapsible-content {
+    padding: 12px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Slider styling */
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    outline: none;
+    transition: background 0.3s;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(6, 182, 212, 0.5);
+    transition: transform 0.1s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.label-with-value {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.value-display {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.8rem;
+}
+
 /* Mobile responsive for Toast */
 @media (max-width: 768px) {
     .toast-container {
@@ -4034,335 +4126,4 @@ input[type="number"] {
         }
     }
 }
-
-/* --- Quick Presets Styling --- */
-.preset-buttons-group {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-top: 6px;
-}
-
-.btn-preset {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-secondary, #94a3b8);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.btn-preset:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-preset.active {
-    background: rgba(6, 182, 212, 0.15);
-    border-color: var(--accent, #06b6d4);
-    color: var(--accent, #06b6d4);
-    box-shadow: 0 0 8px rgba(6, 182, 212, 0.2);
-}
-
-/* --- Collapsible Accordion Panels --- */
-.collapsible-group {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    margin-top: 6px;
-    padding-top: 6px;
-}
-
-.collapsible-header {
-    width: 100%;
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.82rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 4px;
-    cursor: pointer;
-    transition: color 0.2s ease;
-    font-family: inherit;
-}
-
-.collapsible-header:hover {
-    color: var(--accent, #06b6d4);
-}
-
-.collapsible-header .arrow-icon {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.collapsible-group.open .collapsible-header .arrow-icon {
-    transform: rotate(180deg);
-    color: var(--accent, #06b6d4);
-}
-
-.collapsible-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-sizing: border-box;
-}
-
-.collapsible-group.open .collapsible-content {
-    max-height: 500px;
-    padding-bottom: 12px;
-}
-
-/* --- Filter Grid & Previews --- */
-.filter-options-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    padding: 4px;
-}
-
-.btn-filter {
-    background: transparent;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.btn-filter:hover .filter-preview {
-    transform: scale(1.08);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.btn-filter.active .filter-preview {
-    border-color: var(--accent, #06b6d4);
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
-}
-
-.btn-filter.active .filter-label {
-    color: var(--accent, #06b6d4);
-    font-weight: 600;
-}
-
-.filter-preview {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    background-size: cover;
-    background-position: center;
-    transition: all 0.2s ease;
-    background: linear-gradient(135deg, #4f46e5, #06b6d4);
-}
-
-.filter-label {
-    font-size: 0.72rem;
-    color: var(--text-secondary, #94a3b8);
-    font-family: inherit;
-    text-align: center;
-}
-
-/* Các bộ lọc màu cụ thể (gradient cho preview) */
-.filter-preview.filter-none {
-    background: linear-gradient(135deg, #64748b, #cbd5e1);
-}
-.filter-preview.filter-vintage {
-    background: linear-gradient(135deg, #b45309, #f59e0b);
-}
-.filter-preview.filter-bw {
-    background: linear-gradient(135deg, #1e293b, #94a3b8);
-}
-.filter-preview.filter-cinema {
-    background: linear-gradient(135deg, #0f172a, #06b6d4);
-}
-.filter-preview.filter-warm {
-    background: linear-gradient(135deg, #e11d48, #fb7185);
-}
-.filter-preview.filter-cool {
-    background: linear-gradient(135deg, #2563eb, #60a5fa);
-}
-
-/* --- Watermark Config Pane Styling --- */
-.watermark-config-pane, .export-config-pane {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 4px;
-}
-
-/* Tiện ích slider mờ nhẹ */
-.watermark-config-pane input[type="range"].slider {
-    background: rgba(255, 255, 255, 0.1);
-}
-.watermark-config-pane input[type="range"].slider::-webkit-slider-runnable-track {
-    height: 4px;
-}
-.watermark-config-pane input[type="range"].slider::-webkit-slider-thumb {
-    width: 12px;
-    height: 12px;
-    margin-top: -4px;
-}
-
-/* --- PC Welcome Screen layout when NO image is selected --- */
-@media (min-width: 1025px) {
-    /* Khi chưa có ảnh, biến app-content thành layout 1 cột căn giữa */
-    .app-content:not(.has-image) {
-        grid-template-columns: 1fr !important;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-        height: 100%;
-        max-height: calc(100vh - 120px);
-    }
-    
-    /* Ẩn panel xem trước bên phải khi chưa có ảnh */
-    .app-content:not(.has-image) .view-panel {
-        display: none !important;
-    }
-    
-    /* Căn giữa và tạo màn hình Welcome cho sidebar */
-    .app-content:not(.has-image) #sidebar {
-        max-width: 640px;
-        width: 100%;
-        margin: 0 auto;
-        height: auto !important;
-        max-height: 85vh !important;
-        border-radius: var(--border-radius-md);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--border-color);
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        overflow: hidden !important;
-    }
-
-    /* Ẩn các cấu hình chỉnh sửa và nút cắt ảnh khi chưa có ảnh */
-    .app-content:not(.has-image) #sidebar > *:not(.panel-header):not(.sidebar-scroll-content):not(.sidebar-account-panel) {
-        display: none !important;
-    }
-
-    .app-content:not(.has-image) #sidebar .sidebar-scroll-content > *:not(.dropzone):not(.history-section) {
-        display: none !important;
-    }
-    
-    .app-content:not(.has-image) #sidebar .sidebar-scroll-content {
-        overflow-y: auto !important;
-        max-height: 70vh;
-        gap: 16px;
-    }
-
-    /* Tạo Dropzone lớn khi chưa có ảnh */
-    .app-content:not(.has-image) #sidebar .dropzone {
-        height: 160px;
-        border-width: 2px;
-        border-style: dashed;
-        background: rgba(17, 24, 39, 0.4);
-    }
-    .app-content:not(.has-image) #sidebar .dropzone-prompt {
-        flex-direction: column;
-        gap: 12px;
-    }
-    .app-content:not(.has-image) #sidebar .dropzone-icon {
-        font-size: 2.5rem;
-    }
-    .app-content:not(.has-image) #sidebar .dropzone-text-group {
-        align-items: center;
-        text-align: center;
-    }
-    .app-content:not(.has-image) #sidebar .dropzone-text-main {
-        font-size: 1.1rem;
-    }
-    .app-content:not(.has-image) #sidebar .dropzone-text-sub {
-        font-size: 0.85rem;
-    }
-    .app-content:not(.has-image) #sidebar .file-format-badge {
-        display: inline-block !important;
-    }
-
-    /* Hiển thị lịch sử dự án rộng rãi ở màn Welcome */
-    .app-content:not(.has-image) #sidebar .history-section {
-        display: block !important;
-        margin-top: 10px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding-top: 16px;
-    }
-    .app-content:not(.has-image) #sidebar #history-list {
-        max-height: 280px;
-        overflow-y: auto;
-    }
-    
-    /* Ẩn nút toggle sidebar */
-    .app-content:not(.has-image) ~ .btn-toggle-sidebar {
-        display: none !important;
-    }
-}
-
-/* --- PC Editor Layout when image IS selected --- */
-@media (min-width: 1025px) {
-    /* Ẩn lịch sử dự án khi có ảnh trên PC để tối ưu diện tích */
-    .app-content.has-image #sidebar .history-section {
-        display: none !important;
-    }
-
-    /* Thu dẹt dropzone cực gọn */
-    .app-content.has-image #sidebar .dropzone {
-        height: 72px;
-        padding: 10px 16px;
-        border-style: solid;
-        background: rgba(17, 24, 39, 0.4);
-        margin-bottom: 4px;
-    }
-    
-    .app-content.has-image #sidebar .dropzone-prompt {
-        flex-direction: row;
-        gap: 12px;
-    }
-    
-    .app-content.has-image #sidebar .dropzone-icon {
-        font-size: 1.5rem;
-        color: var(--accent);
-    }
-    
-    .app-content.has-image #sidebar .dropzone-text-group {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
-        gap: 1px;
-    }
-    
-    .app-content.has-image #sidebar .dropzone-text-main {
-        font-size: 0.82rem;
-        margin: 0;
-    }
-    
-    .app-content.has-image #sidebar .dropzone-text-sub {
-        font-size: 0.72rem;
-        margin: 0;
-    }
-    
-    .app-content.has-image #sidebar .file-format-badge {
-        display: none !important; /* Ẩn badge định dạng để siêu gọn */
-    }
-}
-
 

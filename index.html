@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Carousel Cut - Cắt ảnh Slide TikTok Vô Cực</title>
-    <meta name="description" content="Công cụ Mobile-First giúp bạn chia nhỏ ảnh dài (panorama) thành các slide nối liền hoàn hảo, không méo hình, hỗ trợ kéo thả sắp xếp, đổi tên và tải ZIP nhanh chóng để đăng TikTok.">
+    <title>Social Cut - Cắt ảnh Slide TikTok, Album Facebook & Instagram</title>
+    <meta name="description" content="Công cụ Mobile-First giúp bạn chia nhỏ ảnh dài thành các slide nối liền hoàn hảo hoặc chia lưới album Facebook không méo hình, hỗ trợ kéo thả sắp xếp và tải ZIP nhanh chóng.">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://carousel-cut.vercel.app/">
-    <meta property="og:title" content="Carousel Cut - Cắt ảnh Slide TikTok Vô Cực">
-    <meta property="og:description" content="Công cụ Mobile-First giúp bạn chia nhỏ ảnh dài (panorama) thành các slide nối liền hoàn hảo, không méo hình, hỗ trợ kéo thả sắp xếp, đổi tên và tải ZIP nhanh chóng để đăng TikTok.">
+    <meta property="og:url" content="https://social-cut.vercel.app/">
+    <meta property="og:title" content="Social Cut - Cắt ảnh Slide TikTok, Album Facebook & Instagram">
+    <meta property="og:description" content="Công cụ Mobile-First giúp bạn chia nhỏ ảnh dài thành các slide nối liền hoàn hảo hoặc chia lưới album Facebook không méo hình, hỗ trợ kéo thả sắp xếp và tải ZIP nhanh chóng.">
     <meta property="og:image" content="og_preview.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://carousel-cut.vercel.app/">
-    <meta property="twitter:title" content="Carousel Cut - Cắt ảnh Slide TikTok Vô Cực">
-    <meta property="twitter:description" content="Công cụ Mobile-First giúp bạn chia nhỏ ảnh dài (panorama) thành các slide nối liền hoàn hảo, không méo hình, hỗ trợ kéo thả sắp xếp, đổi tên và tải ZIP nhanh chóng để đăng TikTok.">
+    <meta property="twitter:url" content="https://social-cut.vercel.app/">
+    <meta property="twitter:title" content="Social Cut - Cắt ảnh Slide TikTok, Album Facebook & Instagram">
+    <meta property="twitter:description" content="Công cụ Mobile-First giúp bạn chia nhỏ ảnh dài thành các slide nối liền hoàn hảo hoặc chia lưới album Facebook không méo hình, hỗ trợ kéo thả sắp xếp và tải ZIP nhanh chóng.">
     <meta property="twitter:image" content="og_preview.png">
 
     <!-- Icons for Mobile Home Screen & Browser -->
@@ -47,7 +47,7 @@
         <header class="app-header">
             <div class="logo">
                 <i class="fa-solid fa-scissors brand-icon"></i>
-                <span class="brand-text">Carousel <span class="accent-text">Cut</span></span>
+                <span class="brand-text">Social <span class="accent-text">Cut</span></span>
             </div>
             <p class="subtitle">Cắt ảnh ghép thông minh thành lưới đa ô để đăng Instagram, Facebook, TikTok tiện lợi</p>
             <!-- Hamburger menu button for mobile -->
@@ -80,10 +80,9 @@
                         <input type="file" id="file-input" accept="image/*" class="file-input">
                         <div class="dropzone-prompt" id="dropzone-prompt">
                             <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                            <div class="dropzone-text-group">
-                                <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
-                                <p class="dropzone-text-sub">hoặc nhấp chuột để chọn</p>
-                            </div>
+                            <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
+                            <p class="dropzone-text-sub">hoặc nhấp chuột để chọn từ máy tính</p>
+                            <span class="file-format-badge">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
                         </div>
                         <!-- Mini Preview when file selected -->
                         <div class="dropzone-file-info" id="file-info" style="display: none;">
@@ -163,7 +162,7 @@
                     </div>
 
                     <!-- Grid Layout & Ratio selectors in one row -->
-                    <div class="control-group-grid grid-ratio-group">
+                    <div class="control-group-grid grid-ratio-group" style="margin-bottom: 12px;">
                         <div class="control-item" id="grid-type-control-item">
                             <label for="select-grid-type">
                                 <i class="fa-solid fa-table-cells" style="color: #06b6d4;"></i> Bố cục lưới
@@ -188,27 +187,8 @@
                         </div>
                     </div>
 
-                    <!-- Quick Presets -->
-                    <div class="control-item">
-                        <label><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> Preset MXH nhanh</label>
-                        <div class="preset-buttons-group">
-                            <button type="button" class="btn-preset" data-preset="ig-1-1" title="Instagram 1:1 (Lưới 3 cột, Cắt đều)">
-                                <i class="fa-brands fa-instagram"></i> IG 1:1
-                            </button>
-                            <button type="button" class="btn-preset" data-preset="ig-4-5" title="Instagram 4:5 (Lưới 3 cột, Cắt đều)">
-                                <i class="fa-brands fa-instagram"></i> IG 4:5
-                            </button>
-                            <button type="button" class="btn-preset" data-preset="tt-9-16" title="TikTok 9:16 (Lưới dọc)">
-                                <i class="fa-brands fa-tiktok"></i> TT 9:16
-                            </button>
-                            <button type="button" class="btn-preset" data-preset="fb-asym" title="Facebook Bất đối xứng (1 Dọc + 3 Phải)">
-                                <i class="fa-brands fa-facebook"></i> FB Lưới
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Global Slider (Applies to both modes) -->
-                    <div class="control-item">
+                    <div class="control-item" style="margin-bottom: 12px;">
                         <div class="label-with-value">
                             <label for="input-offset">
                                 <i class="fa-solid fa-border-none"></i> Xén viền ô (Offset Padding)
@@ -225,7 +205,7 @@
                     </div>
 
                     <!-- Uniform constraints & Snap switchers in one row -->
-                    <div class="control-group-grid snap-uniform-group">
+                    <div class="control-group-grid snap-uniform-group" style="margin-top: 4px; margin-bottom: 12px;">
                         <div class="control-item">
                             <div class="switch-inline-container">
                                 <label for="switch-uniform" class="label-switch">
@@ -250,128 +230,97 @@
                         </div>
                     </div>
 
-                    <!-- Collapsible: Filters -->
-                    <div class="collapsible-group">
-                        <button type="button" class="collapsible-header">
-                            <span><i class="fa-solid fa-wand-magic-sparkles" style="color: #a855f7;"></i> Bộ lọc màu (Filters)</span>
-                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
-                        </button>
-                        <div class="collapsible-content">
-                            <div class="filter-options-grid">
-                                <button type="button" class="btn-filter active" data-filter="none">
-                                    <span class="filter-preview filter-none"></span>
-                                    <span class="filter-label">Gốc</span>
-                                </button>
-                                <button type="button" class="btn-filter" data-filter="vintage">
-                                    <span class="filter-preview filter-vintage"></span>
-                                    <span class="filter-label">Cổ điển</span>
-                                </button>
-                                <button type="button" class="btn-filter" data-filter="bw">
-                                    <span class="filter-preview filter-bw"></span>
-                                    <span class="filter-label">Trắng đen</span>
-                                </button>
-                                <button type="button" class="btn-filter" data-filter="cinema">
-                                    <span class="filter-preview filter-cinema"></span>
-                                    <span class="filter-label">Điện ảnh</span>
-                                </button>
-                                <button type="button" class="btn-filter" data-filter="warm">
-                                    <span class="filter-preview filter-warm"></span>
-                                    <span class="filter-label">Ấm áp</span>
-                                </button>
-                                <button type="button" class="btn-filter" data-filter="cool">
-                                    <span class="filter-preview filter-cool"></span>
-                                    <span class="filter-label">Tươi mát</span>
-                                </button>
-                            </div>
+                    <!-- Collapsible Watermark Panel -->
+                    <div class="collapsible-panel" id="panel-watermark">
+                        <div class="collapsible-header" id="header-watermark">
+                            <span class="collapsible-title">
+                                <i class="fa-solid fa-copyright" style="color: #f59e0b;"></i> Đóng dấu (Watermark)
+                            </span>
+                            <i class="fa-solid fa-chevron-down collapsible-arrow"></i>
                         </div>
-                    </div>
-
-                    <!-- Collapsible: Watermark -->
-                    <div class="collapsible-group">
-                        <button type="button" class="collapsible-header">
-                            <span><i class="fa-solid fa-copyright" style="color: #10b981;"></i> Đóng dấu (Watermark)</span>
-                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
-                        </button>
-                        <div class="collapsible-content">
-                            <div class="watermark-config-pane">
-                                <div class="control-item switch-inline-container" style="margin-bottom: 8px;">
-                                    <label for="switch-watermark" class="label-switch" style="font-size: 0.8rem;">Kích hoạt đóng dấu</label>
+                        <div class="collapsible-content" id="content-watermark" style="display: none;">
+                            <!-- Checkbox bật tắt watermark -->
+                            <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
+                                <div class="switch-inline-container">
+                                    <label for="switch-watermark" class="label-switch">
+                                        <i class="fa-solid fa-square-check" style="color: #10b981;"></i> Bật đóng dấu
+                                    </label>
                                     <div class="switch-wrapper">
                                         <input type="checkbox" id="switch-watermark" class="switch-checkbox">
                                         <label for="switch-watermark" class="switch-label-btn"></label>
                                     </div>
                                 </div>
-                                <div class="watermark-inputs" id="watermark-inputs-panel" style="display: none;">
-                                    <div class="control-item" style="margin-bottom: 8px;">
-                                        <label style="font-size: 0.75rem;">Loại đóng dấu</label>
-                                        <select id="watermark-type" style="height: 32px; font-size: 0.8rem;">
-                                            <option value="text">Chữ (Text)</option>
-                                            <option value="image">Ảnh Logo</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div id="watermark-text-group" class="control-item" style="margin-bottom: 8px;">
-                                        <label style="font-size: 0.75rem;">Nội dung chữ</label>
-                                        <input type="text" id="watermark-text-val" placeholder="@nickname" value="@carousel_cut" style="height: 32px; font-size: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0 8px; width: 100%; box-sizing: border-box;">
-                                    </div>
-
-                                    <div id="watermark-image-group" class="control-item" style="margin-bottom: 8px; display: none;">
-                                        <label style="font-size: 0.75rem;">Tải Logo (.png, .jpg)</label>
-                                        <input type="file" id="watermark-image-file" accept="image/*" style="font-size: 0.75rem; color: var(--text-secondary); width: 100%;">
-                                    </div>
-
-                                    <div class="control-item" style="margin-bottom: 8px;">
-                                        <label style="font-size: 0.75rem;">Vị trí</label>
-                                        <select id="watermark-position" style="height: 32px; font-size: 0.8rem;">
-                                            <option value="bottom-right">Dưới cùng bên phải</option>
-                                            <option value="bottom-left">Dưới cùng bên trái</option>
-                                            <option value="top-right">Trên cùng bên phải</option>
-                                            <option value="center">Ở giữa ảnh</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="control-item" style="margin-bottom: 8px;">
-                                        <div class="label-with-value">
-                                            <label style="font-size: 0.75rem;">Độ mờ (Opacity)</label>
-                                            <span id="watermark-opacity-label" style="font-size: 0.75rem; color: var(--accent);">40%</span>
-                                        </div>
-                                        <input type="range" id="watermark-opacity" min="10" max="100" value="40" step="5" class="slider" style="height: 4px;">
-                                    </div>
-
-                                    <div class="control-item" style="margin-bottom: 8px;">
-                                        <div class="label-with-value">
-                                            <label style="font-size: 0.75rem;">Kích thước (Size)</label>
-                                            <span id="watermark-size-label" style="font-size: 0.75rem; color: var(--accent);">5%</span>
-                                        </div>
-                                        <input type="range" id="watermark-size" min="2" max="25" value="5" step="1" class="slider" style="height: 4px;">
-                                    </div>
-                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Collapsible: Export Options -->
-                    <div class="collapsible-group">
-                        <button type="button" class="collapsible-header">
-                            <span><i class="fa-solid fa-sliders" style="color: #06b6d4;"></i> Tùy chọn xuất ảnh</span>
-                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
-                        </button>
-                        <div class="collapsible-content">
-                            <div class="export-config-pane">
-                                <div class="control-item" style="margin-bottom: 8px;">
-                                    <label style="font-size: 0.75rem;">Định dạng file</label>
-                                    <select id="export-format" style="height: 32px; font-size: 0.8rem;">
-                                        <option value="image/png">PNG (Nét tuyệt đối - lossless)</option>
-                                        <option value="image/jpeg">JPEG (Nhẹ, tải nhanh - lossy)</option>
+                            <div id="watermark-options-container" style="display: none;">
+                                <!-- Dropdown chọn loại đóng dấu (Chữ / Ảnh) -->
+                                <div class="control-item" style="margin-bottom: 12px;">
+                                    <label for="select-watermark-type" style="font-size: 0.8rem; color: var(--text-secondary);">Loại đóng dấu</label>
+                                    <select id="select-watermark-type" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                        <option value="text" selected>Dạng chữ (Text)</option>
+                                        <option value="image">Dạng ảnh logo (Image)</option>
                                     </select>
                                 </div>
-                                <div class="control-item" style="margin-bottom: 8px;">
-                                    <label style="font-size: 0.75rem;">Tỉ lệ phóng (Export Scale)</label>
-                                    <select id="export-scale-val" style="height: 32px; font-size: 0.8rem;">
-                                        <option value="1">1x (Kích thước gốc)</option>
-                                        <option value="2" selected>2x (Super HD - Khuyên dùng)</option>
-                                        <option value="3">3x (Ultra HD - Siêu nét)</option>
+
+                                <!-- Cấu hình Watermark Chữ -->
+                                <div id="watermark-text-config" style="display: block;">
+                                    <!-- Input text -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <label for="input-watermark-text" style="font-size: 0.8rem; color: var(--text-secondary);">Nội dung chữ</label>
+                                        <input type="text" id="input-watermark-text" placeholder="Ví dụ: @username" value="@SocialCut" class="text-input" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                    </div>
+
+                                    <!-- Slider size chữ -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <div class="label-with-value">
+                                            <label for="input-watermark-size">Cỡ chữ (px)</label>
+                                            <span class="value-display" id="watermark-size-val">24</span>
+                                        </div>
+                                        <input type="range" id="input-watermark-size" min="12" max="64" value="24" step="1" class="slider" style="width: 100%; margin-top: 4px;">
+                                    </div>
+                                </div>
+
+                                <!-- Cấu hình Watermark Ảnh -->
+                                <div id="watermark-image-config" style="display: none;">
+                                    <!-- Input file -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <label for="input-watermark-image" style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Tải ảnh logo</label>
+                                        <input type="file" id="input-watermark-image" accept="image/*" style="width: 100%; font-size: 0.8rem; color: var(--text-secondary);">
+                                        <div id="watermark-image-preview-info" style="font-size: 0.72rem; color: var(--success); margin-top: 4px; display: none;">
+                                            <i class="fa-solid fa-circle-check"></i> Đã tải logo thành công
+                                        </div>
+                                    </div>
+
+                                    <!-- Slider size ảnh logo -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <div class="label-with-value">
+                                            <label for="input-watermark-image-scale">Kích thước logo (%)</label>
+                                            <span class="value-display" id="watermark-image-scale-val">20</span>
+                                        </div>
+                                        <input type="range" id="input-watermark-image-scale" min="5" max="60" value="20" step="1" class="slider" style="width: 100%; margin-top: 4px;">
+                                    </div>
+                                </div>
+
+                                <!-- Cấu hình chung cho cả 2 loại -->
+                                <!-- Select vị trí -->
+                                <div class="control-item" style="margin-bottom: 12px;">
+                                    <label for="select-watermark-position" style="font-size: 0.8rem; color: var(--text-secondary);">Vị trí đóng dấu</label>
+                                    <select id="select-watermark-position" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                        <option value="bottom-right" selected>Dưới cùng bên phải</option>
+                                        <option value="bottom-left">Dưới cùng bên trái</option>
+                                        <option value="top-right">Trên cùng bên phải</option>
+                                        <option value="top-left">Trên cùng bên trái</option>
+                                        <option value="center">Ở giữa</option>
                                     </select>
+                                </div>
+
+                                <!-- Slider opacity -->
+                                <div class="control-item" style="margin-bottom: 12px;">
+                                    <div class="label-with-value">
+                                        <label for="input-watermark-opacity">Độ mờ dấu (%)</label>
+                                        <span class="value-display" id="watermark-opacity-val">50</span>
+                                    </div>
+                                    <input type="range" id="input-watermark-opacity" min="10" max="100" value="50" step="5" class="slider" style="width: 100%; margin-top: 4px;">
                                 </div>
                             </div>
                         </div>
@@ -518,7 +467,7 @@
         </main>
 
         <footer class="app-footer">
-            <p>&copy; 2026 Carousel Cut. Được xây dựng bằng HTML5, CSS3 và JS thuần.</p>
+            <p>&copy; 2026 Social Cut. Được xây dựng bằng HTML5, CSS3 và JS thuần.</p>
         </footer>
 
         <!-- Mobile Bottom Navigation Bar (Đưa vào trong app-container) -->
@@ -558,9 +507,9 @@
                     
                     <!-- Fake TikTok Video Info & Overlay UI (Make it feel like TikTok) -->
                     <div class="fake-tiktok-ui">
-                        <div class="fake-tiktok-user">@carousel_cut</div>
-                        <div class="fake-tiktok-desc">Tác phẩm cắt ảnh nối liền của tôi! #carousel #fyp #magic</div>
-                        <div class="fake-tiktok-music"><i class="fa-solid fa-music"></i> Nhạc nền thịnh hành - Carousel Cut</div>
+                        <div class="fake-tiktok-user">@social_cut</div>
+                        <div class="fake-tiktok-desc">Tác phẩm cắt ảnh nối liền của tôi! #socialcut #fyp #magic</div>
+                        <div class="fake-tiktok-music"><i class="fa-solid fa-music"></i> Nhạc nền thịnh hành - Social Cut</div>
                         
                         <!-- Right Side Icons (Fake Likes, Comments, Share) -->
                         <div class="fake-tiktok-actions">
@@ -596,12 +545,12 @@
                                 <i class="fa-solid fa-circle-user"></i>
                             </div>
                             <div class="fb-post-meta">
-                                <div class="fb-post-author">Carousel Cut</div>
+                                <div class="fb-post-author">Social Cut</div>
                                 <div class="fb-post-time">1 phút &middot; <i class="fa-solid fa-earth-americas"></i></div>
                             </div>
                             <div class="fb-post-more"><i class="fa-solid fa-ellipsis"></i></div>
                         </div>
-                        <div class="fb-post-text">Tác phẩm cắt ảnh ghép bất đối xứng của tôi trên Facebook! #facebook #grid #carousel</div>
+                        <div class="fb-post-text">Tác phẩm cắt ảnh ghép bất đối xứng của tôi trên Facebook! #facebook #grid #socialcut</div>
                         <div class="fb-post-grid" id="fb-post-grid">
                             <!-- Dynamic images will be inserted here based on fb-1d3v or fb-1n3v -->
                         </div>
@@ -746,7 +695,7 @@
         <div class="password-box">
             <div class="password-logo">
                 <i class="fa-solid fa-scissors brand-icon"></i>
-                <span class="brand-text">Carousel <span class="accent-text">Cut</span></span>
+                <span class="brand-text">Social <span class="accent-text">Cut</span></span>
             </div>
             <p class="password-desc">Ứng dụng đã được khóa bảo mật. Vui lòng nhập mật khẩu mở khóa để tiếp tục sử dụng.</p>
             

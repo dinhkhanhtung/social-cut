@@ -67,6 +67,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordErrorMessage = document.getElementById('password-error-message');
     const btnTogglePasswordVisibility = document.getElementById('btn-toggle-password-visibility');
 
+    // Watermark DOM Elements
+    const panelWatermark = document.getElementById('panel-watermark');
+    const headerWatermark = document.getElementById('header-watermark');
+    const contentWatermark = document.getElementById('content-watermark');
+    const switchWatermark = document.getElementById('switch-watermark');
+    const watermarkOptionsContainer = document.getElementById('watermark-options-container');
+    const inputWatermarkText = document.getElementById('input-watermark-text');
+    const selectWatermarkPosition = document.getElementById('select-watermark-position');
+    const inputWatermarkSize = document.getElementById('input-watermark-size');
+    const watermarkSizeVal = document.getElementById('watermark-size-val');
+    const inputWatermarkOpacity = document.getElementById('input-watermark-opacity');
+    const watermarkOpacityVal = document.getElementById('watermark-opacity-val');
+
+    // Watermark Image DOM Elements
+    const selectWatermarkType = document.getElementById('select-watermark-type');
+    const watermarkTextConfig = document.getElementById('watermark-text-config');
+    const watermarkImageConfig = document.getElementById('watermark-image-config');
+    const inputWatermarkImage = document.getElementById('input-watermark-image');
+    const watermarkImagePreviewInfo = document.getElementById('watermark-image-preview-info');
+    const inputWatermarkImageScale = document.getElementById('input-watermark-image-scale');
+    const watermarkImageScaleVal = document.getElementById('watermark-image-scale-val');
+
+    // Global Watermark Image Object
+    let watermarkImageObj = null;
+
     const ctx = previewCanvas.getContext('2d');
 
     // Global State
@@ -171,241 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- New Features State Variables ---
-    let currentFilter = 'none';
-    let isWatermarkEnabled = false;
-    let watermarkType = 'text';
-    let watermarkText = '@carousel_cut';
-    let watermarkImage = null; // Store loaded image object
-    let watermarkPosition = 'bottom-right';
-    let watermarkOpacity = 40; // Percentage
-    let watermarkSize = 5; // Percentage of slice width/height
-    let exportFormat = 'image/png';
-    let exportScale = 2; // Default to 2x for HD quality
-
-    // --- Collapsible Panels Handler (Accordion & Auto Scroll) ---
-    const collapsibles = document.querySelectorAll('.collapsible-header');
-    collapsibles.forEach(header => {
-        header.addEventListener('click', () => {
-            const group = header.parentElement;
-            const content = group.querySelector('.collapsible-content');
-            const isOpen = group.classList.contains('open');
-            
-            // Đóng tất cả các panel khác
-            collapsibles.forEach(otherHeader => {
-                const otherGroup = otherHeader.parentElement;
-                const otherContent = otherGroup.querySelector('.collapsible-content');
-                if (otherGroup !== group) {
-                    otherGroup.classList.remove('open');
-                    otherContent.style.maxHeight = null;
-                }
-            });
-            
-            // Toggle panel hiện tại
-            group.classList.toggle('open', !isOpen);
-            if (!isOpen) {
-                content.style.maxHeight = (content.scrollHeight + 50) + "px"; // padding buffer
-                
-                // Tự động cuộn mượt mà đưa panel vừa mở hiển thị tối ưu trong tầm mắt
-                setTimeout(() => {
-                    group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 200); // Đợi hiệu ứng transition bắt đầu
-            } else {
-                content.style.maxHeight = null;
-            }
-        });
-    });
-
-    // --- Quick Presets Handler ---
-    const presetButtons = document.querySelectorAll('.btn-preset');
-    presetButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            presetButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            const preset = btn.dataset.preset;
-            
-            // Chuyển về chế độ cắt lưới
-            slicingMode = 'grid';
-            modeGridBtn.classList.add('active');
-            modeBoxBtn.classList.remove('active');
-            controlsGridMode.classList.add('active');
-            controlsBoxMode.classList.remove('active');
-            btnGenBoxes.disabled = true;
-            btnClearBoxes.disabled = true;
-
-            isCustomGrid = false;
-            colsX = [];
-            rowsY = [];
-            
-            if (preset === 'ig-1-1') {
-                selectGridType.value = 'even';
-                gridType = 'even';
-                selectRatio.value = '1:1';
-                lockedRatio = 1.0;
-                inputRows.value = 1;
-                inputCols.value = 3;
-            } else if (preset === 'ig-4-5') {
-                selectGridType.value = 'even';
-                gridType = 'even';
-                selectRatio.value = '4:5';
-                lockedRatio = 4 / 5;
-                inputRows.value = 1;
-                inputCols.value = 3;
-            } else if (preset === 'tt-9-16') {
-                selectGridType.value = 'even';
-                gridType = 'even';
-                selectRatio.value = '9:16';
-                lockedRatio = 9 / 16;
-                inputRows.value = 1;
-                inputCols.value = 3;
-            } else if (preset === 'fb-asym') {
-                selectGridType.value = 'fb-1d3v';
-                gridType = 'fb-1d3v';
-                selectRatio.value = 'free';
-                lockedRatio = null;
-            }
-
-            // Đồng bộ UI lưới
-            if (gridType === 'even') {
-                if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
-                resetGridToEven();
-            } else {
-                if (gridEvenParameters) gridEvenParameters.style.display = 'none';
-            }
-
-            handleParamsChange();
-            showToast("Đã áp dụng preset thành công!", "success");
-        });
-    });
-
-    // --- Filters Handler ---
-    const filterButtons = document.querySelectorAll('.btn-filter');
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentFilter = btn.dataset.filter;
-            
-            // Áp dụng filter CSS lên preview canvas
-            applyFilterToPreviewCanvas();
-        });
-    });
-
-    function applyFilterToPreviewCanvas() {
-        if (!previewCanvas) return;
-        
-        let filterCSS = 'none';
-        if (currentFilter === 'vintage') {
-            filterCSS = 'sepia(0.5) contrast(1.1) saturate(1.1)';
-        } else if (currentFilter === 'bw') {
-            filterCSS = 'grayscale(1) contrast(1.2)';
-        } else if (currentFilter === 'cinema') {
-            filterCSS = 'contrast(1.25) saturate(0.85) hue-rotate(-10deg)';
-        } else if (currentFilter === 'warm') {
-            filterCSS = 'sepia(0.15) saturate(1.3) contrast(1.05) hue-rotate(5deg)';
-        } else if (currentFilter === 'cool') {
-            filterCSS = 'saturate(1.2) hue-rotate(-15deg) contrast(1.05)';
-        }
-        
-        previewCanvas.style.filter = filterCSS;
-    }
-
-    // --- Watermark UI Handler ---
-    const switchWatermark = document.getElementById('switch-watermark');
-    const watermarkInputsPanel = document.getElementById('watermark-inputs-panel');
-    const watermarkTypeSelect = document.getElementById('watermark-type');
-    const watermarkTextGroup = document.getElementById('watermark-text-group');
-    const watermarkImageGroup = document.getElementById('watermark-image-group');
-    const watermarkTextVal = document.getElementById('watermark-text-val');
-    const watermarkImageFile = document.getElementById('watermark-image-file');
-    const watermarkPositionSelect = document.getElementById('watermark-position');
-    const watermarkOpacityRange = document.getElementById('watermark-opacity');
-    const watermarkOpacityLabel = document.getElementById('watermark-opacity-label');
-    const watermarkSizeRange = document.getElementById('watermark-size');
-    const watermarkSizeLabel = document.getElementById('watermark-size-label');
-
-    if (switchWatermark) {
-        switchWatermark.addEventListener('change', () => {
-            isWatermarkEnabled = switchWatermark.checked;
-            watermarkInputsPanel.style.display = isWatermarkEnabled ? 'block' : 'none';
-            // Cập nhật lại chiều cao của collapsible container
-            const content = switchWatermark.closest('.collapsible-content');
-            if (content) content.style.maxHeight = (content.scrollHeight + 50) + "px";
-        });
-    }
-
-    if (watermarkTypeSelect) {
-        watermarkTypeSelect.addEventListener('change', () => {
-            watermarkType = watermarkTypeSelect.value;
-            watermarkTextGroup.style.display = (watermarkType === 'text') ? 'block' : 'none';
-            watermarkImageGroup.style.display = (watermarkType === 'image') ? 'block' : 'none';
-            // Cập nhật lại chiều cao collapsible
-            const content = watermarkTypeSelect.closest('.collapsible-content');
-            if (content) content.style.maxHeight = (content.scrollHeight + 50) + "px";
-        });
-    }
-
-    if (watermarkTextVal) {
-        watermarkTextVal.addEventListener('input', () => {
-            watermarkText = watermarkTextVal.value;
-        });
-    }
-
-    if (watermarkImageFile) {
-        watermarkImageFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        watermarkImage = img;
-                        showToast("Đã tải logo watermark thành công!", "success");
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    if (watermarkPositionSelect) {
-        watermarkPositionSelect.addEventListener('change', () => {
-            watermarkPosition = watermarkPositionSelect.value;
-        });
-    }
-
-    if (watermarkOpacityRange && watermarkOpacityLabel) {
-        watermarkOpacityRange.addEventListener('input', () => {
-            watermarkOpacity = parseInt(watermarkOpacityRange.value);
-            watermarkOpacityLabel.textContent = watermarkOpacity + "%";
-        });
-    }
-
-    if (watermarkSizeRange && watermarkSizeLabel) {
-        watermarkSizeRange.addEventListener('input', () => {
-            watermarkSize = parseInt(watermarkSizeRange.value);
-            watermarkSizeLabel.textContent = watermarkSize + "%";
-        });
-    }
-
-    // --- Export Options UI Handler ---
-    const exportFormatSelect = document.getElementById('export-format');
-    const exportScaleSelect = document.getElementById('export-scale-val');
-
-    if (exportFormatSelect) {
-        exportFormatSelect.addEventListener('change', () => {
-            exportFormat = exportFormatSelect.value;
-        });
-    }
-
-    if (exportScaleSelect) {
-        exportScaleSelect.addEventListener('change', () => {
-            exportScale = parseInt(exportScaleSelect.value);
-        });
-    }
-
     // --- Drag and Drop Events for Upload ---
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, (e) => {
@@ -467,6 +257,107 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation(); // Prevent opening file chooser
         resetApp();
     });
+
+    // --- Watermark Collapsible & Controls Event Listeners ---
+    if (headerWatermark && contentWatermark && panelWatermark) {
+        headerWatermark.addEventListener('click', () => {
+            const isExpanded = panelWatermark.classList.contains('expanded');
+            if (isExpanded) {
+                panelWatermark.classList.remove('expanded');
+                contentWatermark.style.display = 'none';
+            } else {
+                panelWatermark.classList.add('expanded');
+                contentWatermark.style.display = 'block';
+            }
+        });
+    }
+
+    if (switchWatermark) {
+        switchWatermark.addEventListener('change', () => {
+            const isEnabled = switchWatermark.checked;
+            if (watermarkOptionsContainer) {
+                watermarkOptionsContainer.style.display = isEnabled ? 'block' : 'none';
+            }
+            drawLiveGrid();
+        });
+    }
+
+    if (inputWatermarkText) {
+        inputWatermarkText.addEventListener('input', () => {
+            drawLiveGrid();
+        });
+    }
+
+    if (selectWatermarkPosition) {
+        selectWatermarkPosition.addEventListener('change', () => {
+            drawLiveGrid();
+        });
+    }
+
+    if (inputWatermarkSize && watermarkSizeVal) {
+        inputWatermarkSize.addEventListener('input', (e) => {
+            watermarkSizeVal.textContent = e.target.value;
+            drawLiveGrid();
+        });
+    }
+
+    if (inputWatermarkOpacity && watermarkOpacityVal) {
+        inputWatermarkOpacity.addEventListener('input', (e) => {
+            watermarkOpacityVal.textContent = e.target.value;
+            drawLiveGrid();
+        });
+    }
+
+    if (selectWatermarkType) {
+        selectWatermarkType.addEventListener('change', (e) => {
+            const type = e.target.value;
+            if (watermarkTextConfig) {
+                watermarkTextConfig.style.display = (type === 'text') ? 'block' : 'none';
+            }
+            if (watermarkImageConfig) {
+                watermarkImageConfig.style.display = (type === 'image') ? 'block' : 'none';
+            }
+            drawLiveGrid();
+        });
+    }
+
+    if (inputWatermarkImage) {
+        inputWatermarkImage.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                watermarkImageObj = null;
+                if (watermarkImagePreviewInfo) watermarkImagePreviewInfo.style.display = 'none';
+                drawLiveGrid();
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                showToast('Logo phải là file hình ảnh!', 'warning');
+                watermarkImageObj = null;
+                if (watermarkImagePreviewInfo) watermarkImagePreviewInfo.style.display = 'none';
+                inputWatermarkImage.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    watermarkImageObj = img;
+                    if (watermarkImagePreviewInfo) watermarkImagePreviewInfo.style.display = 'block';
+                    drawLiveGrid();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (inputWatermarkImageScale && watermarkImageScaleVal) {
+        inputWatermarkImageScale.addEventListener('input', (e) => {
+            watermarkImageScaleVal.textContent = e.target.value;
+            drawLiveGrid();
+        });
+    }
 
     // --- Slicing Mode Switches ---
     const setSlicingMode = (mode) => {
@@ -1924,6 +1815,103 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // --- Draw Watermark Helper ---
+    function drawWatermarkOnCtx(targetCtx, position, opacityVal, config = {}) {
+        const type = config.type || 'text';
+        
+        targetCtx.save();
+        targetCtx.globalAlpha = opacityVal / 100;
+        
+        if (type === 'text') {
+            const text = config.text || '';
+            if (!text) {
+                targetCtx.restore();
+                return;
+            }
+            const fontSize = config.fontSize || 24;
+            targetCtx.font = `bold ${fontSize}px 'Inter', sans-serif`;
+            
+            const textMetrics = targetCtx.measureText(text);
+            const textWidth = textMetrics.width;
+            const padding = fontSize * 0.8;
+            
+            let x = config.cellX;
+            let y = config.cellY;
+            
+            targetCtx.textAlign = 'left';
+            targetCtx.textBaseline = 'middle';
+            
+            if (position === 'bottom-right') {
+                x = config.cellX + config.cellW - textWidth - padding;
+                y = config.cellY + config.cellH - padding;
+            } else if (position === 'bottom-left') {
+                x = config.cellX + padding;
+                y = config.cellY + config.cellH - padding;
+            } else if (position === 'top-right') {
+                x = config.cellX + config.cellW - textWidth - padding;
+                y = config.cellY + padding + fontSize / 2;
+            } else if (position === 'top-left') {
+                x = config.cellX + padding;
+                y = config.cellY + padding + fontSize / 2;
+            } else if (position === 'center') {
+                x = config.cellX + (config.cellW - textWidth) / 2;
+                y = config.cellY + config.cellH / 2;
+            }
+            
+            targetCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+            targetCtx.lineWidth = Math.max(2, fontSize / 8);
+            targetCtx.lineJoin = 'round';
+            targetCtx.strokeText(text, x, y);
+            
+            targetCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            targetCtx.fillText(text, x, y);
+            
+        } else if (type === 'image') {
+            const img = config.imageObj;
+            if (!img) {
+                targetCtx.restore();
+                return;
+            }
+            
+            const scalePercent = config.scalePercent || 20;
+            const maxW = config.cellW * (scalePercent / 100);
+            const maxH = config.cellH * (scalePercent / 100);
+            
+            let logoW = img.width;
+            let logoH = img.height;
+            
+            const ratio = Math.min(maxW / logoW, maxH / logoH);
+            logoW = logoW * ratio;
+            logoH = logoH * ratio;
+            
+            const padding = Math.max(8, logoW * 0.2);
+            
+            let x = config.cellX;
+            let y = config.cellY;
+            
+            if (position === 'bottom-right') {
+                x = config.cellX + config.cellW - logoW - padding;
+                y = config.cellY + config.cellH - logoH - padding;
+            } else if (position === 'bottom-left') {
+                x = config.cellX + padding;
+                y = config.cellY + config.cellH - logoH - padding;
+            } else if (position === 'top-right') {
+                x = config.cellX + config.cellW - logoW - padding;
+                y = config.cellY + padding;
+            } else if (position === 'top-left') {
+                x = config.cellX + padding;
+                y = config.cellY + padding;
+            } else if (position === 'center') {
+                x = config.cellX + (config.cellW - logoW) / 2;
+                y = config.cellY + (config.cellH - logoH) / 2;
+            }
+            
+            targetCtx.drawImage(img, x, y, logoW, logoH);
+        }
+        
+        targetCtx.restore();
+    }
+
     // --- Draw Live Preview Grid & Selection Boxes ---
     function drawLiveGrid() {
         if (!currentImage) return;
@@ -2079,7 +2067,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Vẽ các nét đứt phân cách cyan gốc
+            // Vẽ các nét đứt phân cách cyan gốc (hiển thị vô cực từ trong ảnh ra toàn khung làm việc)
             ctx.strokeStyle = '#06b6d4';
             ctx.lineWidth = Math.max(2, Math.floor(width / 600));
             ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
@@ -2087,14 +2075,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gridType === 'even') {
                 colsX.forEach(x => {
                     ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x, height);
+                    ctx.moveTo(x, -1000000);
+                    ctx.lineTo(x, 1000000);
                     ctx.stroke();
                 });
                 rowsY.forEach(y => {
                     ctx.beginPath();
-                    ctx.moveTo(0, y);
-                    ctx.lineTo(width, y);
+                    ctx.moveTo(-1000000, y);
+                    ctx.lineTo(1000000, y);
                     ctx.stroke();
                 });
             } else if (gridType === 'fb-1d3v') {
@@ -2103,18 +2091,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const h2 = height * (2/3);
                 
                 ctx.beginPath();
-                ctx.moveTo(midX, 0);
-                ctx.lineTo(midX, height);
+                ctx.moveTo(midX, -1000000);
+                ctx.lineTo(midX, 1000000);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(midX, h1);
-                ctx.lineTo(width, h1);
+                ctx.lineTo(1000000, h1);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(midX, h2);
-                ctx.lineTo(width, h2);
+                ctx.lineTo(1000000, h2);
                 ctx.stroke();
             } else if (gridType === 'fb-1n3v') {
                 const midY = height * 0.5;
@@ -2122,18 +2110,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const w2 = width * (2/3);
                 
                 ctx.beginPath();
-                ctx.moveTo(0, midY);
-                ctx.lineTo(width, midY);
+                ctx.moveTo(-1000000, midY);
+                ctx.lineTo(1000000, midY);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(w1, midY);
-                ctx.lineTo(w1, height);
+                ctx.lineTo(w1, 1000000);
                 ctx.stroke();
                 
                 ctx.beginPath();
                 ctx.moveTo(w2, midY);
-                ctx.lineTo(w2, height);
+                ctx.lineTo(w2, 1000000);
                 ctx.stroke();
             }
 
@@ -2234,6 +2222,101 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 ctx.stroke();
             });
+        }
+
+        // Vẽ xem trước Watermark lên từng ô/khung
+        const isWatermarkEnabled = switchWatermark && switchWatermark.checked;
+        if (isWatermarkEnabled) {
+            const type = selectWatermarkType ? selectWatermarkType.value : 'text';
+            const position = selectWatermarkPosition ? selectWatermarkPosition.value : 'bottom-right';
+            const opacity = parseInt(inputWatermarkOpacity ? inputWatermarkOpacity.value : 50) || 50;
+            const size = parseInt(inputWatermarkSize ? inputWatermarkSize.value : 24) || 24;
+            const text = inputWatermarkText ? inputWatermarkText.value.trim() : '';
+            const scalePercent = parseInt(inputWatermarkImageScale ? inputWatermarkImageScale.value : 20) || 20;
+
+            if ((type === 'text' && text) || (type === 'image' && watermarkImageObj)) {
+                const drawConf = {
+                    type: type,
+                    text: text,
+                    fontSize: size,
+                    imageObj: watermarkImageObj,
+                    scalePercent: scalePercent
+                };
+
+                if (slicingMode === 'grid') {
+                    let tempCells = [];
+                    if (gridType === 'even') {
+                        const boundariesX = [0, ...colsX, width];
+                        const boundariesY = [0, ...rowsY, height];
+                        const totalCols = boundariesX.length - 1;
+                        const totalRows = boundariesY.length - 1;
+                        for (let r = 0; r < totalRows; r++) {
+                            for (let c = 0; c < totalCols; c++) {
+                                const x1 = boundariesX[c];
+                                const x2 = boundariesX[c + 1];
+                                const y1 = boundariesY[r];
+                                const y2 = boundariesY[r + 1];
+                                const leftOffset = (c === 0) ? (2 * offset) : offset;
+                                const rightOffset = (c === totalCols - 1) ? (2 * offset) : offset;
+                                const topOffset = (r === 0) ? (2 * offset) : offset;
+                                const bottomOffset = (r === totalRows - 1) ? (2 * offset) : offset;
+                                tempCells.push({
+                                    sx: x1 + leftOffset,
+                                    sy: y1 + topOffset,
+                                    sw: (x2 - x1) - leftOffset - rightOffset,
+                                    sh: (y2 - y1) - topOffset - bottomOffset
+                                });
+                            }
+                        }
+                    } else if (gridType === 'fb-1d3v') {
+                        const midX = width * 0.5;
+                        const h1 = height * (1/3);
+                        const h2 = height * (2/3);
+                        const smallCropW = (width - midX) - 3 * offset;
+                        const smallCropH = h1 - 3 * offset;
+                        tempCells.push({ sx: 2 * offset, sy: 2 * offset, sw: midX - 3 * offset, sh: height - 4 * offset });
+                        tempCells.push({ sx: midX + offset, sy: 2 * offset, sw: smallCropW, sh: smallCropH });
+                        tempCells.push({ sx: midX + offset, sy: h1 + offset + Math.floor(offset / 2), sw: smallCropW, sh: smallCropH });
+                        tempCells.push({ sx: midX + offset, sy: h2 + offset, sw: smallCropW, sh: smallCropH });
+                    } else if (gridType === 'fb-1n3v') {
+                        const midY = height * 0.5;
+                        const w1 = width * (1/3);
+                        const w2 = width * (2/3);
+                        const smallCropW = w1 - 3 * offset;
+                        const smallCropH = (height - midY) - 3 * offset;
+                        tempCells.push({ sx: 2 * offset, sy: 2 * offset, sw: width - 4 * offset, sh: midY - 3 * offset });
+                        tempCells.push({ sx: 2 * offset, sy: midY + offset, sw: smallCropW, sh: smallCropH });
+                        tempCells.push({ sx: w1 + offset + Math.floor(offset / 2), sy: midY + offset, sw: smallCropW, sh: smallCropH });
+                        tempCells.push({ sx: w2 + offset, sy: midY + offset, sw: smallCropW, sh: smallCropH });
+                    }
+                    
+                    tempCells.forEach(cell => {
+                        if (cell.sw > 0 && cell.sh > 0) {
+                            const cellConf = Object.assign({}, drawConf, {
+                                cellX: cell.sx,
+                                cellY: cell.sy,
+                                cellW: cell.sw,
+                                cellH: cell.sh
+                            });
+                            drawWatermarkOnCtx(ctx, position, opacity, cellConf);
+                        }
+                    });
+                } else {
+                    selectionBoxes.forEach(box => {
+                        const cropW = box.w - (2 * offset);
+                        const cropH = box.h - (2 * offset);
+                        if (cropW > 0 && cropH > 0) {
+                            const cellConf = Object.assign({}, drawConf, {
+                                cellX: box.x + offset,
+                                cellY: box.y + offset,
+                                cellW: cropW,
+                                cellH: cropH
+                            });
+                            drawWatermarkOnCtx(ctx, position, opacity, cellConf);
+                        }
+                    });
+                }
+            }
         }
 
         ctx.restore();
@@ -2825,128 +2908,53 @@ document.addEventListener('DOMContentLoaded', () => {
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
 
-        // Định dạng file và đuôi file tương ứng
-        let formatExt = exportFormat === 'image/jpeg' ? 'jpg' : 'png';
-        const cleanName = sliceName.replace(/\.png$/, `.${formatExt}`).replace(/\.jpg$/, `.${formatExt}`).replace(/\.jpeg$/, `.${formatExt}`);
-
-        // Áp dụng Export Scale vào kích thước thật của slide canvas
-        const finalW = Math.round(targetW * exportScale);
-        const finalH = Math.round(targetH * exportScale);
-
-        sliceCanvas.width = finalW;
-        sliceCanvas.height = finalH;
-        
-        if (finalW === cropW && finalH === cropH) {
+        sliceCanvas.width = targetW;
+        sliceCanvas.height = targetH;
+        if (targetW === cropW && targetH === cropH) {
             sliceCtx.imageSmoothingEnabled = false;
         } else {
             sliceCtx.imageSmoothingEnabled = true;
             sliceCtx.imageSmoothingQuality = 'high';
         }
-        sliceCtx.clearRect(0, 0, finalW, finalH);
+        sliceCtx.clearRect(0, 0, targetW, targetH);
 
-        // 1. Áp dụng bộ lọc màu (Filters)
-        let filterCSS = 'none';
-        if (currentFilter === 'vintage') {
-            filterCSS = 'sepia(0.5) contrast(1.1) saturate(1.1)';
-        } else if (currentFilter === 'bw') {
-            filterCSS = 'grayscale(1) contrast(1.2)';
-        } else if (currentFilter === 'cinema') {
-            filterCSS = 'contrast(1.25) saturate(0.85) hue-rotate(-10deg)';
-        } else if (currentFilter === 'warm') {
-            filterCSS = 'sepia(0.15) saturate(1.3) contrast(1.05) hue-rotate(5deg)';
-        } else if (currentFilter === 'cool') {
-            filterCSS = 'saturate(1.2) hue-rotate(-15deg) contrast(1.05)';
-        }
-        sliceCtx.filter = filterCSS;
+        // Vẽ toàn bộ vùng ảnh gốc trong ô lưới (cropW x cropH) lên Canvas con (targetW x targetH)
+        // Trình duyệt sẽ tự động co giãn (nội suy phóng to/thu nhỏ) để lấp đầy vừa khít
+        // mà hoàn toàn không cắt bớt bất kỳ pixel nào của ảnh gốc trong vùng lưới
+        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
 
-        // Vẽ ảnh gốc lên canvas
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, finalW, finalH);
-
-        // Tắt filter để vẽ Watermark không bị lệch màu
-        sliceCtx.filter = 'none';
-
-        // 2. Vẽ Watermark nếu được bật
+        // Vẽ watermark thật nếu được kích hoạt
+        const isWatermarkEnabled = switchWatermark && switchWatermark.checked;
         if (isWatermarkEnabled) {
-            const baseSize = Math.min(finalW, finalH);
-            const wmSize = baseSize * (watermarkSize / 100);
-            
-            // Thiết lập độ mờ
-            sliceCtx.globalAlpha = watermarkOpacity / 100;
+            const type = selectWatermarkType ? selectWatermarkType.value : 'text';
+            const position = selectWatermarkPosition ? selectWatermarkPosition.value : 'bottom-right';
+            const opacity = parseInt(inputWatermarkOpacity ? inputWatermarkOpacity.value : 50) || 50;
+            const size = parseInt(inputWatermarkSize ? inputWatermarkSize.value : 24) || 24;
+            const text = inputWatermarkText ? inputWatermarkText.value.trim() : '';
+            const scalePercent = parseInt(inputWatermarkImageScale ? inputWatermarkImageScale.value : 20) || 20;
 
-            if (watermarkType === 'text' && watermarkText) {
-                // Font size tương đương kích thước watermark
-                const fontSize = Math.max(12, Math.round(wmSize * 0.8));
-                sliceCtx.font = `bold ${fontSize}px 'Inter', sans-serif`;
-                sliceCtx.textBaseline = 'middle';
+            if ((type === 'text' && text) || (type === 'image' && watermarkImageObj)) {
+                // Tính toán cỡ chữ thực tế của watermark dựa trên tỷ lệ scale ảnh
+                const scaleFactor = targetW / cropW;
+                const actualFontSize = Math.max(12, Math.round(size * scaleFactor));
                 
-                const textWidth = sliceCtx.measureText(watermarkText).width;
-                const textHeight = fontSize;
-                
-                let x = 0, y = 0;
-                const padding = 20 * exportScale; // padding tỷ lệ với scale để không bị quá nhỏ trên ảnh lớn
-                
-                if (watermarkPosition === 'bottom-right') {
-                    x = finalW - textWidth - padding;
-                    y = finalH - textHeight / 2 - padding;
-                } else if (watermarkPosition === 'bottom-left') {
-                    x = padding;
-                    y = finalH - textHeight / 2 - padding;
-                } else if (watermarkPosition === 'top-right') {
-                    x = finalW - textWidth - padding;
-                    y = textHeight / 2 + padding;
-                } else if (watermarkPosition === 'center') {
-                    x = (finalW - textWidth) / 2;
-                    y = finalH / 2;
-                }
-
-                // Vẽ viền đen cho chữ nổi bật
-                sliceCtx.strokeStyle = '#000000';
-                sliceCtx.lineWidth = Math.max(2, Math.round(fontSize * 0.15));
-                sliceCtx.strokeText(watermarkText, x, y);
-                
-                // Vẽ chữ trắng
-                sliceCtx.fillStyle = '#ffffff';
-                sliceCtx.fillText(watermarkText, x, y);
-
-            } else if (watermarkType === 'image' && watermarkImage) {
-                const imgRatio = watermarkImage.width / watermarkImage.height;
-                let w = 0, h = 0;
-                
-                // Kích thước logo
-                if (imgRatio > 1) {
-                    w = wmSize * 2.5;
-                    h = w / imgRatio;
-                } else {
-                    h = wmSize * 2.5;
-                    w = h * imgRatio;
-                }
-                
-                let x = 0, y = 0;
-                const padding = 20 * exportScale;
-                
-                if (watermarkPosition === 'bottom-right') {
-                    x = finalW - w - padding;
-                    y = finalH - h - padding;
-                } else if (watermarkPosition === 'bottom-left') {
-                    x = padding;
-                    y = finalH - h - padding;
-                } else if (watermarkPosition === 'top-right') {
-                    x = finalW - w - padding;
-                    y = padding;
-                } else if (watermarkPosition === 'center') {
-                    x = (finalW - w) / 2;
-                    y = (finalH - h) / 2;
-                }
-                
-                sliceCtx.drawImage(watermarkImage, x, y, w, h);
+                const cellConf = {
+                    type: type,
+                    text: text,
+                    fontSize: actualFontSize,
+                    imageObj: watermarkImageObj,
+                    scalePercent: scalePercent,
+                    cellX: 0,
+                    cellY: 0,
+                    cellW: targetW,
+                    cellH: targetH
+                };
+                drawWatermarkOnCtx(sliceCtx, position, opacity, cellConf);
             }
-            
-            // Khôi phục độ mờ ban đầu
-            sliceCtx.globalAlpha = 1.0;
         }
 
-        const dataUrl = sliceCanvas.toDataURL(exportFormat, exportFormat === 'image/jpeg' ? 0.95 : undefined);
-        slicedImages.push({ id: resultId, name: cleanName, dataUrl: dataUrl });
+        const dataUrl = sliceCanvas.toDataURL('image/png');
+        slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl });
 
         const isFacebookMode = (gridType === 'fb-1d3v' || gridType === 'fb-1n3v');
 
@@ -2954,7 +2962,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultItem.classList.add('result-item');
         resultItem.dataset.id = resultId;
         resultItem.setAttribute('draggable', isFacebookMode ? 'false' : 'true');
-        resultItem.style.aspectRatio = `${finalW} / ${finalH}`;
+        resultItem.style.aspectRatio = `${targetW} / ${targetH}`;
 
         const grip = document.createElement('div');
         grip.classList.add('result-item-grip');
@@ -2986,6 +2994,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnMobilePreview) btnMobilePreview.style.display = 'none';
                 globalTargetW = null;
                 globalTargetH = null;
+            } else {
+                // CSS Grid sẽ tự động điều chỉnh số cột cho nhỏ gọn
             }
         });
         resultItem.appendChild(btnDel);
@@ -2993,7 +3003,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgEl = document.createElement('img');
         imgEl.src = dataUrl;
         imgEl.classList.add('result-img');
-        imgEl.alt = cleanName;
+        imgEl.alt = sliceName;
         resultItem.appendChild(imgEl);
 
         const nameContainer = document.createElement('div');
@@ -3002,7 +3012,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.classList.add('result-item-name-input');
-        const baseName = cleanName.substring(0, cleanName.lastIndexOf('.'));
+        const baseName = sliceName.replace('.png', '');
         nameInput.value = baseName;
         nameInput.title = "Nhấp chuột hoặc nhấn Enter để đổi tên";
         
@@ -3012,7 +3022,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nameInput.addEventListener('blur', () => {
             resultItem.setAttribute('draggable', 'true');
             const newBaseName = nameInput.value.trim().replace(/[\\/:*?"<>|]/g, '');
-            const newFullName = newBaseName ? `${newBaseName}.${formatExt}` : cleanName;
+            const newFullName = newBaseName ? `${newBaseName}.png` : sliceName;
             nameInput.value = newBaseName || baseName;
             
             const imgObj = slicedImages.find(item => item.id === resultId);
@@ -3029,7 +3039,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const extSpan = document.createElement('span');
         extSpan.classList.add('result-item-ext');
-        extSpan.textContent = '.' + formatExt;
+        extSpan.textContent = '.png';
 
         nameContainer.appendChild(nameInput);
         nameContainer.appendChild(extSpan);
@@ -3042,7 +3052,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnDl.addEventListener('click', () => {
             const a = document.createElement('a');
             const currentImgObj = slicedImages.find(item => item.id === resultId);
-            const downloadName = currentImgObj ? currentImgObj.name : cleanName;
+            const downloadName = currentImgObj ? currentImgObj.name : sliceName;
             a.href = dataUrl;
             a.download = downloadName;
             a.click();
@@ -3068,7 +3078,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (navigator.vibrate) {
                 navigator.vibrate(40);
             }
-            e.preventDefault();
+            e.preventDefault(); // Ngăn chặn các sự kiện mặc định ngay lập tức
         }, { passive: false });
 
         grip.addEventListener('touchmove', (e) => {
@@ -3131,15 +3141,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Click xem ảnh full cho di động
+        // Bổ sung sự kiện click xem ảnh full cho di động (Mobile Lightbox dùng chính modal Mobile Preview)
         resultItem.addEventListener('click', (e) => {
+            // Tránh kích hoạt khi click vào các nút hành động con của card
             if (e.target.closest('.result-item-btn-del') || e.target.closest('.result-item-btn-dl') || e.target.closest('.result-item-name-container')) {
                 return;
             }
             
+            // Nếu có chức năng xem trước trên di động
             if (btnMobilePreview) {
-                btnMobilePreview.click();
+                btnMobilePreview.click(); // Kích hoạt mở modal xem thử
                 
+                // Đợi modal render xong slide, scroll tới slide tương ứng với card được click
                 setTimeout(() => {
                     if (mobileCarouselSlider) {
                         const targetSlideIndex = slicedImages.findIndex(item => item.id === resultId);
@@ -3157,12 +3170,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resultGrid.appendChild(resultItem);
 
         sliceCanvas.toBlob((blob) => {
-            slicedBlobs.push({ id: resultId, name: cleanName, blob: blob });
+            slicedBlobs.push({ id: resultId, name: sliceName, blob: blob });
             
             if (slicedBlobs.length === slicedImages.length) {
                 btnDownloadZip.disabled = false;
             }
-        }, exportFormat, exportFormat === 'image/jpeg' ? 0.95 : undefined);
+        }, 'image/png');
     }
 
     // --- Drag & Drop for Result Items ---
@@ -3259,7 +3272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const url = URL.createObjectURL(content);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'carousel_sliced_images.zip';
+            a.download = 'social_sliced_images.zip';
             document.body.appendChild(a);
             a.click();
             
@@ -3311,12 +3324,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Đọc thứ tự thực tế trong DOM
             const orderedItems = Array.from(resultGrid.children);
             
-            let formatExt = exportFormat === 'image/jpeg' ? 'jpg' : 'png';
-            
             orderedItems.forEach((resultItem, index) => {
                 const resultId = parseInt(resultItem.dataset.id);
                 const newIndex = index + 1;
-                const newName = `slide_${newIndex}.${formatExt}`;
+                const newName = `slide_${newIndex}.png`;
                 const newBaseName = `slide_${newIndex}`;
 
                 // Cập nhật giá trị hiển thị trong input
@@ -4521,7 +4532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const a = document.createElement('a');
                 a.href = url;
                 const baseName = proj.name.substring(0, proj.name.lastIndexOf('.')) || proj.name;
-                a.download = `${baseName}_carousel_cut.ccut`;
+                a.download = `${baseName}_social_cut.ccut`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
