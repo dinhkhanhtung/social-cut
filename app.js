@@ -3648,6 +3648,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             cropH = cellH;
                         }
 
+                        // Tính kích thước canvas đích riêng cho từng ô để bảo toàn tỷ lệ khung hình gốc (chống méo ảnh)
+                        const scale = getExportScale(cropW);
+                        const cellTargetW = Math.round(cropW * scale);
+                        const cellTargetH = Math.round(cropH * scale);
+
                         const resultId = resultIdCounter++;
                         const sliceName = `slide_${startIndex + count}.png`;
                         const meta = {
@@ -3656,10 +3661,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             cellIndex: count - 1,
                             row: r,
                             col: c,
-                            targetW: targetW,
-                            targetH: targetH
+                            targetW: cellTargetW,
+                            targetH: cellTargetH
                         };
-                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
+                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, cellTargetW, cellTargetH, meta);
                         count++;
                     }
                 }
@@ -3816,31 +3821,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
-                // Tính toán kích thước canvas đích
-                // 1. Nhóm 1: Ảnh to
-                const largeCell = gridCells[0];
-                const largeScale = getExportScale(largeCell.cropW);
-                const targetW_large = Math.round(largeCell.cropW * largeScale);
-                const targetH_large = Math.round(largeCell.cropH * largeScale);
-
-                // 2. Nhóm 2: 3 Ảnh nhỏ
-                const smallCell = gridCells[1];
-                const smallScale = getExportScale(smallCell.cropW);
-                const targetW_small = Math.round(smallCell.cropW * smallScale);
-                const targetH_small = Math.round(smallCell.cropH * smallScale);
-
-                // Cắt 4 slide
+                // Cắt 4 slide của Facebook layout với tỷ lệ khung hình động bảo toàn (chống méo ảnh)
                 gridCells.forEach((cell, idx) => {
                     const sx = cell.sx;
                     const sy = cell.sy;
                     const cropW = cell.cropW;
                     const cropH = cell.cropH;
 
+                    const scale = getExportScale(cropW);
+                    const tW = Math.round(cropW * scale);
+                    const tH = Math.round(cropH * scale);
+
                     const resultId = resultIdCounter++;
                     const sliceName = `slide_${startIndex + idx + 1}.png`;
-                    
-                    const tW = cell.isLarge ? targetW_large : targetW_small;
-                    const tH = cell.isLarge ? targetH_large : targetH_small;
 
                     const meta = {
                         slicingMode: 'grid',
@@ -3894,15 +3887,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     cropH = box.h;
                 }
 
+                // Tính kích thước canvas đích riêng cho từng khung để bảo toàn tỷ lệ khung hình gốc (chống méo ảnh)
+                const scale = getExportScale(cropW);
+                const boxTargetW = Math.round(cropW * scale);
+                const boxTargetH = Math.round(cropH * scale);
+
                 const resultId = resultIdCounter++;
                 const sliceName = `slide_${startIndex + idx + 1}.png`;
                 const meta = {
                     slicingMode: 'box',
                     boxId: box.id,
-                    targetW: targetW,
-                    targetH: targetH
+                    targetW: boxTargetW,
+                    targetH: boxTargetH
                 };
-                processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
+                processSlice(sx, sy, cropW, cropH, sliceName, resultId, boxTargetW, boxTargetH, meta);
             });
         }
 
@@ -6050,11 +6048,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let { sx, sy, cropW, cropH } = coords;
-        const targetW = recutItem.meta.targetW;
-        const targetH = recutItem.meta.targetH;
 
         if (cropW <= 0) cropW = 1;
         if (cropH <= 0) cropH = 1;
+
+        // Tính toán lại kích thước canvas đích dựa theo tỷ lệ khung hình mới của vùng recut (chống méo ảnh)
+        const scale = getExportScale(cropW);
+        const targetW = Math.round(cropW * scale);
+        const targetH = Math.round(cropH * scale);
+
+        // Cập nhật lại thông tin meta để các lần tương tác tiếp theo chính xác
+        recutItem.meta.targetW = targetW;
+        recutItem.meta.targetH = targetH;
 
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
