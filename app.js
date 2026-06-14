@@ -4670,8 +4670,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const totalItems = container.querySelectorAll('.history-item-checkbox');
                     const count = checkedItems.length;
 
-                    if (btnBulkDelete) {
-                        btnBulkDelete.disabled = count === 0;
+                    const activeBtnBulkDelete = document.getElementById(isPc ? 'btn-pc-bulk-delete' : 'btn-mobile-bulk-delete');
+                    const activeBtnSelectAll = document.getElementById(isPc ? 'btn-pc-select-all-toggle' : 'btn-mobile-select-all-toggle');
+
+                    if (activeBtnBulkDelete) {
+                        activeBtnBulkDelete.disabled = count === 0;
                     }
 
                     if (badge) {
@@ -4679,13 +4682,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         badge.style.display = count > 0 ? 'inline-block' : 'none';
                     }
 
-                    if (btnSelectAll) {
+                    if (activeBtnSelectAll) {
                         if (count === totalItems.length && totalItems.length > 0) {
-                            btnSelectAll.classList.add('active');
-                            btnSelectAll.title = "Bỏ chọn tất cả";
+                            activeBtnSelectAll.classList.add('active');
+                            activeBtnSelectAll.title = "Bỏ chọn tất cả";
                         } else {
-                            btnSelectAll.classList.remove('active');
-                            btnSelectAll.title = "Chọn tất cả dự án";
+                            activeBtnSelectAll.classList.remove('active');
+                            activeBtnSelectAll.title = "Chọn tất cả dự án";
                         }
                     }
                 };
