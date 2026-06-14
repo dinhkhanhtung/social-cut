@@ -107,6 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let slicedImages = []; // Array of { name, dataUrl }
     let slicedBlobs = [];  // Array of { name, blob }
     let recutSlideId = null; // ID of the slice being recut (single edit mode)
+    let recutButtonsOffset = { x: 0, y: 0 }; // Offset of the recut confirm/cancel buttons relative to center
+    let isDraggingRecutButtons = false;
+    let dragRecutButtonsStart = { x: 0, y: 0, startOffset: { x: 0, y: 0 } };
     
     // --- Update state of sidebar controls when recutting single slide ---
     function updateSidebarControlsState() {
@@ -1527,12 +1530,59 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgX = coords.x;
         const imgY = coords.y;
 
-        // Ưu tiên cursor pointer cho nút điều khiển recut
+        // Xử lý kéo nắm di chuyển cụm nút recut
+        if (isDraggingRecutButtons && recutSlideId !== null) {
+            const recutItem = slicedImages.find(item => item.id === recutSlideId);
+            if (recutItem) {
+                const recutCoords = getRecutSlideCoords(recutItem);
+                if (recutCoords) {
+                    const deltaX = imgX - dragRecutButtonsStart.x;
+                    const deltaY = imgY - dragRecutButtonsStart.y;
+                    let newOffsetX = dragRecutButtonsStart.startOffset.x + deltaX;
+                    let newOffsetY = dragRecutButtonsStart.startOffset.y + deltaY;
+
+                    const paddingX = 54 / zoomScale;
+                    const paddingY = 24 / zoomScale;
+
+                    const limitX = Math.max(0, recutCoords.cropW / 2 - paddingX);
+                    const limitY = Math.max(0, recutCoords.cropH / 2 - paddingY);
+
+                    newOffsetX = Math.max(-limitX, Math.min(limitX, newOffsetX));
+                    newOffsetY = Math.max(-limitY, Math.min(limitY, newOffsetY));
+
+                    recutButtonsOffset.x = newOffsetX;
+                    recutButtonsOffset.y = newOffsetY;
+                    
+                    drawLiveGrid();
+                    previewCanvas.style.cursor = 'move';
+                }
+            }
+            lastDragMouseX = imgX;
+            lastDragMouseY = imgY;
+            return;
+        }
+
+        // Ưu tiên cursor cho cụm nút recut (pointer khi hover nút, move khi hover khoảng giữa)
         if (recutSlideId !== null) {
             const recutAction = checkRecutButtonInteraction(imgX, imgY);
             if (recutAction) {
                 previewCanvas.style.cursor = 'pointer';
                 return;
+            }
+
+            // Hover vào vùng kéo cụm nút
+            const recutItem = slicedImages.find(item => item.id === recutSlideId);
+            if (recutItem) {
+                const recutCoords = getRecutSlideCoords(recutItem);
+                if (recutCoords) {
+                    const cx = recutCoords.sx + recutCoords.cropW / 2 + recutButtonsOffset.x;
+                    const cy = recutCoords.sy + recutCoords.cropH / 2 + recutButtonsOffset.y;
+                    const distToCenter = Math.hypot(imgX - cx, imgY - cy);
+                    if (distToCenter <= 60 / zoomScale) {
+                        previewCanvas.style.cursor = 'move';
+                        return;
+                    }
+                }
             }
         }
 
@@ -1740,6 +1790,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Kiểm tra xem có kéo nắm di chuyển cụm nút Recut (Lưu/Hủy) hay không
+        if (recutSlideId !== null) {
+            const recutItem = slicedImages.find(item => item.id === recutSlideId);
+            if (recutItem) {
+                const recutCoords = getRecutSlideCoords(recutItem);
+                if (recutCoords) {
+                    const cx = recutCoords.sx + recutCoords.cropW / 2 + recutButtonsOffset.x;
+                    const cy = recutCoords.sy + recutCoords.cropH / 2 + recutButtonsOffset.y;
+                    const distToCenter = Math.hypot(imgX - cx, imgY - cy);
+                    if (distToCenter <= 60 / zoomScale) {
+                        isDraggingRecutButtons = true;
+                        dragRecutButtonsStart = {
+                            x: imgX,
+                            y: imgY,
+                            startOffset: { ...recutButtonsOffset }
+                        };
+                        previewCanvas.style.cursor = 'move';
+                        return;
+                    }
+                }
+            }
+        }
+
         // Lưu trữ tọa độ chuột bắt đầu kéo
         lastDragMouseX = imgX;
         lastDragMouseY = imgY;
@@ -1860,6 +1933,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mouse Up Event Listener ---
     window.addEventListener('mouseup', () => {
+        isDraggingRecutButtons = false;
         if (snapGuides.length > 0) {
             snapGuides = [];
             drawLiveGrid();
@@ -1898,6 +1972,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // mouseleave to stop panning safely
     previewCanvas.addEventListener('mouseleave', () => {
+        isDraggingRecutButtons = false;
         if (isPanning) {
             isPanning = false;
             previewCanvas.style.cursor = spacePressed ? 'grab' : 'default';
@@ -2288,6 +2363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Handle Image Selection & Load ---
     function handleImageSelection(file) {
         recutSlideId = null;
+        recutButtonsOffset = { x: 0, y: 0 };
         updateSidebarControlsState();
         
         if (!file.type.startsWith('image/')) {
@@ -2922,41 +2998,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const y2 = coords.sy + coords.cropH;
 
                 if (x1 !== undefined && y1 !== undefined && x2 !== undefined && y2 !== undefined) {
-                    const centerX = x1 + coords.cropW / 2;
-                    const centerY = y1 + coords.cropH / 2;
+                    const centerX = x1 + coords.cropW / 2 + recutButtonsOffset.x;
+                    const centerY = y1 + coords.cropH / 2 + recutButtonsOffset.y;
 
-                    const btnRad = 20 / zoomScale;
+                    const btnRad = 24 / zoomScale;
                     const btnY = centerY;
-                    const confirmX = centerX + 25 / zoomScale;
-                    const cancelX = centerX - 25 / zoomScale;
+                    const confirmX = centerX + 30 / zoomScale;
+                    const cancelX = centerX - 30 / zoomScale;
 
                     ctx.save();
                     
-                    // Vẽ nền Pill
-                    const pillW = 108 / zoomScale;
-                    const pillH = 50 / zoomScale;
-                    const pillX = centerX - pillW / 2;
-                    const pillY = centerY - pillH / 2;
-                    const pillRad = 12 / zoomScale;
-
-                    ctx.beginPath();
-                    ctx.moveTo(pillX + pillRad, pillY);
-                    ctx.lineTo(pillX + pillW - pillRad, pillY);
-                    ctx.quadraticCurveTo(pillX + pillW, pillY, pillX + pillW, pillY + pillRad);
-                    ctx.lineTo(pillX + pillW, pillY + pillH - pillRad);
-                    ctx.quadraticCurveTo(pillX + pillW, pillY + pillH, pillX + pillW - pillRad, pillY + pillH);
-                    ctx.lineTo(pillX + pillRad, pillY + pillH);
-                    ctx.quadraticCurveTo(pillX, pillY + pillH, pillX, pillY + pillH - pillRad);
-                    ctx.lineTo(pillX, pillY + pillRad);
-                    ctx.quadraticCurveTo(pillX, pillY, pillX + pillRad, pillY);
-                    ctx.closePath();
-                    ctx.fillStyle = 'rgba(15, 23, 42, 0.95)'; // Slate 900 mờ sang trọng
-                    ctx.fill();
-                    ctx.lineWidth = 1.5 / zoomScale;
-                    ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)'; // Emerald border nhạt
-                    ctx.stroke();
-
-                    // Shadow cho các nút tròn bên trong
+                    // Shadow cho các nút tròn lơ lửng
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
                     ctx.shadowBlur = 6 / zoomScale;
                     ctx.shadowOffsetX = 0;
@@ -2967,7 +3019,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
                     ctx.fillStyle = '#ef4444';
                     ctx.fill();
-                    ctx.lineWidth = 1.5 / zoomScale;
+                    ctx.lineWidth = 2 / zoomScale;
                     ctx.strokeStyle = '#ffffff';
                     ctx.stroke();
 
@@ -2976,7 +3028,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
                     ctx.fillStyle = '#10b981';
                     ctx.fill();
-                    ctx.lineWidth = 1.5 / zoomScale;
+                    ctx.lineWidth = 2 / zoomScale;
                     ctx.strokeStyle = '#ffffff';
                     ctx.stroke();
 
@@ -2988,9 +3040,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Vẽ dấu nhân '✕' bằng nét vẽ (path) đẹp mắt
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3 / zoomScale;
+                    ctx.lineWidth = 3.5 / zoomScale;
                     ctx.lineCap = 'round';
-                    const crossSz = 5.5 / zoomScale;
+                    const crossSz = 6.5 / zoomScale;
                     ctx.moveTo(cancelX - crossSz, btnY - crossSz);
                     ctx.lineTo(cancelX + crossSz, btnY + crossSz);
                     ctx.moveTo(cancelX + crossSz, btnY - crossSz);
@@ -3000,12 +3052,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Vẽ dấu tích '✓' bằng nét vẽ (path) chuẩn FontAwesome
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3 / zoomScale;
+                    ctx.lineWidth = 3.5 / zoomScale;
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
-                    ctx.moveTo(confirmX - 6.5 / zoomScale, btnY - 0.5 / zoomScale);
-                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 4.5 / zoomScale);
-                    ctx.lineTo(confirmX + 6.5 / zoomScale, btnY - 4.5 / zoomScale);
+                    ctx.moveTo(confirmX - 7.5 / zoomScale, btnY - 0.5 / zoomScale);
+                    ctx.lineTo(confirmX - 1.5 / zoomScale, btnY + 5.5 / zoomScale);
+                    ctx.lineTo(confirmX + 7.5 / zoomScale, btnY - 5.5 / zoomScale);
                     ctx.stroke();
 
                     ctx.restore();
@@ -3746,6 +3798,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnEdit.addEventListener('click', (e) => {
             e.stopPropagation();
             recutSlideId = resultId;
+            recutButtonsOffset = { x: 0, y: 0 };
             if (btnSlice) {
                 btnSlice.disabled = true; // Vô hiệu hóa nút cắt ảnh chính
             }
@@ -5708,13 +5761,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const coords = getRecutSlideCoords(recutItem);
         if (!coords) return null;
 
-        const centerX = coords.sx + coords.cropW / 2;
-        const centerY = coords.sy + coords.cropH / 2;
+        const centerX = coords.sx + coords.cropW / 2 + recutButtonsOffset.x;
+        const centerY = coords.sy + coords.cropH / 2 + recutButtonsOffset.y;
 
-        const btnRad = 16 / zoomScale;
-        const btnY = centerY - 6 / zoomScale;
-        const confirmX = centerX + 26 / zoomScale;
-        const cancelX = centerX - 26 / zoomScale;
+        const btnRad = 24 / zoomScale;
+        const btnY = centerY;
+        const confirmX = centerX + 30 / zoomScale;
+        const cancelX = centerX - 30 / zoomScale;
 
         const distConfirm = Math.hypot(imgX - confirmX, imgY - btnY);
         const distCancel = Math.hypot(imgX - cancelX, imgY - btnY);
@@ -5834,6 +5887,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Đã cắt lại slide thành công!", "success");
 
         recutSlideId = null;
+        recutButtonsOffset = { x: 0, y: 0 };
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
         drawLiveGrid();
@@ -5844,6 +5898,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handleCancelRecut = () => {
         recutSlideId = null;
+        recutButtonsOffset = { x: 0, y: 0 };
         if (btnSlice) btnSlice.disabled = false;
         updateSidebarControlsState();
         drawLiveGrid();
