@@ -3648,11 +3648,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             cropH = cellH;
                         }
 
-                        // Tính kích thước canvas đích riêng cho từng ô để bảo toàn tỷ lệ khung hình gốc (chống méo ảnh)
-                        const scale = getExportScale(cropW);
-                        const cellTargetW = Math.round(cropW * scale);
-                        const cellTargetH = Math.round(cropH * scale);
-
                         const resultId = resultIdCounter++;
                         const sliceName = `slide_${startIndex + count}.png`;
                         const meta = {
@@ -3661,10 +3656,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             cellIndex: count - 1,
                             row: r,
                             col: c,
-                            targetW: cellTargetW,
-                            targetH: cellTargetH
+                            targetW: targetW,
+                            targetH: targetH
                         };
-                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, cellTargetW, cellTargetH, meta);
+                        processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
                         count++;
                     }
                 }
@@ -3822,18 +3817,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Cắt 4 slide của Facebook layout với tỷ lệ khung hình động bảo toàn (chống méo ảnh)
+                // Tính toán kích thước canvas đích
+                // 1. Nhóm 1: Ảnh to
+                const largeCell = gridCells[0];
+                const largeScale = getExportScale(largeCell.cropW);
+                const targetW_large = Math.round(largeCell.cropW * largeScale);
+                const targetH_large = Math.round(largeCell.cropH * largeScale);
+
+                // 2. Nhóm 2: 3 Ảnh nhỏ
+                const smallCell = gridCells[1];
+                const smallScale = getExportScale(smallCell.cropW);
+                const targetW_small = Math.round(smallCell.cropW * smallScale);
+                const targetH_small = Math.round(smallCell.cropH * smallScale);
+
+                // Cắt 4 slide
                 gridCells.forEach((cell, idx) => {
                     const sx = cell.sx;
                     const sy = cell.sy;
                     const cropW = cell.cropW;
                     const cropH = cell.cropH;
 
-                    const scale = getExportScale(cropW);
-                    const tW = Math.round(cropW * scale);
-                    const tH = Math.round(cropH * scale);
-
                     const resultId = resultIdCounter++;
                     const sliceName = `slide_${startIndex + idx + 1}.png`;
+                    
+                    const tW = cell.isLarge ? targetW_large : targetW_small;
+                    const tH = cell.isLarge ? targetH_large : targetH_small;
 
                     const meta = {
                         slicingMode: 'grid',
@@ -3949,10 +3957,26 @@ document.addEventListener('DOMContentLoaded', () => {
             sliceCtx.filter = 'none';
         }
 
-        // Vẽ toàn bộ vùng ảnh gốc trong ô lưới (cropW x cropH) lên Canvas con (targetW x targetH)
-        // Trình duyệt sẽ tự động co giãn (nội suy phóng to/thu nhỏ) để lấp đầy vừa khít
-        // mà hoàn toàn không cắt bớt bất kỳ pixel nào của ảnh gốc trong vùng lưới
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+        // Áp dụng thuật toán Smart Cover (xén thông minh phần thừa) để vừa giữ nguyên kích thước canvas đích
+        // (đảm bảo các slide ảnh kết quả đều nhau tăm tắp 100%) vừa chống méo ảnh tuyệt đối.
+        const sourceAspect = cropW / cropH;
+        const targetAspect = targetW / targetH;
+        let drawSx = sx;
+        let drawSy = sy;
+        let drawSw = cropW;
+        let drawSh = cropH;
+
+        if (sourceAspect > targetAspect) {
+            // Vùng nguồn rộng hơn canvas đích -> Xén bớt chiều rộng vùng nguồn (chia đều 2 bên trái/phải)
+            drawSw = cropH * targetAspect;
+            drawSx = sx + (cropW - drawSw) / 2;
+        } else if (sourceAspect < targetAspect) {
+            // Vùng nguồn cao hơn canvas đích -> Xén bớt chiều cao vùng nguồn (chia đều 2 bên trên/dưới)
+            drawSh = cropW / targetAspect;
+            drawSy = sy + (cropH - drawSh) / 2;
+        }
+
+        sliceCtx.drawImage(currentImage, drawSx, drawSy, drawSw, drawSh, 0, 0, targetW, targetH);
         
         // Reset filter sau khi vẽ xong ảnh gốc để tránh ảnh hưởng đến Watermark
         sliceCtx.filter = 'none';
@@ -6052,14 +6076,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cropW <= 0) cropW = 1;
         if (cropH <= 0) cropH = 1;
 
-        // Tính toán lại kích thước canvas đích dựa theo tỷ lệ khung hình mới của vùng recut (chống méo ảnh)
-        const scale = getExportScale(cropW);
-        const targetW = Math.round(cropW * scale);
-        const targetH = Math.round(cropH * scale);
-
-        // Cập nhật lại thông tin meta để các lần tương tác tiếp theo chính xác
-        recutItem.meta.targetW = targetW;
-        recutItem.meta.targetH = targetH;
+        const targetW = recutItem.meta.targetW;
+        const targetH = recutItem.meta.targetH;
 
         const sliceCanvas = document.createElement('canvas');
         const sliceCtx = sliceCanvas.getContext('2d');
@@ -6080,7 +6098,23 @@ document.addEventListener('DOMContentLoaded', () => {
             sliceCtx.filter = 'none';
         }
 
-        sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+        // Áp dụng thuật toán Smart Cover cho ảnh cắt lại để bảo toàn tỷ lệ khung hình (chống méo ảnh)
+        const sourceAspect = cropW / cropH;
+        const targetAspect = targetW / targetH;
+        let drawSx = sx;
+        let drawSy = sy;
+        let drawSw = cropW;
+        let drawSh = cropH;
+
+        if (sourceAspect > targetAspect) {
+            drawSw = cropH * targetAspect;
+            drawSx = sx + (cropW - drawSw) / 2;
+        } else if (sourceAspect < targetAspect) {
+            drawSh = cropW / targetAspect;
+            drawSy = sy + (cropH - drawSh) / 2;
+        }
+
+        sliceCtx.drawImage(currentImage, drawSx, drawSy, drawSw, drawSh, 0, 0, targetW, targetH);
         sliceCtx.filter = 'none';
 
         const isWatermarkEnabled = switchWatermark && switchWatermark.checked;
