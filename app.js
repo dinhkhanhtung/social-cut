@@ -1013,9 +1013,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Parameter Control Events ---
     const handleParamsChange = (e) => {
-        if (recutSlideId !== null) return;
-        
         if (slicingMode === 'grid' && e && (e.target.id === 'input-rows' || e.target.id === 'input-cols')) {
+            if (recutSlideId !== null) return;
             if (isCustomGrid) {
                 updateGridParamsSmart(e.target.id === 'input-rows' ? 'rows' : 'cols');
             } else {
