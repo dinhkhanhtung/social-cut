@@ -342,6 +342,43 @@
                         </div>
                     </div>
 
+                    <!-- Collapsible Panel: Export Settings (Cấu hình xuất ảnh) -->
+                    <div class="collapsible-panel" id="panel-export-settings">
+                        <div class="collapsible-header" id="header-export-settings">
+                            <span class="collapsible-title">
+                                <i class="fa-solid fa-download" style="color: #10b981;"></i> Cấu hình xuất ảnh
+                            </span>
+                            <i class="fa-solid fa-chevron-down collapsible-arrow"></i>
+                        </div>
+                        <div class="collapsible-content" id="content-export-settings" style="display: none;">
+                            <!-- Dropdown chọn độ phân giải -->
+                            <div class="control-item" style="margin-bottom: 12px; margin-top: 8px;">
+                                <label for="select-export-resolution" style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    <i class="fa-solid fa-expand" style="margin-right: 4px;"></i>Độ phân giải xuất (Resolution)
+                                </label>
+                                <select id="select-export-resolution" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                    <option value="auto" selected>Tự động (Tối thiểu 1080px)</option>
+                                    <option value="original">Gốc (Không tự động phóng to)</option>
+                                    <option value="2k">Phóng đại 2K (Tối thiểu 2160px)</option>
+                                    <option value="4k">Phóng đại 4K (Tối thiểu 3840px)</option>
+                                </select>
+                            </div>
+
+                            <!-- Dropdown chọn độ sắc nét -->
+                            <div class="control-item" style="margin-bottom: 12px;">
+                                <label for="select-export-sharpness" style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 4px;"></i>Độ sắc nét AI (Sharpening)
+                                </label>
+                                <select id="select-export-sharpness" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.85rem; outline: none; margin-top: 4px;">
+                                    <option value="off" selected>Tắt (Mặc định)</option>
+                                    <option value="light">Nhẹ (Light)</option>
+                                    <option value="medium">Vừa (Medium)</option>
+                                    <option value="strong">Mạnh (Strong)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Action Buttons -->
@@ -731,6 +768,21 @@
             </div>
         </div>
     </div>
+
+    <!-- Hidden SVG for Sharpening Filters -->
+    <svg width="0" height="0" style="position: absolute; width: 0; height: 0;">
+        <defs>
+            <filter id="sharpen-light">
+                <feConvolveMatrix kernelMatrix="0 -0.5 0  -0.5 3 -0.5  0 -0.5 0" preserveAlpha="true"/>
+            </filter>
+            <filter id="sharpen-medium">
+                <feConvolveMatrix kernelMatrix="0 -1 0  -1 5 -1  0 -1 0" preserveAlpha="true"/>
+            </filter>
+            <filter id="sharpen-strong">
+                <feConvolveMatrix kernelMatrix="-1 -1 -1  -1 9 -1  -1 -1 -1" preserveAlpha="true"/>
+            </filter>
+        </defs>
+    </svg>
 
 </body>
 </html>

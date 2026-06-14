@@ -89,6 +89,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputWatermarkImageScale = document.getElementById('input-watermark-image-scale');
     const watermarkImageScaleVal = document.getElementById('watermark-image-scale-val');
 
+    // Export Settings DOM Elements
+    const panelExportSettings = document.getElementById('panel-export-settings');
+    const headerExportSettings = document.getElementById('header-export-settings');
+    const contentExportSettings = document.getElementById('content-export-settings');
+    const selectExportResolution = document.getElementById('select-export-resolution');
+    const selectExportSharpness = document.getElementById('select-export-sharpness');
+
     // Global Watermark Image Object
     let watermarkImageObj = null;
 
@@ -103,6 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let slicingMode = 'grid'; // 'grid' or 'box'
     let gridType = 'even';    // 'even' | 'fb-1d3v' | 'fb-1n3v'
     let gridLineColor = '#06b6d4'; // Màu sắc hiển thị của lưới
+    let exportResolution = 'auto'; // 'auto' | 'original' | '2k' | '4k'
+    let exportSharpness = 'off';    // 'off' | 'light' | 'medium' | 'strong'
     let currentSlideIndex = 0; // Chỉ số slide hiện tại cho Mobile Preview
 
     // --- Mode 1: Grid Mode Variables ---
@@ -270,6 +279,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 panelWatermark.classList.add('expanded');
                 contentWatermark.style.display = 'block';
             }
+        });
+    }
+
+    // --- Export Settings Collapsible & Controls Event Listeners ---
+    if (headerExportSettings && contentExportSettings && panelExportSettings) {
+        headerExportSettings.addEventListener('click', () => {
+            const isExpanded = panelExportSettings.classList.contains('expanded');
+            if (isExpanded) {
+                panelExportSettings.classList.remove('expanded');
+                contentExportSettings.style.display = 'none';
+            } else {
+                panelExportSettings.classList.add('expanded');
+                contentExportSettings.style.display = 'block';
+            }
+        });
+    }
+
+    if (selectExportResolution) {
+        selectExportResolution.addEventListener('change', () => {
+            exportResolution = selectExportResolution.value;
+        });
+    }
+
+    if (selectExportSharpness) {
+        selectExportSharpness.addEventListener('change', () => {
+            exportSharpness = selectExportSharpness.value;
         });
     }
 
@@ -2756,10 +2791,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const width = currentImage.naturalWidth;
         const height = currentImage.naturalHeight;
 
-        // Hàm tính tỷ lệ scale xuất ảnh động
+        // Hàm tính tỷ lệ scale xuất ảnh động dựa theo cấu hình độ phân giải
         const getExportScale = (w) => {
-            // Đảm bảo chiều rộng mỗi slide sau khi cắt tối thiểu đạt 1080px để hiển thị sắc nét trên TikTok/Instagram
-            return w < 1080 ? (1080 / w) : 1.0;
+            if (exportResolution === 'original') {
+                return 1.0;
+            }
+            let targetMinW = 1080;
+            if (exportResolution === '2k') {
+                targetMinW = 2160;
+            } else if (exportResolution === '4k') {
+                targetMinW = 3840;
+            }
+            return w < targetMinW ? (targetMinW / w) : 1.0;
         };
 
         // Bắt đầu từ vị trí tiếp nối (số ảnh kết quả hiện tại)
@@ -3043,10 +3086,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         sliceCtx.clearRect(0, 0, targetW, targetH);
 
+        // Áp dụng bộ lọc làm sắc nét từ SVG nếu được kích hoạt
+        if (exportSharpness !== 'off') {
+            sliceCtx.filter = `url(#sharpen-${exportSharpness})`;
+        } else {
+            sliceCtx.filter = 'none';
+        }
+
         // Vẽ toàn bộ vùng ảnh gốc trong ô lưới (cropW x cropH) lên Canvas con (targetW x targetH)
         // Trình duyệt sẽ tự động co giãn (nội suy phóng to/thu nhỏ) để lấp đầy vừa khít
         // mà hoàn toàn không cắt bớt bất kỳ pixel nào của ảnh gốc trong vùng lưới
         sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+        
+        // Reset filter sau khi vẽ xong ảnh gốc để tránh ảnh hưởng đến Watermark
+        sliceCtx.filter = 'none';
 
         // Vẽ watermark thật nếu được kích hoạt
         const isWatermarkEnabled = switchWatermark && switchWatermark.checked;
@@ -4321,6 +4374,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 cols_x: colsX,
                 rows_y: rowsY,
                 grid_line_color: gridLineColor,
+                export_resolution: exportResolution,
+                export_sharpness: exportSharpness,
                 image_url: publicUrl
             };
 
@@ -4517,6 +4572,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             gridLineColor = proj.grid_line_color || '#06b6d4';
             updateColorPickerUI(gridLineColor);
+            exportResolution = proj.export_resolution || 'auto';
+            exportSharpness = proj.export_sharpness || 'off';
+            if (selectExportResolution) selectExportResolution.value = exportResolution;
+            if (selectExportSharpness) selectExportSharpness.value = exportSharpness;
             if (switchUniform) {
                 switchUniform.checked = proj.switch_uniform;
                 isUniformSize = proj.switch_uniform;
@@ -4651,6 +4710,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     colsX: proj.cols_x,
                     rowsY: proj.rows_y,
                     gridLineColor: proj.grid_line_color || '#06b6d4',
+                    exportResolution: proj.export_resolution || 'auto',
+                    exportSharpness: proj.export_sharpness || 'off',
                     imageBase64: base64Data
                 };
 
@@ -4725,6 +4786,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     cols_x: data.colsX || [],
                     rows_y: data.rowsY || [],
                     grid_line_color: data.gridLineColor || '#06b6d4',
+                    export_resolution: data.exportResolution || 'auto',
+                    export_sharpness: data.exportSharpness || 'off',
                     image_url: publicUrl
                 };
 
