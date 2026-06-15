@@ -3068,22 +3068,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Vẽ 2 nút điều khiển Xác nhận (Check xanh) và Hủy (X đỏ) nằm chính giữa cạnh dưới khung màu vàng/xanh
             const centerX = sx + cropW / 2;
-            const btnRad = 24 / zoomScale; // Tăng bán kính hiển thị nút lên 24px (đường kính 48px chuẩn di động)
-            const btnY = sy + cropH - 35 / zoomScale; // Thụt sâu vào trong 35px
-            const confirmX = centerX + 35 / zoomScale; // Khoảng cách giữa 2 nút rộng ra (70px trên màn hình)
-            const cancelX = centerX - 35 / zoomScale;
+            const btnRad = 24; // Bán kính nút 24px trên ảnh gốc (sẽ phóng to tỷ lệ thuận khi zoom ảnh)
+            const btnY = sy + cropH - 35; // Thụt sâu vào trong 35px
+            const confirmX = centerX + 35;
+            const cancelX = centerX - 35;
 
             ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowBlur = 8 / zoomScale;
+            ctx.shadowBlur = 8;
             ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 4 / zoomScale;
+            ctx.shadowOffsetY = 4;
 
             // Vẽ nút Hủy (Xóa màu đỏ)
             ctx.beginPath();
             ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI);
             ctx.fillStyle = '#ef4444';
             ctx.fill();
-            ctx.lineWidth = 2.5 / zoomScale;
+            ctx.lineWidth = 2.5;
             ctx.strokeStyle = '#ffffff';
             ctx.stroke();
 
@@ -3092,7 +3092,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI);
             ctx.fillStyle = '#10b981';
             ctx.fill();
-            ctx.lineWidth = 2.5 / zoomScale;
+            ctx.lineWidth = 2.5;
             ctx.strokeStyle = '#ffffff';
             ctx.stroke();
 
@@ -3103,24 +3103,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Vẽ dấu '✕' bằng canvas path sắc nét, bo tròn (đồng bộ bộ icon)
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 4.0 / zoomScale;
+            ctx.lineWidth = 4.0;
             ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(cancelX - 7 / zoomScale, btnY - 7 / zoomScale);
-            ctx.lineTo(cancelX + 7 / zoomScale, btnY + 7 / zoomScale);
-            ctx.moveTo(cancelX + 7 / zoomScale, btnY - 7 / zoomScale);
-            ctx.lineTo(cancelX - 7 / zoomScale, btnY + 7 / zoomScale);
+            ctx.moveTo(cancelX - 7, btnY - 7);
+            ctx.lineTo(cancelX + 7, btnY + 7);
+            ctx.moveTo(cancelX + 7, btnY - 7);
+            ctx.lineTo(cancelX - 7, btnY + 7);
             ctx.stroke();
 
             // Vẽ dấu '✓' bằng canvas path sắc nét, bo tròn (đồng bộ bộ icon)
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 4.0 / zoomScale;
+            ctx.lineWidth = 4.0;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.beginPath();
-            ctx.moveTo(confirmX - 8 / zoomScale, btnY);
-            ctx.lineTo(confirmX - 3 / zoomScale, btnY + 7 / zoomScale);
-            ctx.lineTo(confirmX + 8 / zoomScale, btnY - 7 / zoomScale);
+            ctx.moveTo(confirmX - 8, btnY);
+            ctx.lineTo(confirmX - 3, btnY + 7);
+            ctx.lineTo(confirmX + 8, btnY - 7);
             ctx.stroke();
 
             ctx.restore();
@@ -5861,16 +5861,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const { sx, sy, cropW, cropH } = recutTempCoords;
         const centerX = sx + cropW / 2;
-        const btnRad = 24 / zoomScale; // Bán kính nút to 24px (đường kính 48px)
-        const btnY = sy + cropH - 35 / zoomScale; // Thụt sâu vào trong 35px
-        const confirmX = centerX + 35 / zoomScale;
-        const cancelX = centerX - 35 / zoomScale;
+        const btnRad = 24; // Bán kính nút 24px (sẽ phóng to tỷ lệ thuận khi zoom ảnh)
+        const btnY = sy + cropH - 35;
+        const confirmX = centerX + 35;
+        const cancelX = centerX - 35;
 
         const distConfirm = Math.hypot(imgX - confirmX, imgY - btnY);
         const distCancel = Math.hypot(imgX - cancelX, imgY - btnY);
 
-        // Tăng bán kính hitbox (vùng kiểm tra va chạm) lên 32px (đường kính 64px) để chạm cực nhạy trên di động
-        const hitRad = 32 / zoomScale;
+        // Hitbox có bán kính 32px (sẽ tự động phóng to tỷ lệ thuận khi zoom ảnh)
+        const hitRad = 32;
         if (distConfirm <= hitRad) return 'confirm';
         if (distCancel <= hitRad) return 'cancel';
 
