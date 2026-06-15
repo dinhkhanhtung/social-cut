@@ -2152,17 +2152,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const wrapper = document.querySelector('.canvas-wrapper');
                 if (wrapper) {
+                    const rect = previewCanvas.getBoundingClientRect();
                     const wrapperRect = wrapper.getBoundingClientRect();
                     const centerX = currentCenter.x - wrapperRect.left;
                     const centerY = currentCenter.y - wrapperRect.top;
+                    
+                    const mouseX_on_canvas = currentCenter.x - rect.left;
+                    const mouseY_on_canvas = currentCenter.y - rect.top;
                     
                     const zoomRatio = newZoomScale / zoomScale;
                     
                     zoomScale = newZoomScale;
                     updateCanvasDisplaySize();
                     
-                    wrapper.scrollLeft = (wrapper.scrollLeft + centerX) * zoomRatio - centerX;
-                    wrapper.scrollTop = (wrapper.scrollTop + centerY) * zoomRatio - centerY;
+                    const marginX_new = parseInt(previewCanvas.style.marginLeft) || 0;
+                    const marginY_new = parseInt(previewCanvas.style.marginTop) || 0;
+                    
+                    wrapper.scrollLeft = mouseX_on_canvas * zoomRatio - centerX + marginX_new;
+                    wrapper.scrollTop = mouseY_on_canvas * zoomRatio - centerY + marginY_new;
                 }
             }
             
@@ -2207,23 +2214,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!wrapper) return;
 
         const wrapperRect = wrapper.getBoundingClientRect();
+        const rect = previewCanvas.getBoundingClientRect();
+
         const cursorX = e.clientX - wrapperRect.left;
         const cursorY = e.clientY - wrapperRect.top;
+
+        const mouseX_on_canvas = e.clientX - rect.left;
+        const mouseY_on_canvas = e.clientY - rect.top;
 
         const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
         const newZoomScale = Math.max(0.05, Math.min(10.0, zoomScale * zoomFactor));
 
         if (newZoomScale !== zoomScale) {
-            const oldScrollLeft = wrapper.scrollLeft;
-            const oldScrollTop = wrapper.scrollTop;
-
             const zoomRatio = newZoomScale / zoomScale;
 
             zoomScale = newZoomScale;
             updateCanvasDisplaySize();
 
-            wrapper.scrollLeft = (oldScrollLeft + cursorX) * zoomRatio - cursorX;
-            wrapper.scrollTop = (oldScrollTop + cursorY) * zoomRatio - cursorY;
+            // Lấy margin mới đã được thiết lập động
+            const marginX_new = parseInt(previewCanvas.style.marginLeft) || 0;
+            const marginY_new = parseInt(previewCanvas.style.marginTop) || 0;
+
+            wrapper.scrollLeft = mouseX_on_canvas * zoomRatio - cursorX + marginX_new;
+            wrapper.scrollTop = mouseY_on_canvas * zoomRatio - cursorY + marginY_new;
 
             drawLiveGrid();
         }
@@ -2237,22 +2250,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!wrapper) return;
 
         const wrapperRect = wrapper.getBoundingClientRect();
+        const rect = previewCanvas.getBoundingClientRect();
+
         const cursorX = wrapperRect.width / 2;
         const cursorY = wrapperRect.height / 2;
+
+        const clientX = wrapperRect.left + cursorX;
+        const clientY = wrapperRect.top + cursorY;
+
+        const mouseX_on_canvas = clientX - rect.left;
+        const mouseY_on_canvas = clientY - rect.top;
 
         const newZoomScale = Math.max(0.05, Math.min(10.0, zoomScale * factor));
 
         if (newZoomScale !== zoomScale) {
-            const oldScrollLeft = wrapper.scrollLeft;
-            const oldScrollTop = wrapper.scrollTop;
-
             const zoomRatio = newZoomScale / zoomScale;
 
             zoomScale = newZoomScale;
             updateCanvasDisplaySize();
 
-            wrapper.scrollLeft = (oldScrollLeft + cursorX) * zoomRatio - cursorX;
-            wrapper.scrollTop = (oldScrollTop + cursorY) * zoomRatio - cursorY;
+            const marginX_new = parseInt(previewCanvas.style.marginLeft) || 0;
+            const marginY_new = parseInt(previewCanvas.style.marginTop) || 0;
+
+            wrapper.scrollLeft = mouseX_on_canvas * zoomRatio - cursorX + marginX_new;
+            wrapper.scrollTop = mouseY_on_canvas * zoomRatio - cursorY + marginY_new;
 
             drawLiveGrid();
         }
@@ -2692,8 +2713,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const initialHeight = Math.max(200, rect.height - padding);
         const initialWidth = initialHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
 
-        previewCanvas.style.height = (initialHeight * zoomScale) + 'px';
-        previewCanvas.style.width = (initialWidth * zoomScale) + 'px';
+        const canvasW = initialWidth * zoomScale;
+        const canvasH = initialHeight * zoomScale;
+
+        previewCanvas.style.height = canvasH + 'px';
+        previewCanvas.style.width = canvasW + 'px';
+
+        // Tính toán margin động tạo khung nền vô cực (overscroll) khi zoom lớn
+        const wrapperW = rect.width;
+        const wrapperH = rect.height;
+
+        const marginX = canvasW > wrapperW ? Math.floor(wrapperW * 0.5) : 0;
+        const marginY = canvasH > wrapperH ? Math.floor(wrapperH * 0.5) : 0;
+
+        if (canvasW > wrapperW && canvasH > wrapperH) {
+            previewCanvas.style.margin = `${marginY}px ${marginX}px`;
+        } else if (canvasW > wrapperW) {
+            previewCanvas.style.margin = `auto ${marginX}px`;
+        } else if (canvasH > wrapperH) {
+            previewCanvas.style.margin = `${marginY}px auto`;
+        } else {
+            previewCanvas.style.margin = 'auto';
+        }
     }
 
     // --- Draw Live Preview Grid & Selection Boxes ---
