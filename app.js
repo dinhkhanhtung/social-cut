@@ -2832,7 +2832,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Luôn tính toán base size động dựa trên chiều cao hiện tại của wrapper để co giãn mượt mà
-        const padding = 32;
+        const padding = 0;
         baseCanvasHeight = Math.max(200, rect.height - padding);
         baseCanvasWidth = baseCanvasHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
 
