@@ -2226,7 +2226,7 @@ input[type="number"] {
         justify-content: center !important;
     }
     .app-container.mobile-tab-edit #sidebar .control-item {
-        margin-bottom: 6px !important;
+        margin-bottom: 0 !important;
     }
     .app-container.mobile-tab-edit #sidebar .control-item select {
         height: 38px !important;
