@@ -2415,10 +2415,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (e.key === '0') {
             e.preventDefault();
             zoomScale = 1.0;
+            updateCanvasDisplaySize();
             const canvasWrapper = document.querySelector('.canvas-wrapper');
             if (canvasWrapper) {
-                canvasWrapper.scrollLeft = 0;
-                canvasWrapper.scrollTop = 0;
+                const rect = previewCanvas.getBoundingClientRect();
+                canvasWrapper.scrollLeft = rect.width * 0.5;
+                canvasWrapper.scrollTop = rect.height * 0.5;
             }
             drawLiveGrid();
         }
@@ -2563,10 +2565,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 zoomScale = 1.0;
                 panX = 0;
                 panY = 0;
+                updateCanvasDisplaySize();
                 const canvasWrapper = document.querySelector('.canvas-wrapper');
                 if (canvasWrapper) {
-                    canvasWrapper.scrollLeft = 0;
-                    canvasWrapper.scrollTop = 0;
+                    const rect = previewCanvas.getBoundingClientRect();
+                    canvasWrapper.scrollLeft = rect.width * 0.5;
+                    canvasWrapper.scrollTop = rect.height * 0.5;
                 }
                 selectedBoxIdx = -1;
                 
@@ -2719,22 +2723,18 @@ document.addEventListener('DOMContentLoaded', () => {
         previewCanvas.style.height = canvasH + 'px';
         previewCanvas.style.width = canvasW + 'px';
 
-        // Tính toán margin động tạo khung nền vô cực (overscroll) khi zoom lớn
         const wrapperW = rect.width;
         const wrapperH = rect.height;
 
-        const marginX = canvasW > wrapperW ? Math.floor(wrapperW * 0.5) : 0;
-        const marginY = canvasH > wrapperH ? Math.floor(wrapperH * 0.5) : 0;
+        // Luôn sử dụng flex-start để khắc phục lỗi Flexbox overflow scroll
+        canvasWrapper.style.justifyContent = 'flex-start';
+        canvasWrapper.style.alignItems = 'flex-start';
 
-        if (canvasW > wrapperW && canvasH > wrapperH) {
-            previewCanvas.style.margin = `${marginY}px ${marginX}px`;
-        } else if (canvasW > wrapperW) {
-            previewCanvas.style.margin = `auto ${marginX}px`;
-        } else if (canvasH > wrapperH) {
-            previewCanvas.style.margin = `${marginY}px auto`;
-        } else {
-            previewCanvas.style.margin = 'auto';
-        }
+        // Luôn áp dụng margin bằng 50% kích thước wrapper để pan tự do mọi phía
+        const marginX = Math.floor(wrapperW * 0.5);
+        const marginY = Math.floor(wrapperH * 0.5);
+        
+        previewCanvas.style.margin = `${marginY}px ${marginX}px`;
     }
 
     // --- Draw Live Preview Grid & Selection Boxes ---
