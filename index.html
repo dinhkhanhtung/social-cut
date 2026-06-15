@@ -268,7 +268,7 @@
                     </div>
 
                     <!-- Global Settings Wrapper (teleported to settings popup/drawer) -->
-                    <div id="global-settings-wrapper" style="display: none; width: 100%;">
+                    <div id="global-settings-wrapper" style="width: 100%;">
                         <!-- Hàng chứa 2 tiêu đề nằm song song cùng 1 hàng -->
                         <div class="collapsible-panels-row" style="display: flex; flex-direction: row; gap: 8px; margin-bottom: 0; align-items: flex-start; width: 100%;">
                             <!-- Tiêu đề Đóng dấu -->
@@ -467,7 +467,7 @@
                             <div class="auth-popup-header">
                                 <h3><i class="fa-solid fa-circle-user"></i> Tài Khoản Hệ Thống</h3>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <button type="button" class="btn-popup-settings-toggle" id="btn-pc-settings-header" title="Cấu hình & Đóng dấu" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;">
+                                    <button type="button" class="btn-popup-settings-toggle" id="btn-pc-settings-header" title="Cấu hình & Đóng dấu" style="display: none !important; background: transparent; border: none; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; align-items: center; transition: color 0.2s;">
                                         <i class="fa-solid fa-gear"></i>
                                     </button>
                                     <button type="button" class="btn-close-auth-popup" id="btn-close-auth-popup" style="display: flex; align-items: center;">&times;</button>
@@ -483,6 +483,12 @@
                                             <i class="fa-solid fa-user auth-input-icon"></i>
                                             <input type="text" id="pc-username-input" placeholder="Tên đăng nhập" maxlength="30">
                                         </div>
+                                        
+                                        <!-- Nút cấu hình khi chưa đăng nhập -->
+                                        <button type="button" class="btn-auth-settings-wide btn-pc-settings-toggle-btn" title="Cấu hình & Đóng dấu" style="display: none !important;">
+                                            <i class="fa-solid fa-gear"></i> Cấu hình & Đóng dấu
+                                        </button>
+                                        
                                         <div class="auth-input-wrapper">
                                             <i class="fa-solid fa-lock auth-input-icon"></i>
                                             <input type="password" id="pc-password-input" placeholder="Mật khẩu">
@@ -491,11 +497,6 @@
                                             <button type="button" class="btn btn-primary btn-auth-submit" id="btn-pc-auth-submit">Đăng nhập</button>
                                         </div>
                                         
-                                        <!-- Nút cấu hình khi chưa đăng nhập -->
-                                        <button type="button" class="btn-auth-settings-wide btn-pc-settings-toggle-btn" title="Cấu hình & Đóng dấu">
-                                            <i class="fa-solid fa-gear"></i> Cấu hình & Đóng dấu
-                                        </button>
-
                                         <div class="auth-switch-mode">
                                             <span id="pc-auth-switch-text">Chưa có tài khoản?</span> 
                                             <a href="#" id="link-pc-auth-switch">Đăng ký ngay</a>
@@ -509,7 +510,7 @@
                                         </div>
                                         
                                         <!-- Nút cấu hình khi đã đăng nhập -->
-                                        <button type="button" class="btn-auth-settings-wide btn-pc-settings-toggle-btn" title="Cấu hình & Đóng dấu">
+                                        <button type="button" class="btn-auth-settings-wide btn-pc-settings-toggle-btn" title="Cấu hình & Đóng dấu" style="display: none !important;">
                                             <i class="fa-solid fa-gear"></i> Cấu hình & Đóng dấu
                                         </button>
 
@@ -816,6 +817,12 @@
                         <!-- Logged out view -->
                         <div class="auth-logged-out" id="mobile-auth-logged-out">
                             <div class="auth-title" id="mobile-auth-title">Đăng Nhập Hệ Thống</div>
+                            
+                            <!-- Nút cấu hình khi chưa đăng nhập (Mobile) -->
+                            <button type="button" class="btn-auth-settings-wide btn-mobile-settings-toggle-btn" title="Cấu hình & Đóng dấu" style="display: none !important;">
+                                <i class="fa-solid fa-gear"></i> Cấu hình & Đóng dấu
+                            </button>
+                            
                             <div class="auth-input-wrapper">
                                 <i class="fa-solid fa-user auth-input-icon"></i>
                                 <input type="text" id="mobile-username-input" placeholder="Tên đăng nhập" maxlength="30">
@@ -828,10 +835,7 @@
                                 <button type="button" class="btn btn-primary btn-auth-submit" id="btn-mobile-auth-submit">Đăng nhập</button>
                             </div>
                             
-                            <!-- Nút cấu hình khi chưa đăng nhập (Mobile) -->
-                            <button type="button" class="btn-auth-settings-wide btn-mobile-settings-toggle-btn" title="Cấu hình & Đóng dấu">
-                                <i class="fa-solid fa-gear"></i> Cấu hình & Đóng dấu
-                            </button>
+
 
                             <div class="auth-switch-mode">
                                 <span id="mobile-auth-switch-text">Chưa có tài khoản?</span> 
@@ -846,7 +850,7 @@
                             </div>
                             
                             <!-- Nút cấu hình khi đã đăng nhập (Mobile) -->
-                            <button type="button" class="btn-auth-settings-wide btn-mobile-settings-toggle-btn" title="Cấu hình & Đóng dấu">
+                            <button type="button" class="btn-auth-settings-wide btn-mobile-settings-toggle-btn" title="Cấu hình & Đóng dấu" style="display: none !important;">
                                 <i class="fa-solid fa-gear"></i> Cấu hình & Đóng dấu
                             </button>
 

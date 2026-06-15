@@ -6575,7 +6575,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const switchToPcSettings = () => {
         if (globalSettingsWrapper && pcSettingsTeleportZone) {
-            pcSettingsTeleportZone.appendChild(globalSettingsWrapper);
+            // pcSettingsTeleportZone.appendChild(globalSettingsWrapper);
             globalSettingsWrapper.style.display = 'block';
             expandAllSettingsPanels();
         }
@@ -6590,7 +6590,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const switchToMobileSettings = () => {
         if (globalSettingsWrapper && mobileSettingsTeleportZone) {
-            mobileSettingsTeleportZone.appendChild(globalSettingsWrapper);
+            // mobileSettingsTeleportZone.appendChild(globalSettingsWrapper);
             globalSettingsWrapper.style.display = 'block';
             expandAllSettingsPanels();
         }
