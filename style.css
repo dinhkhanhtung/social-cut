@@ -4807,6 +4807,66 @@ input[type="number"] {
     box-shadow: 0 0 10px rgba(6, 182, 212, 0.4) !important;
 }
 
+/* Custom Tooltip Styles */
+.custom-tooltip {
+    position: absolute;
+    z-index: 10000;
+    pointer-events: none;
+    background: rgba(11, 19, 36, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    color: #f3f4f6;
+    font-family: var(--font-sans);
+    font-size: 0.76rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
 
+.custom-tooltip.active {
+    opacity: 1;
+    transform: scale(1);
+}
 
+.tooltip-text {
+    line-height: 1.4;
+}
 
+.tooltip-shortcut-container {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 2px 5px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tooltip-key {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    box-shadow: 0 1.5px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-family: Consolas, Monaco, 'Courier New', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 4px;
+    line-height: 1.2;
+    display: inline-block;
+}
+
+.tooltip-separator {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.65rem;
+    font-weight: 600;
+}

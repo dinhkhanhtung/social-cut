@@ -66,10 +66,10 @@
 
                 <!-- Mode Switcher -->
                 <div class="mode-switch-container">
-                    <button type="button" class="mode-btn active" id="mode-grid" data-mode="grid">
+                    <button type="button" class="mode-btn active" id="mode-grid" data-mode="grid" title="Chế độ cắt theo lưới (Phím 1)">
                         <i class="fa-solid fa-table-cells"></i> Cắt theo lưới
                     </button>
-                    <button type="button" class="mode-btn" id="mode-box" data-mode="box">
+                    <button type="button" class="mode-btn" id="mode-box" data-mode="box" title="Chế độ cắt tự do (Phím 2)">
                         <i class="fa-solid fa-arrow-pointer"></i> Cắt tự do (Vẽ khung)
                     </button>
                 </div>
@@ -136,9 +136,9 @@
                                         <i class="fa-solid fa-arrows-up-down"></i> Số hàng (Rows)
                                     </label>
                                     <div class="input-number-group">
-                                        <button type="button" class="btn-spinner btn-minus" data-target="input-rows"><i class="fa-solid fa-minus"></i></button>
-                                        <input type="number" id="input-rows" min="1" max="20" value="3">
-                                        <button type="button" class="btn-spinner btn-plus" data-target="input-rows"><i class="fa-solid fa-plus"></i></button>
+                                        <button type="button" class="btn-spinner btn-minus" data-target="input-rows" title="Giảm số hàng (Phím S hoặc Mũi tên xuống)"><i class="fa-solid fa-minus"></i></button>
+                                        <input type="number" id="input-rows" min="1" max="20" value="3" title="Số hàng (Phím W / Mũi tên lên để tăng, S / Mũi tên xuống để giảm)">
+                                        <button type="button" class="btn-spinner btn-plus" data-target="input-rows" title="Tăng số hàng (Phím W hoặc Mũi tên lên)"><i class="fa-solid fa-plus"></i></button>
                                     </div>
                                 </div>
                                 <div class="control-item">
@@ -146,9 +146,9 @@
                                         <i class="fa-solid fa-arrows-left-right"></i> Số cột (Columns)
                                     </label>
                                     <div class="input-number-group">
-                                        <button type="button" class="btn-spinner btn-minus" data-target="input-cols"><i class="fa-solid fa-minus"></i></button>
-                                        <input type="number" id="input-cols" min="1" max="20" value="3">
-                                        <button type="button" class="btn-spinner btn-plus" data-target="input-cols"><i class="fa-solid fa-plus"></i></button>
+                                        <button type="button" class="btn-spinner btn-minus" data-target="input-cols" title="Giảm số cột (Phím A hoặc Mũi tên trái)"><i class="fa-solid fa-minus"></i></button>
+                                        <input type="number" id="input-cols" min="1" max="20" value="3" title="Số cột (Phím D / Mũi tên phải để tăng, A / Mũi tên trái để giảm)">
+                                        <button type="button" class="btn-spinner btn-plus" data-target="input-cols" title="Tăng số cột (Phím D hoặc Mũi tên phải)"><i class="fa-solid fa-plus"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -200,9 +200,9 @@
                                 <i class="fa-solid fa-border-none"></i> Xén viền ô
                             </label>
                             <div class="input-number-group">
-                                <button type="button" class="btn-spinner btn-minus" data-target="input-offset-number"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="input-offset-number" min="0" max="50" value="0">
-                                <button type="button" class="btn-spinner btn-plus" data-target="input-offset-number"><i class="fa-solid fa-plus"></i></button>
+                                <button type="button" class="btn-spinner btn-minus" data-target="input-offset-number" title="Giảm xén viền ô (Phím [)"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="input-offset-number" min="0" max="50" value="0" title="Xén viền ô (Phím [ để giảm, ] để tăng)">
+                                <button type="button" class="btn-spinner btn-plus" data-target="input-offset-number" title="Tăng xén viền ô (Phím ])"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <div class="control-item">
@@ -403,7 +403,7 @@
                     <button type="button" id="btn-mobile-toggle-params" class="btn btn-secondary mobile-only-flex" style="display: none;">
                         <i class="fa-solid fa-sliders"></i> Tùy chỉnh thông số
                     </button>
-                    <button id="btn-slice" class="btn btn-primary" disabled>
+                    <button id="btn-slice" class="btn btn-primary" disabled title="Cắt ảnh ngay (Phím C hoặc Enter)">
                         <i class="fa-solid fa-crop-simple"></i> Cắt ảnh ngay
                     </button>
 
@@ -500,7 +500,7 @@
             </section>
 
             <!-- Toggle Sidebar Button -->
-            <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" title="Ẩn thanh cấu hình">
+            <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" title="Ẩn/Hiện thanh cấu hình (Phím Q hoặc B)">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
  
@@ -535,7 +535,7 @@
                         <div class="image-meta-info" id="image-meta" style="display: none;">
                             <span><i class="fa-solid fa-expand"></i> Cỡ: <strong id="img-dim-original">-</strong></span>
                             <span><i class="fa-solid fa-arrows-to-dot"></i> Lưới: <strong id="grid-mode-text">Chia đều</strong></span>
-                            <span><i class="fa-solid fa-magnifying-glass"></i> Zoom: <strong id="zoom-level-text">100%</strong></span>
+                            <span title="Phóng to/thu nhỏ canvas (Phím + / - / 0. Giữ Spacebar + kéo chuột để di chuyển ảnh)"><i class="fa-solid fa-magnifying-glass"></i> Zoom: <strong id="zoom-level-text">100%</strong></span>
                             <span><i class="fa-solid fa-circle-half-stroke"></i> Nền: <strong id="canvas-bg-mode-text" title="Nhấp để chuyển đổi nền Trơn / Caro">Caro</strong></span>
                         </div>
                     </div>
@@ -553,7 +553,7 @@
                                 <button id="btn-mobile-preview" class="btn btn-secondary btn-accent-hover" style="display: none;" title="Xem giả lập Carousel vuốt slide trên điện thoại">
                                     <i class="fa-solid fa-mobile-screen-button"></i> <span>Xem thử</span><span class="desktop-only"> trên điện thoại</span>
                                 </button>
-                                <button id="btn-download-zip" class="btn btn-success" style="display: none;" disabled title="Tải xuống toàn bộ slide dưới dạng ZIP">
+                                <button id="btn-download-zip" class="btn btn-success" style="display: none;" disabled title="Tải xuống toàn bộ slide dưới dạng ZIP (Phím Z)">
                                     <i class="fa-solid fa-file-zipper"></i> <span>Tải ZIP</span><span class="desktop-only"> toàn bộ</span>
                                 </button>
                                 <button id="btn-clear-results" class="btn btn-secondary btn-danger-hover" style="display: none;" title="Xóa toàn bộ slide kết quả">
@@ -678,7 +678,7 @@
             </div>
             
             <!-- Close Button (Bố trí bên dưới mockup, căn giữa đồng bộ với tắt bảng cấu hình) -->
-            <button id="btn-close-mobile-preview" class="mobile-preview-close-btn" title="Đóng xem trước">
+            <button id="btn-close-mobile-preview" class="mobile-preview-close-btn" title="Đóng xem trước (Phím Esc)">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             

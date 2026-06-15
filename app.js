@@ -1668,6 +1668,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Thay đổi con trỏ chuột khi hover qua các handle/cạnh/bên trong khi recut
         if (recutSlideId !== null && recutTempCoords && !dragRecutTarget) {
+            const recutAction = checkRecutButtonInteraction(imgX, imgY);
+            if (recutAction) {
+                previewCanvas.style.cursor = 'pointer';
+                const tooltipText = recutAction === 'confirm' ? 'Xác nhận cắt lại' : 'Hủy cắt lại';
+                const shortcutText = recutAction === 'confirm' ? 'Enter' : 'Esc';
+                showCustomTooltip(tooltipText, shortcutText, e.clientX, e.clientY);
+                return;
+            } else {
+                hideCustomTooltip();
+            }
+
             const action = getRecutInteractionTarget(imgX, imgY, coords.scaleX, coords.scaleY);
             if (action) {
                 if (action === 'tl' || action === 'br') {
@@ -1680,12 +1691,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     previewCanvas.style.cursor = 'ns-resize';
                 } else if (action === 'move') {
                     previewCanvas.style.cursor = 'move';
-                }
-
-                // Kiểm tra xem hover nút Xác nhận / Hủy
-                const recutAction = checkRecutButtonInteraction(imgX, imgY);
-                if (recutAction) {
-                    previewCanvas.style.cursor = 'pointer';
                 }
                 return;
             }
@@ -2001,6 +2006,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPanning = false;
             previewCanvas.style.cursor = spacePressed ? 'grab' : 'default';
         }
+        hideCustomTooltip();
     });
 
     // Biến lưu trạng thái pinch zoom và pan cảm ứng
@@ -6328,8 +6334,175 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
+    // --- Custom Tooltip System ---
+    // ==========================================
+    let customTooltipEl = document.getElementById('custom-tooltip');
+    if (!customTooltipEl) {
+        customTooltipEl = document.createElement('div');
+        customTooltipEl.id = 'custom-tooltip';
+        customTooltipEl.className = 'custom-tooltip';
+        document.body.appendChild(customTooltipEl);
+    }
+
+    const showCustomTooltip = (text, shortcut, x, y, targetEl = null) => {
+        if (window.matchMedia('(max-width: 768px)').matches) return;
+
+        let contentHTML = `<span class="tooltip-text">${text}</span>`;
+        if (shortcut) {
+            let shortcutHTML = '';
+            const keys = shortcut.split(/\s*(?:hoặc|[\/,;])\s*/i);
+            if (keys.length > 0) {
+                shortcutHTML = keys.map(k => `<kbd class="tooltip-key">${k.trim()}</kbd>`).join('<span class="tooltip-separator">/</span>');
+            } else {
+                shortcutHTML = `<kbd class="tooltip-key">${shortcut}</kbd>`;
+            }
+            contentHTML += `<span class="tooltip-shortcut-container">${shortcutHTML}</span>`;
+        }
+
+        customTooltipEl.innerHTML = contentHTML;
+        customTooltipEl.classList.add('active');
+
+        let top, left;
+        if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const tooltipRect = customTooltipEl.getBoundingClientRect();
+            
+            top = rect.top - tooltipRect.height - 8;
+            left = rect.left + (rect.width - tooltipRect.width) / 2;
+
+            if (top < 8) {
+                top = rect.bottom + 8;
+            }
+
+            const minMargin = 8;
+            if (left < minMargin) {
+                left = minMargin;
+            } else if (left + tooltipRect.width > window.innerWidth - minMargin) {
+                left = window.innerWidth - tooltipRect.width - minMargin;
+            }
+            top += window.scrollY;
+            left += window.scrollX;
+        } else {
+            const tooltipRect = customTooltipEl.getBoundingClientRect();
+            top = y - tooltipRect.height - 15 + window.scrollY;
+            left = x - tooltipRect.width / 2 + window.scrollX;
+
+            const minMargin = 8;
+            if (left < minMargin) {
+                left = minMargin;
+            } else if (left + tooltipRect.width > window.innerWidth - minMargin) {
+                left = window.innerWidth - tooltipRect.width - minMargin;
+            }
+            if (top < window.scrollY + 8) {
+                top = y + 15 + window.scrollY;
+            }
+        }
+
+        customTooltipEl.style.top = `${top}px`;
+        customTooltipEl.style.left = `${left}px`;
+    };
+
+    const hideCustomTooltip = () => {
+        if (customTooltipEl) {
+            customTooltipEl.classList.remove('active');
+        }
+    };
+
+    const setupCustomTooltips = () => {
+        document.querySelectorAll('[title]').forEach(el => {
+            const title = el.getAttribute('title');
+            if (!title) return;
+
+            const match = title.match(/^([^(]+)(?:\((?:Phím|giữ)\s*([^)]+)\))?$/i);
+            if (match) {
+                const text = match[1].trim();
+                const shortcut = match[2] ? match[2].trim() : null;
+                el.setAttribute('data-tooltip', text);
+                if (shortcut) {
+                    el.setAttribute('data-shortcut', shortcut);
+                }
+                el.removeAttribute('title');
+            } else {
+                el.setAttribute('data-tooltip', title);
+                el.removeAttribute('title');
+            }
+        });
+    };
+
+    const initCustomTooltips = () => {
+        setupCustomTooltips();
+
+        let showTooltipTimeout = null;
+        let hideTooltipTimeout = null;
+
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('[data-tooltip]');
+            if (!target) return;
+
+            clearTimeout(showTooltipTimeout);
+            clearTimeout(hideTooltipTimeout);
+
+            showTooltipTimeout = setTimeout(() => {
+                const text = target.getAttribute('data-tooltip');
+                const shortcut = target.getAttribute('data-shortcut');
+                showCustomTooltip(text, shortcut, 0, 0, target);
+            }, 150);
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const target = e.target.closest('[data-tooltip]');
+            if (!target) return;
+
+            clearTimeout(showTooltipTimeout);
+            clearTimeout(hideTooltipTimeout);
+
+            hideTooltipTimeout = setTimeout(() => {
+                hideCustomTooltip();
+            }, 80);
+        });
+
+        // MutationObserver để xử lý các phần tử thêm động
+        const tooltipObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) {
+                        if (node.hasAttribute('title')) {
+                            const title = node.getAttribute('title');
+                            const match = title.match(/^([^(]+)(?:\((?:Phím|giữ)\s*([^)]+)\))?$/i);
+                            if (match) {
+                                node.setAttribute('data-tooltip', match[1].trim());
+                                if (match[2]) node.setAttribute('data-shortcut', match[2].trim());
+                            } else {
+                                node.setAttribute('data-tooltip', title);
+                            }
+                            node.removeAttribute('title');
+                        }
+                        node.querySelectorAll('[title]').forEach(el => {
+                            const title = el.getAttribute('title');
+                            const match = title.match(/^([^(]+)(?:\((?:Phím|giữ)\s*([^)]+)\))?$/i);
+                            if (match) {
+                                el.setAttribute('data-tooltip', match[1].trim());
+                                if (match[2]) el.setAttribute('data-shortcut', match[2].trim());
+                            } else {
+                                el.setAttribute('data-tooltip', title);
+                            }
+                            el.removeAttribute('title');
+                        });
+                    }
+                });
+            });
+        });
+
+        tooltipObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    };
+
     // --- Initialize Features ---
     loadHistoryFromDB();
     checkPasswordLock();
     setSlicingMode('grid');
+    initCustomTooltips();
 });
