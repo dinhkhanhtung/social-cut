@@ -2232,7 +2232,9 @@ document.addEventListener('DOMContentLoaded', () => {
             activeEl.tagName === 'SELECT' ||
             (activeEl.tagName === 'INPUT' && ['text', 'password', 'number', 'email', 'search', 'tel', 'url'].includes(activeEl.type))
         );
-        if (isTyping) {
+        // Cho phép phím tắt [ và ] hoạt động kể cả khi đang focus vào ô nhập liệu
+        const isOffsetKey = (e.key === '[' || e.key === ']');
+        if (isTyping && !isOffsetKey) {
             return;
         }
 
