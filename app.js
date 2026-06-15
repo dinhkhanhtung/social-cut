@@ -2182,13 +2182,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Helper to change input grid values (rows/cols) via keyboard
+    // Helper to change input grid values (rows/cols/offset) via keyboard
     const changeGridValue = (inputId, delta) => {
         const input = document.getElementById(inputId);
         if (!input) return;
-        const min = parseInt(input.min) || 1;
-        const max = parseInt(input.max) || 20;
-        let val = parseInt(input.value) || 1;
+        const min = (input.min !== undefined && input.min !== '') ? parseInt(input.min) : 1;
+        const max = (input.max !== undefined && input.max !== '') ? parseInt(input.max) : 20;
+        let val = parseInt(input.value);
+        if (isNaN(val)) val = 0;
         val = Math.max(min, Math.min(max, val + delta));
         input.value = val;
         input.dispatchEvent(new Event('input'));
@@ -2314,6 +2315,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvasWrapper.scrollTop = 0;
             }
             drawLiveGrid();
+        }
+
+        // [ & ] to change offset value (xén viền ô)
+        if (e.key === '[' || e.key === ']') {
+            e.preventDefault();
+            const delta = (e.key === '[') ? -1 : 1;
+            changeGridValue('input-offset-number', delta);
         }
 
         // Grid mode controls (W/S/A/D or Arrows)
