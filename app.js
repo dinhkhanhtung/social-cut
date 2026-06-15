@@ -6030,13 +6030,59 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkPasswordLock() {
         if (!passwordGate) return;
 
+        const securityChecking = document.getElementById('security-checking');
+        const passwordBox = document.getElementById('password-box');
+        const progressFill = document.getElementById('checking-progress-fill');
         const isUnlocked = localStorage.getItem('app_unlocked') === 'true';
-        if (isUnlocked) {
-            passwordGate.style.display = 'none';
-        } else {
-            passwordGate.style.display = 'flex';
-            if (appPasswordInput) appPasswordInput.focus();
+
+        // Đảm bảo ban đầu hiển thị checking, ẩn form nhập mật khẩu
+        if (securityChecking) {
+            securityChecking.style.display = 'flex';
+            securityChecking.style.opacity = '1';
         }
+        if (passwordBox) passwordBox.style.display = 'none';
+        passwordGate.style.display = 'flex';
+        passwordGate.classList.remove('fade-out');
+
+        let progress = 0;
+        const duration = 800; // 0.8 giây
+        const intervalTime = 20;
+        const increment = (100 / (duration / intervalTime));
+
+        const timer = setInterval(() => {
+            progress += increment;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(timer);
+                
+                // Sau khi chạy xong progress bar
+                if (isUnlocked) {
+                    passwordGate.classList.add('fade-out');
+                    setTimeout(() => {
+                        passwordGate.style.display = 'none';
+                    }, 400);
+                } else {
+                    if (securityChecking) {
+                        securityChecking.style.opacity = '0';
+                        setTimeout(() => {
+                            securityChecking.style.display = 'none';
+                            if (passwordBox) {
+                                passwordBox.style.display = 'flex';
+                                passwordBox.style.opacity = '0';
+                                setTimeout(() => {
+                                    passwordBox.style.opacity = '1';
+                                    passwordBox.style.transition = 'opacity 0.3s ease-in-out';
+                                    if (appPasswordInput) appPasswordInput.focus();
+                                }, 50);
+                            }
+                        }, 300);
+                    }
+                }
+            }
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+            }
+        }, intervalTime);
     }
 
     if (btnUnlockApp && appPasswordInput) {

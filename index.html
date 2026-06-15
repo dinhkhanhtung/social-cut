@@ -834,7 +834,23 @@
     <!-- Password Gate Overlay -->
     <div class="password-gate" id="password-gate">
         <div class="password-gate-backdrop"></div>
-        <div class="password-box">
+        
+        <!-- Security checking screen -->
+        <div class="security-checking" id="security-checking">
+            <div class="password-logo">
+                <i class="fa-solid fa-scissors brand-icon"></i>
+                <span class="brand-text">Social <span class="accent-text">Cut</span></span>
+            </div>
+            <p class="checking-desc">
+                <i class="fa-solid fa-shield-halved fa-spin checking-icon"></i> 
+                Đang xác thực bảo mật...
+            </p>
+            <div class="checking-progress-bar">
+                <div class="checking-progress-fill" id="checking-progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="password-box" id="password-box" style="display: none;">
             <div class="password-logo">
                 <i class="fa-solid fa-scissors brand-icon"></i>
                 <span class="brand-text">Social <span class="accent-text">Cut</span></span>
