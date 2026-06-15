@@ -3084,7 +3084,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = '#ef4444';
             ctx.fill();
             ctx.lineWidth = 2.5;
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = gridLineColor;
             ctx.stroke();
 
             // Vẽ nút Xác nhận (Check màu xanh Emerald)
@@ -3093,7 +3093,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = '#10b981';
             ctx.fill();
             ctx.lineWidth = 2.5;
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = gridLineColor;
             ctx.stroke();
 
             // Tắt shadow để vẽ dấu check và dấu x bằng canvas path sắc nét
