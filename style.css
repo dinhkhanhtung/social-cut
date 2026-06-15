@@ -3416,6 +3416,80 @@ input[type="number"] {
     transform: scale(1.05);
 }
 
+/* Grid View for Project History */
+.history-list.grid-view {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)) !important;
+    gap: 10px !important;
+    flex-direction: row !important;
+}
+
+.history-popup-content .history-list.grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
+}
+
+.history-list.grid-view .history-item {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 10px 8px !important;
+    gap: 8px !important;
+    position: relative !important;
+    height: auto !important;
+    min-height: 140px !important;
+    justify-content: space-between !important;
+}
+
+.history-list.grid-view .history-item-checkbox {
+    position: absolute !important;
+    top: 6px !important;
+    left: 6px !important;
+    margin: 0 !important;
+    z-index: 5 !important;
+    width: 14px !important;
+    height: 14px !important;
+    cursor: pointer !important;
+}
+
+.history-list.grid-view .history-thumb {
+    width: 100% !important;
+    height: 65px !important;
+    border-radius: 6px !important;
+    margin-bottom: 2px !important;
+    flex-grow: 0 !important;
+}
+
+.history-list.grid-view .history-info {
+    width: 100% !important;
+    align-items: center !important;
+    flex-grow: 0 !important;
+}
+
+.history-list.grid-view .history-name {
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+}
+
+.history-list.grid-view .history-date {
+    font-size: 0.6rem !important;
+    text-align: center !important;
+}
+
+.history-list.grid-view .history-actions {
+    margin-top: auto !important;
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 6px !important;
+}
+
+.btn-history-action.active-mode {
+    background: var(--accent) !important;
+    color: #000 !important;
+    border-color: var(--accent) !important;
+}
+
 /* --- Password Gate Overlay --- */
 .password-gate {
     position: fixed;

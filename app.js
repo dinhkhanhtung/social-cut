@@ -61,6 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // History & Lock Elements
     const historyList = document.getElementById('history-list');
+    const pcHistoryList = document.getElementById('pc-history-list');
+    const btnMobileHistoryViewToggle = document.getElementById('btn-mobile-history-view-toggle');
+    const btnPcHistoryViewToggle = document.getElementById('btn-pc-history-view-toggle');
+    let historyViewMode = localStorage.getItem('history_view_mode') || 'list';
+
     const passwordGate = document.getElementById('password-gate');
     const btnUnlockApp = document.getElementById('btn-unlock-app');
     const appPasswordInput = document.getElementById('app-password-input');
@@ -5144,6 +5149,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const applyHistoryViewMode = (mode) => {
+        historyViewMode = mode;
+        localStorage.setItem('history_view_mode', mode);
+
+        const listContainers = [historyList, document.getElementById('pc-history-list')];
+        listContainers.forEach(container => {
+            if (container) {
+                if (mode === 'grid') {
+                    container.classList.add('grid-view');
+                } else {
+                    container.classList.remove('grid-view');
+                }
+            }
+        });
+
+        // Cập nhật icon và tooltip cho nút toggle
+        const toggles = [
+            { btn: btnMobileHistoryViewToggle, id: 'btn-mobile-history-view-toggle' },
+            { btn: btnPcHistoryViewToggle, id: 'btn-pc-history-view-toggle' }
+        ];
+
+        toggles.forEach(t => {
+            const btn = t.btn || document.getElementById(t.id);
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    if (mode === 'grid') {
+                        icon.className = 'fa-solid fa-list';
+                        btn.classList.add('active-mode');
+                        btn.setAttribute('data-tooltip', 'Chuyển sang xem dạng Danh sách');
+                    } else {
+                        icon.className = 'fa-solid fa-table-cells-large';
+                        btn.classList.remove('active-mode');
+                        btn.setAttribute('data-tooltip', 'Chuyển sang xem dạng Lưới');
+                    }
+                }
+            }
+        });
+    };
+
+    const initHistoryViewToggle = () => {
+        const toggles = ['btn-mobile-history-view-toggle', 'btn-pc-history-view-toggle'];
+        toggles.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    const newMode = historyViewMode === 'list' ? 'grid' : 'list';
+                    applyHistoryViewMode(newMode);
+                });
+            }
+        });
+    };
+
     async function loadHistoryFromDB() {
         if (!supabase) return;
 
@@ -5322,6 +5381,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderList(pcList, true);
             renderList(mobileList, false);
+
+            applyHistoryViewMode(historyViewMode);
 
         } catch (err) {
             console.error("Lỗi khi load danh sách lịch sử:", err);
@@ -6505,4 +6566,6 @@ document.addEventListener('DOMContentLoaded', () => {
     checkPasswordLock();
     setSlicingMode('grid');
     initCustomTooltips();
+    initHistoryViewToggle();
+    applyHistoryViewMode(historyViewMode);
 });
