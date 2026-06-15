@@ -941,6 +941,15 @@ input[type="number"] {
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
     transition: background-color 0.3s ease, background-image 0.3s ease;
+
+    /* Ẩn scrollbar hiển thị cho Firefox, IE và Edge cũ */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* Ẩn scrollbar hiển thị cho Chrome, Safari, Opera và Edge mới */
+.canvas-wrapper::-webkit-scrollbar {
+    display: none;
 }
 
 .canvas-wrapper.bg-solid {
