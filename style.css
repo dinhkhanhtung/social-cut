@@ -3439,11 +3439,11 @@ input[type="number"] {
     flex-direction: column !important;
     align-items: center !important;
     text-align: center !important;
-    padding: 10px 8px 14px 8px !important;
+    padding: 10px 8px 10px 8px !important;
     gap: 6px !important;
     position: relative !important;
     height: auto !important;
-    min-height: 155px !important;
+    min-height: 146px !important;
     justify-content: space-between !important;
 }
 
@@ -3489,7 +3489,7 @@ input[type="number"] {
     width: 100% !important;
     justify-content: center !important;
     gap: 6px !important;
-    padding-bottom: 2px !important;
+    padding-bottom: 0px !important;
 }
 
 .btn-history-action.active-mode {

@@ -245,8 +245,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Zoom and Pan State ---
     let zoomScale = 1.0;
+    let baseCanvasWidth = 0;
+    let baseCanvasHeight = 0;
     let panX = 0;
     let panY = 0;
+    let startScrollLeft = 0;
+    let startScrollTop = 0;
     let spacePressed = false;
     let isPanning = false;
     let selectedBoxIdx = -1;
@@ -908,6 +912,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (tabId === 'edit') {
             switchTab('tab-live-grid');
+            if (currentImage) {
+                setTimeout(() => {
+                    const canvasWrapper = document.querySelector('.canvas-wrapper');
+                    if (canvasWrapper) {
+                        const _ = canvasWrapper.scrollWidth;
+                        const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
+                        const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
+                        canvasWrapper.scrollLeft = canvasW * 0.5;
+                        canvasWrapper.scrollTop = canvasH * 0.5;
+                    }
+                }, 100);
+            }
         } else if (tabId === 'result') {
             switchTab('tab-result-grid');
         } else if (tabId === 'upload') {
@@ -2154,6 +2170,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 y: (t1.clientY + t2.clientY) / 2
             };
             
+            const wrapper = document.querySelector('.canvas-wrapper');
+            if (wrapper) {
+                startScrollLeft = wrapper.scrollLeft;
+                startScrollTop = wrapper.scrollTop;
+            }
+            
             touchStartPanX = panX;
             touchStartPanY = panY;
         }
@@ -2182,9 +2204,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 y: (t1.clientY + t2.clientY) / 2
             };
             
-            const dx = currentCenter.x - touchStartCenter.x;
-            const dy = currentCenter.y - touchStartCenter.y;
-            
             const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
             if (touchStartDist > 0 && currentDist > 0) {
                 const factor = currentDist / touchStartDist;
@@ -2193,16 +2212,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const wrapper = document.querySelector('.canvas-wrapper');
                 if (wrapper) {
                     const wrapperRect = wrapper.getBoundingClientRect();
-                    const viewX = currentCenter.x - wrapperRect.left;
-                    const viewY = currentCenter.y - wrapperRect.top;
+                    const viewX_start = touchStartCenter.x - wrapperRect.left;
+                    const viewY_start = touchStartCenter.y - wrapperRect.top;
                     
                     const marginX = Math.floor(wrapperRect.width * 0.5);
                     const marginY = Math.floor(wrapperRect.height * 0.5);
                     
-                    const zoomRatio = newZoomScale / zoomScale;
+                    const zoomRatio = newZoomScale / startZoomScale;
                     
-                    const scrollLeft_new = wrapper.scrollLeft * zoomRatio + (viewX - marginX) * (zoomRatio - 1);
-                    const scrollTop_new = wrapper.scrollTop * zoomRatio + (viewY - marginY) * (zoomRatio - 1);
+                    const dx = currentCenter.x - touchStartCenter.x;
+                    const dy = currentCenter.y - touchStartCenter.y;
+                    
+                    const scrollLeft_new = startScrollLeft * zoomRatio + (viewX_start - marginX) * (zoomRatio - 1) - dx;
+                    const scrollTop_new = startScrollTop * zoomRatio + (viewY_start - marginY) * (zoomRatio - 1) - dy;
                     
                     zoomScale = newZoomScale;
                     updateCanvasDisplaySize();
@@ -2214,18 +2236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     wrapper.scrollTop = scrollTop_new;
                 }
             }
-            
-            if (dx !== 0 || dy !== 0) {
-                const wrapper = document.querySelector('.canvas-wrapper');
-                if (wrapper) {
-                    wrapper.scrollLeft -= dx;
-                    wrapper.scrollTop -= dy;
-                }
-            }
-            
-            touchStartCenter = currentCenter;
-            touchStartDist = currentDist;
-            startZoomScale = zoomScale;
             
             drawLiveGrid();
         }
@@ -2614,6 +2624,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Reset zoom & pan for new image
                 zoomScale = 1.0;
+                baseCanvasWidth = 0;
+                baseCanvasHeight = 0;
                 panX = 0;
                 panY = 0;
                 updateCanvasDisplaySize();
@@ -2645,21 +2657,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     setSlicingMode(slicingMode);
                     initHistory(); // Khởi tạo lịch sử cho ảnh mới
                     
-                    // Cuộn wrapper về tâm của canvas sau khi canvas hiển thị và layout hoàn tất
-                    const canvasWrapper = document.querySelector('.canvas-wrapper');
-                    if (canvasWrapper) {
-                        // Ép reflow đồng bộ scroll container bằng cách đọc scrollWidth
-                        const _ = canvasWrapper.scrollWidth;
-                        const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
-                        const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
-                        canvasWrapper.scrollLeft = canvasW * 0.5;
-                        canvasWrapper.scrollTop = canvasH * 0.5;
-                    }
-                    
                     // Hiển thị tab cắt ảnh và tự động chuyển sang tab cắt ảnh trên mobile
                     if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
                     if (mobileNavResult) mobileNavResult.classList.add('disabled');
                     switchMobileTab('edit');
+                    
+                    // Cuộn wrapper về tâm của canvas sau khi tab hiển thị và layout hoàn tất
+                    setTimeout(() => {
+                        const canvasWrapper = document.querySelector('.canvas-wrapper');
+                        if (canvasWrapper) {
+                            // Ép reflow đồng bộ scroll container bằng cách đọc scrollWidth
+                            const _ = canvasWrapper.scrollWidth;
+                            const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
+                            const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
+                            canvasWrapper.scrollLeft = canvasW * 0.5;
+                            canvasWrapper.scrollTop = canvasH * 0.5;
+                        }
+                    }, 100);
                 }, 50);
             };
             img.src = event.target.result;
@@ -2770,13 +2784,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvasWrapper = document.querySelector('.canvas-wrapper');
         if (!canvasWrapper) return;
 
-        const rect = canvasWrapper.getBoundingClientRect();
-        const padding = 32; // 16px top & bottom
-        const initialHeight = Math.max(200, rect.height - padding);
-        const initialWidth = initialHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
+        // Nếu chưa khởi tạo base size, tự động tính toán
+        if (!baseCanvasWidth || !baseCanvasHeight) {
+            const rect = canvasWrapper.getBoundingClientRect();
+            const padding = 32;
+            baseCanvasHeight = Math.max(200, rect.height - padding);
+            baseCanvasWidth = baseCanvasHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
+        }
 
-        const canvasW = initialWidth * zoomScale;
-        const canvasH = initialHeight * zoomScale;
+        const rect = canvasWrapper.getBoundingClientRect();
+
+        const canvasW = baseCanvasWidth * zoomScale;
+        const canvasH = baseCanvasHeight * zoomScale;
 
         previewCanvas.style.height = canvasH + 'px';
         previewCanvas.style.width = canvasW + 'px';
@@ -5696,6 +5715,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.onload = () => {
                     currentImage = img;
                     zoomScale = 1.0;
+                    baseCanvasWidth = 0;
+                    baseCanvasHeight = 0;
                     panX = 0;
                     panY = 0;
                     selectedBoxIdx = -1;
@@ -5717,6 +5738,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     drawLiveGrid();
                     
+                    if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
+                    if (mobileNavResult) mobileNavResult.classList.add('disabled');
+                    switchTab('tab-live-grid');
+                    switchMobileTab('edit');
+
                     // Cuộn wrapper về tâm của canvas sau khi canvas hiển thị và layout hoàn tất
                     setTimeout(() => {
                         const canvasWrapper = document.querySelector('.canvas-wrapper');
@@ -5727,14 +5753,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             canvasWrapper.scrollLeft = canvasW * 0.5;
                             canvasWrapper.scrollTop = canvasH * 0.5;
                         }
-                    }, 50);
+                    }, 100);
 
                     showToast(`Đã nạp dự án: ${proj.name}`, "success");
-
-                    if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
-                    if (mobileNavResult) mobileNavResult.classList.add('disabled');
-                    switchTab('tab-live-grid');
-                    switchMobileTab('edit');
                 };
                 img.src = event.target.result;
             };
