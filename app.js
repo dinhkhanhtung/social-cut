@@ -1654,6 +1654,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Xử lý kéo thả khung crop khi đang recut
         if (recutSlideId !== null && dragRecutTarget) {
+            const orig = dragRecutTarget.originalCoords;
+            const action = dragRecutTarget.action;
+
             let deltaX = imgX - dragRecutTarget.startX;
             let deltaY = imgY - dragRecutTarget.startY;
             if (e.altKey) {
@@ -1661,8 +1664,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 deltaY *= 0.15;
             }
 
-            const orig = dragRecutTarget.originalCoords;
-            const action = dragRecutTarget.action;
+            // Khóa di chuyển thẳng hàng khi giữ Shift
+            if (e.shiftKey && action === 'move') {
+                if (Math.abs(imgX - dragRecutTarget.startX) > Math.abs(imgY - dragRecutTarget.startY)) {
+                    deltaY = 0;
+                } else {
+                    deltaX = 0;
+                }
+            }
 
             let newSx = orig.sx;
             let newSy = orig.sy;
@@ -1884,8 +1893,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 if (dragBoxTarget.actionType === 'move') {
-                    let newX = box.x + deltaX;
-                    let newY = box.y + deltaY;
+                    let deltaX_from_start = imgX - dragBoxTarget.startX;
+                    let deltaY_from_start = imgY - dragBoxTarget.startY;
+                    if (e.altKey) {
+                        deltaX_from_start *= 0.15;
+                        deltaY_from_start *= 0.15;
+                    }
+
+                    let newX = dragBoxTarget.originalBox.x + deltaX_from_start;
+                    let newY = dragBoxTarget.originalBox.y + deltaY_from_start;
+
+                    if (e.shiftKey) {
+                        if (Math.abs(imgX - dragBoxTarget.startX) > Math.abs(imgY - dragBoxTarget.startY)) {
+                            newY = dragBoxTarget.originalBox.y;
+                        } else {
+                            newX = dragBoxTarget.originalBox.x;
+                        }
+                    }
 
                     // Áp dụng Smart Snap (Tạm tắt snap khi nhấn Alt để căn chỉnh chi tiết)
                     const snapped = e.altKey ? { x: newX, y: newY } : applyMoveSnapping(newX, newY, box.w, box.h, dragBoxTarget.boxIndex);
@@ -2135,6 +2159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartPanY = 0;
     let touchStartCenter = { x: 0, y: 0 };
     let isPinching = false;
+    let cachedWrapperRect = null;
 
     // Touch support mapping for main canvas
     previewCanvas.addEventListener('touchstart', (e) => {
@@ -2184,6 +2209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wrapper) {
                 startScrollLeft = wrapper.scrollLeft;
                 startScrollTop = wrapper.scrollTop;
+                cachedWrapperRect = wrapper.getBoundingClientRect(); // Cache rect khi bắt đầu pinch
             }
             
             touchStartPanX = panX;
@@ -2228,7 +2254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const wrapper = document.querySelector('.canvas-wrapper');
                 if (wrapper) {
-                    const wrapperRect = wrapper.getBoundingClientRect();
+                    const wrapperRect = cachedWrapperRect || wrapper.getBoundingClientRect();
                     const viewX_start = touchStartCenter.x - wrapperRect.left;
                     const viewY_start = touchStartCenter.y - wrapperRect.top;
                     
@@ -2244,10 +2270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const scrollTop_new = startScrollTop * zoomRatio + (viewY_start - marginY) * (zoomRatio - 1) - dy;
                     
                     zoomScale = newZoomScale;
-                    updateCanvasDisplaySize();
-                    
-                    // Ép reflow đồng bộ để cập nhật scrollWidth/scrollHeight
-                    const _ = wrapper.scrollWidth;
+                    updateCanvasDisplaySize(wrapperRect);
                     
                     wrapper.scrollLeft = scrollLeft_new;
                     wrapper.scrollTop = scrollTop_new;
@@ -2261,10 +2284,12 @@ document.addEventListener('DOMContentLoaded', () => {
     previewCanvas.addEventListener('touchend', (e) => {
         if (e.touches.length === 0) {
             isPinching = false;
+            cachedWrapperRect = null; // Clear cache
             const mouseEvent = new MouseEvent('mouseup', {});
             window.dispatchEvent(mouseEvent);
         } else if (e.touches.length === 1) {
             isPinching = false;
+            cachedWrapperRect = null; // Clear cache
             const touch = e.touches[0];
             const mouseEvent = new MouseEvent('mousedown', {
                 clientX: touch.clientX,
@@ -2411,7 +2436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             (activeEl.tagName === 'INPUT' && ['text', 'password', 'number', 'email', 'search', 'tel', 'url'].includes(activeEl.type))
         );
         // Cho phép phím tắt [ và ] hoạt động kể cả khi đang focus vào ô nhập liệu
-        const isOffsetKey = (e.key === '[' || e.key === ']');
+        const isOffsetKey = (e.key === '[' || e.code === 'BracketLeft' || e.key === ']' || e.code === 'BracketRight');
         if (isTyping && !isOffsetKey) {
             return;
         }
@@ -2500,9 +2525,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // [ & ] to change offset value (xén viền ô)
-        if (e.key === '[' || e.key === ']') {
+        const isBracketLeft = (e.key === '[' || e.code === 'BracketLeft');
+        const isBracketRight = (e.key === ']' || e.code === 'BracketRight');
+        if (isBracketLeft || isBracketRight) {
             e.preventDefault();
-            const delta = (e.key === '[') ? -1 : 1;
+            const delta = isBracketLeft ? -1 : 1;
             changeGridValue('input-offset-number', delta);
         }
 
@@ -2639,17 +2666,19 @@ document.addEventListener('DOMContentLoaded', () => {
             img.onload = () => {
                 currentImage = img;
                 
+                // Tạm ẩn canvas bằng visibility để không bị nhảy giật trước mắt người dùng
+                previewCanvas.style.visibility = 'hidden';
+                previewCanvas.style.display = 'block';
+                
                 // Reset zoom & pan for new image
                 zoomScale = 1.0;
                 baseCanvasWidth = 0;
                 baseCanvasHeight = 0;
                 panX = 0;
                 panY = 0;
-                updateCanvasDisplaySize();
                 selectedBoxIdx = -1;
                 
                 canvasPlaceholder.style.display = 'none';
-                previewCanvas.style.display = 'block';
                 imageMeta.style.display = 'flex';
                 interactiveTip.style.display = 'flex';
                 imgDimOriginal.textContent = `${img.naturalWidth}×${img.naturalHeight}`;
@@ -2669,19 +2698,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectionBoxes = [];
                 nextBoxId = 1;
                 
+                // Hiển thị tab cắt ảnh và tự động chuyển sang tab cắt ảnh trên mobile ngay lập tức
+                if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
+                if (mobileNavResult) mobileNavResult.classList.add('disabled');
+                switchMobileTab('edit');
+                
+                handleParamsChange();
+                setSlicingMode(slicingMode);
+                initHistory(); // Khởi tạo lịch sử cho ảnh mới
+                
+                // Trì hoãn cực ngắn để trình duyệt cập nhật layout của tab mới
                 setTimeout(() => {
-                    handleParamsChange();
-                    setSlicingMode(slicingMode);
-                    initHistory(); // Khởi tạo lịch sử cho ảnh mới
-                    
-                    // Hiển thị tab cắt ảnh và tự động chuyển sang tab cắt ảnh trên mobile
-                    if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
-                    if (mobileNavResult) mobileNavResult.classList.add('disabled');
-                    switchMobileTab('edit');
-                    
-                    // Cuộn wrapper về tâm của canvas sau khi tab hiển thị và layout hoàn tất
-                    setTimeout(centerCanvas, 150);
-                }, 50);
+                    updateCanvasDisplaySize();
+                    centerCanvas();
+                    drawLiveGrid();
+                    // Hiện canvas lên khi đã ở chính giữa hoàn hảo
+                    previewCanvas.style.visibility = 'visible';
+                }, 30);
             };
             img.src = event.target.result;
         };
@@ -2786,24 +2819,22 @@ document.addEventListener('DOMContentLoaded', () => {
         targetCtx.restore();
     }
 
-    function updateCanvasDisplaySize() {
+    function updateCanvasDisplaySize(cachedRect = null) {
         if (!currentImage || !previewCanvas) return;
         const canvasWrapper = document.querySelector('.canvas-wrapper');
         if (!canvasWrapper) return;
 
-        const rect = canvasWrapper.getBoundingClientRect();
+        const rect = cachedRect || canvasWrapper.getBoundingClientRect();
 
         // Không cho phép tính toán base size nếu wrapper chưa hiển thị (height hoặc width = 0)
         if (rect.height <= 0 || rect.width <= 0) {
             return;
         }
 
-        // Nếu chưa khởi tạo base size, tự động tính toán
-        if (!baseCanvasWidth || !baseCanvasHeight) {
-            const padding = 32;
-            baseCanvasHeight = Math.max(200, rect.height - padding);
-            baseCanvasWidth = baseCanvasHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
-        }
+        // Luôn tính toán base size động dựa trên chiều cao hiện tại của wrapper để co giãn mượt mà
+        const padding = 32;
+        baseCanvasHeight = Math.max(200, rect.height - padding);
+        baseCanvasWidth = baseCanvasHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
 
         const canvasW = baseCanvasWidth * zoomScale;
         const canvasH = baseCanvasHeight * zoomScale;
@@ -2883,10 +2914,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const y1 = boundariesY[r];
                         const y2 = boundariesY[r + 1];
                         
-                        const leftOffset = (c === 0) ? (2 * offset) : offset;
-                        const rightOffset = (c === totalCols - 1) ? (2 * offset) : offset;
-                        const topOffset = (r === 0) ? (2 * offset) : offset;
-                        const bottomOffset = (r === totalRows - 1) ? (2 * offset) : offset;
+                        const leftOffset = offset;
+                        const rightOffset = offset;
+                        const topOffset = offset;
+                        const bottomOffset = offset;
                         
                         cells.push({
                             x1: x1, y1: y1, x2: x2, y2: y2,
@@ -2902,80 +2933,84 @@ document.addEventListener('DOMContentLoaded', () => {
                 const h1 = height * (1/3);
                 const h2 = height * (2/3);
                 
-                const smallCropW = (width - midX) - 3 * offset;
-                const smallCropH = h1 - 3 * offset;
+                const leftCropW = midX - 2 * offset;
+                const leftCropH = height - 2 * offset;
+                const rightCropW = (width - midX) - 2 * offset;
+                const rightCropH = h1 - 2 * offset;
                 
                 // Ô 1 (dọc trái)
                 cells.push({
                     x1: 0, y1: 0, x2: midX, y2: height,
-                    sx: 2 * offset,
-                    sy: 2 * offset,
-                    sw: midX - 3 * offset,
-                    sh: height - 4 * offset
+                    sx: offset,
+                    sy: offset,
+                    sw: leftCropW,
+                    sh: leftCropH
                 });
                 // Ô 2 (nhỏ trên phải)
                 cells.push({
                     x1: midX, y1: 0, x2: width, y2: h1,
                     sx: midX + offset,
-                    sy: 2 * offset,
-                    sw: smallCropW,
-                    sh: smallCropH
+                    sy: offset,
+                    sw: rightCropW,
+                    sh: rightCropH
                 });
-                // Ô 3 (nhỏ giữa phải) - Dịch chuyển thông minh chống méo
+                // Ô 3 (nhỏ giữa phải)
                 cells.push({
                     x1: midX, y1: h1, x2: width, y2: h2,
                     sx: midX + offset,
-                    sy: h1 + offset + Math.floor(offset / 2),
-                    sw: smallCropW,
-                    sh: smallCropH
+                    sy: h1 + offset,
+                    sw: rightCropW,
+                    sh: rightCropH
                 });
                 // Ô 4 (nhỏ dưới phải)
                 cells.push({
                     x1: midX, y1: h2, x2: width, y2: height,
                     sx: midX + offset,
                     sy: h2 + offset,
-                    sw: smallCropW,
-                    sh: smallCropH
+                    sw: rightCropW,
+                    sh: rightCropH
                 });
             } else if (gridType === 'fb-1n3v') {
                 const midY = height * 0.5;
                 const w1 = width * (1/3);
                 const w2 = width * (2/3);
                 
-                const smallCropW = w1 - 3 * offset;
-                const smallCropH = (height - midY) - 3 * offset;
+                const topCropW = width - 2 * offset;
+                const topCropH = midY - 2 * offset;
+                const bottomCropW = w1 - 2 * offset;
+                const bottomCropH = (height - midY) - 2 * offset;
                 
                 // Ô 1 (ngang trên)
                 cells.push({
                     x1: 0, y1: 0, x2: width, y2: midY,
-                    sx: 2 * offset,
-                    sy: 2 * offset,
-                    sw: width - 4 * offset,
-                    sh: midY - 3 * offset
+                    sx: offset,
+                    sy: offset,
+                    sw: topCropW,
+                    sh: topCropH
                 });
                 // Ô 2 (nhỏ trái dưới)
                 cells.push({
                     x1: 0, y1: midY, x2: w1, y2: height,
-                    sx: 2 * offset,
+                    sx: offset,
                     sy: midY + offset,
-                    sw: smallCropW,
-                    sh: smallCropH
+                    sw: bottomCropW,
+                    sh: bottomCropH
                 });
-                // Ô 3 (nhỏ giữa dưới) - Dịch chuyển thông minh chống méo
+                // Ô 3 (nhỏ giữa dưới)
                 cells.push({
                     x1: w1, y1: midY, x2: w2, y2: height,
-                    sx: w1 + offset + Math.floor(offset / 2),
+                    sx: w1 + offset,
                     sy: midY + offset,
-                    sw: smallCropW,
-                    sh: smallCropH
+                    sw: bottomCropW,
+                    sh: bottomCropH
                 });
                 // Ô 4 (nhỏ phải dưới)
                 cells.push({
                     x1: w2, y1: midY, x2: width, y2: height,
                     sx: w2 + offset,
                     sy: midY + offset,
-                    sw: smallCropW,
-                    sh: smallCropH
+                    sw: bottomCropW,
+                    sh: bottomCropH
                 });
             }
 
@@ -3183,10 +3218,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const x2 = boundariesX[c + 1];
                                 const y1 = boundariesY[r];
                                 const y2 = boundariesY[r + 1];
-                                const leftOffset = (c === 0) ? (2 * offset) : offset;
-                                const rightOffset = (c === totalCols - 1) ? (2 * offset) : offset;
-                                const topOffset = (r === 0) ? (2 * offset) : offset;
-                                const bottomOffset = (r === totalRows - 1) ? (2 * offset) : offset;
+                                const leftOffset = offset;
+                                const rightOffset = offset;
+                                const topOffset = offset;
+                                const bottomOffset = offset;
                                 tempCells.push({
                                     sx: x1 + leftOffset,
                                     sy: y1 + topOffset,
@@ -3199,22 +3234,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         const midX = width * 0.5;
                         const h1 = height * (1/3);
                         const h2 = height * (2/3);
-                        const smallCropW = (width - midX) - 3 * offset;
-                        const smallCropH = h1 - 3 * offset;
-                        tempCells.push({ sx: 2 * offset, sy: 2 * offset, sw: midX - 3 * offset, sh: height - 4 * offset });
-                        tempCells.push({ sx: midX + offset, sy: 2 * offset, sw: smallCropW, sh: smallCropH });
-                        tempCells.push({ sx: midX + offset, sy: h1 + offset + Math.floor(offset / 2), sw: smallCropW, sh: smallCropH });
-                        tempCells.push({ sx: midX + offset, sy: h2 + offset, sw: smallCropW, sh: smallCropH });
+                        const leftCropW = midX - 2 * offset;
+                        const leftCropH = height - 2 * offset;
+                        const rightCropW = (width - midX) - 2 * offset;
+                        const rightCropH = h1 - 2 * offset;
+                        tempCells.push({ sx: offset, sy: offset, sw: leftCropW, sh: leftCropH });
+                        tempCells.push({ sx: midX + offset, sy: offset, sw: rightCropW, sh: rightCropH });
+                        tempCells.push({ sx: midX + offset, sy: h1 + offset, sw: rightCropW, sh: rightCropH });
+                        tempCells.push({ sx: midX + offset, sy: h2 + offset, sw: rightCropW, sh: rightCropH });
                     } else if (gridType === 'fb-1n3v') {
                         const midY = height * 0.5;
                         const w1 = width * (1/3);
                         const w2 = width * (2/3);
-                        const smallCropW = w1 - 3 * offset;
-                        const smallCropH = (height - midY) - 3 * offset;
-                        tempCells.push({ sx: 2 * offset, sy: 2 * offset, sw: width - 4 * offset, sh: midY - 3 * offset });
-                        tempCells.push({ sx: 2 * offset, sy: midY + offset, sw: smallCropW, sh: smallCropH });
-                        tempCells.push({ sx: w1 + offset + Math.floor(offset / 2), sy: midY + offset, sw: smallCropW, sh: smallCropH });
-                        tempCells.push({ sx: w2 + offset, sy: midY + offset, sw: smallCropW, sh: smallCropH });
+                        const topCropW = width - 2 * offset;
+                        const topCropH = midY - 2 * offset;
+                        const bottomCropW = w1 - 2 * offset;
+                        const bottomCropH = (height - midY) - 2 * offset;
+                        tempCells.push({ sx: offset, sy: offset, sw: topCropW, sh: topCropH });
+                        tempCells.push({ sx: offset, sy: midY + offset, sw: bottomCropW, sh: bottomCropH });
+                        tempCells.push({ sx: w1 + offset, sy: midY + offset, sw: bottomCropW, sh: bottomCropH });
+                        tempCells.push({ sx: w2 + offset, sy: midY + offset, sw: bottomCropW, sh: bottomCropH });
                     }
                     
                     tempCells.forEach(cell => {
@@ -3706,11 +3745,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const firstCellW = boundariesX[1] - boundariesX[0];
                 const firstCellH = boundariesY[1] - boundariesY[0];
                 
-                // Xén rìa ngoài cùng gấp đôi (2 * offset) để loại bỏ sạch viền trắng mép ngoài
-                const firstLeftOffset = (2 * offset);
-                const firstRightOffset = (cols === 1) ? (2 * offset) : offset;
-                const firstTopOffset = (2 * offset);
-                const firstBottomOffset = (rows === 1) ? (2 * offset) : offset;
+                // Xén đều viền ô ở mọi cạnh một lượng bằng offset
+                const firstLeftOffset = offset;
+                const firstRightOffset = offset;
+                const firstTopOffset = offset;
+                const firstBottomOffset = offset;
 
                 const firstCropW = firstCellW - firstLeftOffset - firstRightOffset;
                 const firstCropH = firstCellH - firstTopOffset - firstBottomOffset;
@@ -3740,11 +3779,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         const cellW = x2 - x1;
                         const cellH = y2 - y1;
 
-                        // Xén rìa ngoài cùng gấp đôi (2 * offset) để loại bỏ sạch viền trắng mép ngoài
-                        const leftOffset = (c === 0) ? (2 * offset) : offset;
-                        const rightOffset = (c === cols - 1) ? (2 * offset) : offset;
-                        const topOffset = (r === 0) ? (2 * offset) : offset;
-                        const bottomOffset = (r === rows - 1) ? (2 * offset) : offset;
+                        // Xén đều viền ô ở mọi cạnh một lượng bằng offset
+                        const leftOffset = offset;
+                        const rightOffset = offset;
+                        const topOffset = offset;
+                        const bottomOffset = offset;
 
                         const sx = x1 + leftOffset;
                         const sy = y1 + topOffset;
@@ -6060,10 +6099,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 y1 = boundariesY[safeR];
                 y2 = boundariesY[safeR + 1];
 
-                const leftOffset = (safeC === 0) ? (2 * offset) : offset;
-                const rightOffset = (safeC === cols - 1) ? (2 * offset) : offset;
-                const topOffset = (safeR === 0) ? (2 * offset) : offset;
-                const bottomOffset = (safeR === rows - 1) ? (2 * offset) : offset;
+                const leftOffset = offset;
+                const rightOffset = offset;
+                const topOffset = offset;
+                const bottomOffset = offset;
 
                 sx = x1 + leftOffset;
                 sy = y1 + topOffset;
@@ -6076,24 +6115,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     const midX = width * 0.5;
                     const h1 = height * (1/3);
                     const h2 = height * (2/3);
-                    const smallCropW = (width - midX) - 3 * offset;
-                    const smallCropH = h1 - 3 * offset;
+                    const leftCropW = midX - 2 * offset;
+                    const leftCropH = height - 2 * offset;
+                    const rightCropW = (width - midX) - 2 * offset;
+                    const rightCropH = h1 - 2 * offset;
 
-                    gridCells.push({ x1: 0, y1: 0, x2: midX, y2: height, sx: 2*offset, sy: 2*offset, cropW: midX - 3*offset, cropH: height - 4*offset });
-                    gridCells.push({ x1: midX, y1: 0, x2: width, y2: h1, sx: midX + offset, sy: 2*offset, cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: midX, y1: h1, x2: width, y2: h2, sx: midX + offset, sy: h1 + offset + Math.floor(offset / 2), cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: midX, y1: h2, x2: width, y2: height, sx: midX + offset, sy: h2 + offset, cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: 0, y1: 0, x2: midX, y2: height, sx: offset, sy: offset, cropW: leftCropW, cropH: leftCropH });
+                    gridCells.push({ x1: midX, y1: 0, x2: width, y2: h1, sx: midX + offset, sy: offset, cropW: rightCropW, cropH: rightCropH });
+                    gridCells.push({ x1: midX, y1: h1, x2: width, y2: h2, sx: midX + offset, sy: h1 + offset, cropW: rightCropW, cropH: rightCropH });
+                    gridCells.push({ x1: midX, y1: h2, x2: width, y2: height, sx: midX + offset, sy: h2 + offset, cropW: rightCropW, cropH: rightCropH });
                 } else if (type === 'fb-1n3v') {
                     const midY = height * 0.5;
                     const w1 = width * (1/3);
                     const w2 = width * (2/3);
-                    const smallCropW = w1 - 3 * offset;
-                    const smallCropH = (height - midY) - 3 * offset;
+                    const topCropW = width - 2 * offset;
+                    const topCropH = midY - 2 * offset;
+                    const bottomCropW = w1 - 2 * offset;
+                    const bottomCropH = (height - midY) - 2 * offset;
 
-                    gridCells.push({ x1: 0, y1: 0, x2: width, y2: midY, sx: 2*offset, sy: 2*offset, cropW: width - 4*offset, cropH: midY - 3*offset });
-                    gridCells.push({ x1: 0, y1: midY, x2: w1, y2: height, sx: 2*offset, sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: w1, y1: midY, x2: w2, y2: height, sx: w1 + offset + Math.floor(offset / 2), sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
-                    gridCells.push({ x1: w2, y1: midY, x2: width, y2: height, sx: w2 + offset, sy: midY + offset, cropW: smallCropW, cropH: smallCropH });
+                    gridCells.push({ x1: 0, y1: 0, x2: width, y2: midY, sx: offset, sy: offset, cropW: topCropW, cropH: topCropH });
+                    gridCells.push({ x1: 0, y1: midY, x2: w1, y2: height, sx: offset, sy: midY + offset, cropW: bottomCropW, cropH: bottomCropH });
+                    gridCells.push({ x1: w1, y1: midY, x2: w2, y2: height, sx: w1 + offset, sy: midY + offset, cropW: bottomCropW, cropH: bottomCropH });
+                    gridCells.push({ x1: w2, y1: midY, x2: width, y2: height, sx: w2 + offset, sy: midY + offset, cropW: bottomCropW, cropH: bottomCropH });
                 }
 
                 const cell = gridCells[recutItem.meta.cellIndex];
@@ -7281,6 +7324,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     regenerateSlicedImagesMimeType();
                 }
             });
+        }
+        // Tự động cập nhật kích thước canvas và căn giữa khi wrapper thay đổi kích thước (ví dụ resize màn hình hoặc toggle sidebar)
+        const wrapperEl = document.querySelector('.canvas-wrapper');
+        if (wrapperEl) {
+            const resizeObserver = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (currentImage) {
+                        updateCanvasDisplaySize();
+                        centerCanvas();
+                        drawLiveGrid();
+                    }
+                }
+            });
+            resizeObserver.observe(wrapperEl);
         }
     };
 
