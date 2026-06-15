@@ -170,23 +170,6 @@
                         </div>
                     </div>
 
-                    <!-- Social Templates Selector -->
-                    <div class="control-item" style="margin-bottom: 12px;">
-                        <label for="select-social-template">
-                            <i class="fa-solid fa-share-nodes" style="color: #3b82f6;"></i> Template MXH (Mẫu gợi ý)
-                        </label>
-                        <select id="select-social-template" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.8rem; outline: none; margin-top: 4px;">
-                            <option value="none" selected>-- Tùy chỉnh (Không áp dụng) --</option>
-                            <option value="insta-square">Instagram Carousel (1:1 Vuông)</option>
-                            <option value="insta-portrait">Instagram Carousel (4:5 Dọc)</option>
-                            <option value="linkedin-square">LinkedIn Carousel (1:1 Vuông)</option>
-                            <option value="linkedin-portrait">LinkedIn Carousel (4:5 Dọc)</option>
-                            <option value="fb-profile-cover">Facebook Profile Cover (851x315)</option>
-                            <option value="fb-page-cover">Facebook Page Cover (820x312)</option>
-                            <option value="fb-group-cover">Facebook Group Cover (1640x856)</option>
-                        </select>
-                    </div>
-
                     <!-- Grid Layout & Ratio selectors in one row -->
                     <div class="control-group-grid grid-ratio-group" style="margin-bottom: 12px;">
                         <div class="control-item" id="grid-type-control-item">
@@ -194,9 +177,22 @@
                                 <i class="fa-solid fa-table-cells" style="color: #06b6d4;"></i> Bố cục lưới
                             </label>
                             <select id="select-grid-type">
-                                <option value="even" selected>Chia đều</option>
-                                <option value="fb-1d3v">FB: 1 Dọc + 3 Phải</option>
-                                <option value="fb-1n3v">FB: 1 Ngang + 3 Dưới</option>
+                                <optgroup label="Bố cục cơ bản">
+                                    <option value="even" selected>Chia đều</option>
+                                </optgroup>
+                                <optgroup label="Facebook Collage (Lưới ghép)">
+                                    <option value="fb-1d3v">FB: 1 Dọc + 3 Phải</option>
+                                    <option value="fb-1n3v">FB: 1 Ngang + 3 Dưới</option>
+                                </optgroup>
+                                <optgroup label="Template Facebook Cover">
+                                    <option value="fb-profile-cover">FB: Ảnh bìa cá nhân (851x315)</option>
+                                    <option value="fb-page-cover">FB: Ảnh bìa Trang (820x312)</option>
+                                    <option value="fb-group-cover">FB: Ảnh bìa Nhóm (1640x856)</option>
+                                </optgroup>
+                                <optgroup label="Template Instagram / LinkedIn">
+                                    <option value="insta-square">IG/LI Carousel: Vuông 1:1</option>
+                                    <option value="insta-portrait">IG/LI Carousel: Dọc 4:5</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div class="control-item" id="ratio-control-item">

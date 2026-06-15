@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const containerExportQuality = document.getElementById('container-export-quality');
     const inputExportQuality = document.getElementById('input-export-quality');
     const exportQualityVal = document.getElementById('export-quality-val');
-    const selectSocialTemplate = document.getElementById('select-social-template');
+
 
     // Global Watermark Image Object
     let watermarkImageObj = null;
@@ -143,15 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputOffset) inputOffset.disabled = isRecutting;
         if (selectRatio) selectRatio.disabled = isRecutting;
         if (selectGridType) selectGridType.disabled = isRecutting;
-        if (selectSocialTemplate) selectSocialTemplate.disabled = isRecutting;
         
         // Block thông số lưới
         const gridEvenParams = document.getElementById('grid-even-parameters');
         const gridTypeControl = document.getElementById('grid-type-control-item');
         const ratioControl = document.getElementById('ratio-control-item');
-        const socialTemplateControl = selectSocialTemplate ? selectSocialTemplate.closest('.control-item') : null;
         
-        [gridEvenParams, gridTypeControl, ratioControl, socialTemplateControl].forEach(el => {
+        [gridEvenParams, gridTypeControl, ratioControl].forEach(el => {
             if (el) {
                 if (isRecutting) el.classList.add('disabled-controls');
                 else el.classList.remove('disabled-controls');
@@ -730,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     modeGridBtn.addEventListener('click', () => {
-        resetSocialTemplateDropdown();
+        resetToEvenGridType();
         setSlicingMode('grid');
         if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
             document.getElementById('sidebar').classList.add('active-params');
@@ -743,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     modeBoxBtn.addEventListener('click', () => {
-        resetSocialTemplateDropdown();
+        resetToEvenGridType();
         setSlicingMode('box');
         if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
             document.getElementById('sidebar').classList.add('active-params');
@@ -757,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Constraints Controls Listeners ---
     selectRatio.addEventListener('change', () => {
-        resetSocialTemplateDropdown();
+        resetToEvenGridType();
         const val = selectRatio.value;
         if (val === 'free') {
             lockedRatio = null;
@@ -1171,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const handleManualInputChange = (e) => {
-        resetSocialTemplateDropdown();
+        resetToEvenGridType();
         handleParamsChange(e);
     };
     inputRows.addEventListener('input', handleManualInputChange);
@@ -1212,17 +1210,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (selectGridType) {
         selectGridType.addEventListener('change', () => {
-            resetSocialTemplateDropdown();
-            gridType = selectGridType.value;
-            
-            if (gridType === 'even') {
-                if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
-                resetGridToEven();
+            const val = selectGridType.value;
+            if (val === 'fb-profile-cover' || val === 'fb-page-cover' || val === 'fb-group-cover' || val === 'insta-square' || val === 'insta-portrait') {
+                if (!currentImage) {
+                    showToast("Vui lòng tải ảnh lên trước khi áp dụng template!", "warning");
+                    selectGridType.value = 'even';
+                    gridType = 'even';
+                    if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
+                    resetGridToEven();
+                    handleParamsChange();
+                    return;
+                }
+                applySocialTemplate(val);
             } else {
-                if (gridEvenParameters) gridEvenParameters.style.display = 'none';
+                gridType = val;
+                if (gridType === 'even') {
+                    if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
+                    resetGridToEven();
+                } else {
+                    if (gridEvenParameters) gridEvenParameters.style.display = 'none';
+                }
+                handleParamsChange();
             }
-            
-            handleParamsChange();
         });
     }
 
@@ -1991,7 +2000,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (slicingMode === 'grid') {
             const target = findNearestGridLine(e.clientX, e.clientY);
             if (target) {
-                resetSocialTemplateDropdown();
+                resetToEvenGridType();
                 dragTarget = target;
             } else {
                 isPanning = true;
@@ -2004,7 +2013,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Chế độ bình thường (không recut hoặc đã được chặn xử lý recut ở trên)
             if (interaction) {
-                resetSocialTemplateDropdown();
+                resetToEvenGridType();
                 selectedBoxIdx = interaction.boxIndex;
                 if (interaction.actionType === 'delete') {
                     selectionBoxes.splice(interaction.boxIndex, 1);
@@ -2028,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawLiveGrid(); // Redraw to show yellow highlight border
                 }
             } else {
-                    resetSocialTemplateDropdown();
+                    resetToEvenGridType();
                     selectedBoxIdx = -1;
                     isDrawingNewBox = true;
                     newBoxStart = { x: imgX, y: imgY };
@@ -2516,22 +2525,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') {
                 e.preventDefault();
-                resetSocialTemplateDropdown();
+                resetToEvenGridType();
                 box.y = Math.max(0, box.y - step);
                 handleParamsChange();
             } else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') {
                 e.preventDefault();
-                resetSocialTemplateDropdown();
+                resetToEvenGridType();
                 box.y = Math.min(currentImage.naturalHeight - box.h, box.y + step);
                 handleParamsChange();
             } else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
                 e.preventDefault();
-                resetSocialTemplateDropdown();
+                resetToEvenGridType();
                 box.x = Math.max(0, box.x - step);
                 handleParamsChange();
             } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
                 e.preventDefault();
-                resetSocialTemplateDropdown();
+                resetToEvenGridType();
                 box.x = Math.min(currentImage.naturalWidth - box.w, box.x + step);
                 handleParamsChange();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -2816,7 +2825,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (slicingMode === 'grid') {
             // Định nghĩa các ô cắt có chứa sẵn tọa độ xén sx, sy, sw, sh
             let cells = [];
-            if (gridType === 'even') {
+            if (gridType === 'even' || gridType === 'insta-square' || gridType === 'insta-portrait') {
                 const boundariesX = [0, ...colsX, width];
                 const boundariesY = [0, ...rowsY, height];
                 const totalCols = boundariesX.length - 1;
@@ -2949,7 +2958,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.lineWidth = Math.max(2, Math.floor(width / 600));
             ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
             
-            if (gridType === 'even') {
+            if (gridType === 'even' || gridType === 'insta-square' || gridType === 'insta-portrait') {
                 colsX.forEach(x => {
                     ctx.beginPath();
                     ctx.moveTo(x, 0);
@@ -3118,7 +3127,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (slicingMode === 'grid') {
                     let tempCells = [];
-                    if (gridType === 'even') {
+                    if (gridType === 'even' || gridType === 'insta-square' || gridType === 'insta-portrait') {
                         const boundariesX = [0, ...colsX, width];
                         const boundariesY = [0, ...rowsY, height];
                         const totalCols = boundariesX.length - 1;
@@ -3564,7 +3573,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnGenBoxes.addEventListener('click', () => {
         if (!currentImage) return;
-        resetSocialTemplateDropdown();
+        resetToEvenGridType();
 
         const rows = parseInt(inputRows.value) || 1;
         const cols = parseInt(inputCols.value) || 1;
@@ -3595,7 +3604,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnClearBoxes.addEventListener('click', () => {
-        resetSocialTemplateDropdown();
+        resetToEvenGridType();
         selectionBoxes = [];
         nextBoxId = 1;
         gridModeText.textContent = `Tự do (0 khung)`;
@@ -3639,7 +3648,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ext = exportFormat === 'png' ? 'png' : (exportFormat === 'jpeg' ? 'jpg' : 'webp');
 
         if (slicingMode === 'grid') {
-            if (gridType === 'even') {
+            if (gridType === 'even' || gridType === 'insta-square' || gridType === 'insta-portrait') {
                 if (!isCustomGrid) {
                     resetGridToEven(); // Đảm bảo colsX và rowsY luôn được chia đều chính xác theo giá trị mới nhất trong input
                 }
@@ -5662,7 +5671,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (gridEvenParameters) {
-                gridEvenParameters.style.display = (gridType === 'even') ? 'flex' : 'none';
+                gridEvenParameters.style.display = (gridType === 'even' || gridType === 'insta-square' || gridType === 'insta-portrait') ? 'flex' : 'none';
             }
 
             fileName.textContent = proj.name;
@@ -5706,7 +5715,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnGenBoxes.disabled = (slicingMode !== 'box');
                     btnClearBoxes.disabled = (slicingMode !== 'box');
 
-                    if (colsX.length === 0 && rowsY.length === 0 && slicingMode === 'grid' && gridType === 'even') {
+                    if (colsX.length === 0 && rowsY.length === 0 && slicingMode === 'grid' && (gridType === 'even' || gridType === 'insta-square' || gridType === 'insta-portrait')) {
                         resetGridToEven();
                     }
 
@@ -5978,7 +5987,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let x1, y1, x2, y2, sx, sy, cropW, cropH;
 
         if (recutItem.meta.slicingMode === 'grid') {
-            if (recutItem.meta.gridType === 'even') {
+            if (recutItem.meta.gridType === 'even' || recutItem.meta.gridType === 'insta-square' || recutItem.meta.gridType === 'insta-portrait') {
                 const r = recutItem.meta.row;
                 const c = recutItem.meta.col;
                 const rows = parseInt(inputRows.value) || 1;
@@ -6770,8 +6779,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isUniformSize: isUniformSize,
             gridType: gridType,
             selectRatioValue: selectRatio ? selectRatio.value : 'free',
-            selectGridTypeValue: selectGridType ? selectGridType.value : 'even',
-            selectSocialTemplateValue: selectSocialTemplate ? selectSocialTemplate.value : 'none'
+            selectGridTypeValue: selectGridType ? selectGridType.value : 'even'
         };
     }
 
@@ -6794,12 +6802,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputRows) inputRows.value = state.rows;
         if (selectRatio) selectRatio.value = state.selectRatioValue;
         if (selectGridType) selectGridType.value = state.selectGridTypeValue;
-        if (selectSocialTemplate) selectSocialTemplate.value = state.selectSocialTemplateValue;
         
         setSlicingMode(slicingMode);
         
         if (slicingMode === 'grid') {
-            if (gridType === 'even') {
+            if (gridType === 'even' || gridType === 'insta-square' || gridType === 'insta-portrait') {
                 if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
             } else {
                 if (gridEvenParameters) gridEvenParameters.style.display = 'none';
@@ -6834,7 +6841,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (s1.gridType !== s2.gridType) return false;
         if (s1.selectRatioValue !== s2.selectRatioValue) return false;
         if (s1.selectGridTypeValue !== s2.selectGridTypeValue) return false;
-        if (s1.selectSocialTemplateValue !== s2.selectSocialTemplateValue) return false;
         
         if (s1.colsX.length !== s2.colsX.length) return false;
         for (let i = 0; i < s1.colsX.length; i++) {
@@ -6917,12 +6923,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset selection boxes trước khi áp dụng
         selectionBoxes = [];
         
+        if (selectGridType) selectGridType.value = template;
+        gridType = template;
+        
         switch (template) {
             case 'insta-square':
-            case 'linkedin-square':
                 setSlicingMode('grid');
-                gridType = 'even';
-                if (selectGridType) selectGridType.value = 'even';
                 if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
                 
                 lockedRatio = 1.0;
@@ -6940,10 +6946,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
                 
             case 'insta-portrait':
-            case 'linkedin-portrait':
                 setSlicingMode('grid');
-                gridType = 'even';
-                if (selectGridType) selectGridType.value = 'even';
                 if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
                 
                 lockedRatio = 4 / 5;
@@ -7057,9 +7060,17 @@ document.addEventListener('DOMContentLoaded', () => {
         handleParamsChange();
     }
 
-    function resetSocialTemplateDropdown() {
-        if (selectSocialTemplate) {
-            selectSocialTemplate.value = 'none';
+    function resetToEvenGridType() {
+        if (selectGridType) {
+            const val = selectGridType.value;
+            if (val === 'insta-square' || val === 'insta-portrait' || 
+                val === 'fb-profile-cover' || val === 'fb-page-cover' || val === 'fb-group-cover') {
+                selectGridType.value = 'even';
+                gridType = 'even';
+                if (gridEvenParameters) {
+                    gridEvenParameters.style.display = (slicingMode === 'grid') ? 'grid' : 'none';
+                }
+            }
         }
     }
 
@@ -7185,20 +7196,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Init new UI Event Listeners ---
     const initNewFeaturesListeners = () => {
-        // Event listener chọn template mạng xã hội
-        if (selectSocialTemplate) {
-            selectSocialTemplate.addEventListener('change', () => {
-                const val = selectSocialTemplate.value;
-                if (val !== 'none') {
-                    if (!currentImage) {
-                        showToast("Vui lòng tải ảnh lên trước khi áp dụng template!", "warning");
-                        selectSocialTemplate.value = 'none';
-                        return;
-                    }
-                    applySocialTemplate(val);
-                }
-            });
-        }
 
         // Event listener chọn định dạng xuất
         if (selectExportFormat) {
