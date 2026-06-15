@@ -2615,12 +2615,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 panX = 0;
                 panY = 0;
                 updateCanvasDisplaySize();
-                const canvasWrapper = document.querySelector('.canvas-wrapper');
-                if (canvasWrapper) {
-                    const rect = previewCanvas.getBoundingClientRect();
-                    canvasWrapper.scrollLeft = rect.width * 0.5;
-                    canvasWrapper.scrollTop = rect.height * 0.5;
-                }
                 selectedBoxIdx = -1;
                 
                 canvasPlaceholder.style.display = 'none';
@@ -2648,6 +2642,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     handleParamsChange();
                     setSlicingMode(slicingMode);
                     initHistory(); // Khởi tạo lịch sử cho ảnh mới
+                    
+                    // Cuộn wrapper về tâm của canvas sau khi canvas hiển thị và layout hoàn tất
+                    const canvasWrapper = document.querySelector('.canvas-wrapper');
+                    if (canvasWrapper) {
+                        const rect = previewCanvas.getBoundingClientRect();
+                        canvasWrapper.scrollLeft = rect.width * 0.5;
+                        canvasWrapper.scrollTop = rect.height * 0.5;
+                    }
+                    
                     // Hiển thị tab cắt ảnh và tự động chuyển sang tab cắt ảnh trên mobile
                     if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
                     if (mobileNavResult) mobileNavResult.classList.add('disabled');
@@ -4784,6 +4787,12 @@ document.addEventListener('DOMContentLoaded', () => {
         imageMeta.style.display = 'none';
         interactiveTip.style.display = 'none';
         canvasPlaceholder.style.display = 'flex';
+        
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        if (canvasWrapper) {
+            canvasWrapper.style.justifyContent = '';
+            canvasWrapper.style.alignItems = '';
+        }
         
         switchTab('tab-live-grid');
         setSlicingMode('grid');
