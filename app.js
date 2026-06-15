@@ -3912,12 +3912,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const extSpan = document.createElement('span');
-        extSpan.classList.add('result-item-ext');
-        extSpan.textContent = '.png';
-
         nameContainer.appendChild(nameInput);
-        nameContainer.appendChild(extSpan);
         resultItem.appendChild(nameContainer);
 
         const btnDl = document.createElement('button');
