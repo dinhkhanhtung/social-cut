@@ -2074,8 +2074,6 @@ input[type="number"] {
         height: 100% !important;
         overflow: auto !important;
         display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
     }
 
     /* Mặc định thu gọn, để sidebar giãn theo nội dung (auto) */

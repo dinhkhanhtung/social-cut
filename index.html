@@ -170,6 +170,23 @@
                         </div>
                     </div>
 
+                    <!-- Social Templates Selector -->
+                    <div class="control-item" style="margin-bottom: 12px;">
+                        <label for="select-social-template">
+                            <i class="fa-solid fa-share-nodes" style="color: #3b82f6;"></i> Template MXH (Mẫu gợi ý)
+                        </label>
+                        <select id="select-social-template" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.8rem; outline: none; margin-top: 4px;">
+                            <option value="none" selected>-- Tùy chỉnh (Không áp dụng) --</option>
+                            <option value="insta-square">Instagram Carousel (1:1 Vuông)</option>
+                            <option value="insta-portrait">Instagram Carousel (4:5 Dọc)</option>
+                            <option value="linkedin-square">LinkedIn Carousel (1:1 Vuông)</option>
+                            <option value="linkedin-portrait">LinkedIn Carousel (4:5 Dọc)</option>
+                            <option value="fb-profile-cover">Facebook Profile Cover (851x315)</option>
+                            <option value="fb-page-cover">Facebook Page Cover (820x312)</option>
+                            <option value="fb-group-cover">Facebook Group Cover (1640x856)</option>
+                        </select>
+                    </div>
+
                     <!-- Grid Layout & Ratio selectors in one row -->
                     <div class="control-group-grid grid-ratio-group" style="margin-bottom: 12px;">
                         <div class="control-item" id="grid-type-control-item">
@@ -381,6 +398,28 @@
                                             <option value="2k">Phóng đại 2K (Tối thiểu 2160px)</option>
                                             <option value="4k">Phóng đại 4K (Tối thiểu 3840px)</option>
                                         </select>
+                                    </div>
+
+                                    <!-- Dropdown chọn định dạng xuất -->
+                                    <div class="control-item" style="margin-bottom: 12px;">
+                                        <label for="select-export-format" style="font-size: 0.78rem; color: var(--text-secondary);">
+                                            <i class="fa-solid fa-file-image" style="margin-right: 4px;"></i>Định dạng ảnh xuất
+                                        </label>
+                                        <select id="select-export-format" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-family: inherit; font-size: 0.8rem; outline: none; margin-top: 4px;">
+                                            <option value="png" selected>PNG (Không mất mát chất lượng)</option>
+                                            <option value="jpeg">JPEG (Nén dung lượng tốt)</option>
+                                            <option value="webp">WebP (Siêu nhẹ - Khuyên dùng)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Thanh trượt chọn chất lượng (Chỉ cho JPEG và WebP) -->
+                                    <div class="control-item" id="container-export-quality" style="margin-bottom: 12px; display: none;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <label for="input-export-quality" style="font-size: 0.78rem; color: var(--text-secondary);">
+                                                <i class="fa-solid fa-sliders" style="margin-right: 4px;"></i>Chất lượng ảnh: <span id="export-quality-val">90%</span>
+                                            </label>
+                                        </div>
+                                        <input type="range" id="input-export-quality" min="10" max="100" value="90" style="width: 100%; margin-top: 6px; cursor: pointer; accent-color: var(--primary-color);">
                                     </div>
 
                                     <!-- Dropdown chọn độ sắc nét -->

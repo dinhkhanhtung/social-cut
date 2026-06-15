@@ -100,6 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentExportSettings = document.getElementById('content-export-settings');
     const selectExportResolution = document.getElementById('select-export-resolution');
     const selectExportSharpness = document.getElementById('select-export-sharpness');
+    const selectExportFormat = document.getElementById('select-export-format');
+    const containerExportQuality = document.getElementById('container-export-quality');
+    const inputExportQuality = document.getElementById('input-export-quality');
+    const exportQualityVal = document.getElementById('export-quality-val');
+    const selectSocialTemplate = document.getElementById('select-social-template');
 
     // Global Watermark Image Object
     let watermarkImageObj = null;
@@ -113,6 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let slicedBlobs = [];  // Array of { name, blob }
     let recutSlideId = null; // ID of the slice being recut (single edit mode)
     let recutBoxId = null; // ID of the box being recut
+    
+    // Export format and quality configuration
+    let exportFormat = 'png'; // 'png' | 'jpeg' | 'webp'
+    let exportQuality = 0.9;  // 0.1 - 1.0
     
     // --- Helper to toggle Sidebar Controls when Recutting ---
     const updateSidebarControlsState = () => {
@@ -134,13 +143,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputOffset) inputOffset.disabled = isRecutting;
         if (selectRatio) selectRatio.disabled = isRecutting;
         if (selectGridType) selectGridType.disabled = isRecutting;
+        if (selectSocialTemplate) selectSocialTemplate.disabled = isRecutting;
         
         // Block thông số lưới
         const gridEvenParams = document.getElementById('grid-even-parameters');
         const gridTypeControl = document.getElementById('grid-type-control-item');
         const ratioControl = document.getElementById('ratio-control-item');
+        const socialTemplateControl = selectSocialTemplate ? selectSocialTemplate.closest('.control-item') : null;
         
-        [gridEvenParams, gridTypeControl, ratioControl].forEach(el => {
+        [gridEvenParams, gridTypeControl, ratioControl, socialTemplateControl].forEach(el => {
             if (el) {
                 if (isRecutting) el.classList.add('disabled-controls');
                 else el.classList.remove('disabled-controls');
@@ -246,6 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Precision drag variables (Alt key slowdown)
     let lastDragMouseX = 0;
     let lastDragMouseY = 0;
+
+    // --- Undo/Redo State ---
+    let historyStack = [];
+    let historyPointer = -1;
+    let isApplyingHistoryState = false;
+    let saveStateTimeout = null;
 
     // Constants
     const dragTolerancePx = 14; // Screen pixels tolerance to grab a grid line
@@ -713,6 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     modeGridBtn.addEventListener('click', () => {
+        resetSocialTemplateDropdown();
         setSlicingMode('grid');
         if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
             document.getElementById('sidebar').classList.add('active-params');
@@ -725,6 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     modeBoxBtn.addEventListener('click', () => {
+        resetSocialTemplateDropdown();
         setSlicingMode('box');
         if (window.innerWidth <= 768 && document.getElementById('sidebar')) {
             document.getElementById('sidebar').classList.add('active-params');
@@ -738,6 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Constraints Controls Listeners ---
     selectRatio.addEventListener('change', () => {
+        resetSocialTemplateDropdown();
         const val = selectRatio.value;
         if (val === 'free') {
             lockedRatio = null;
@@ -1145,11 +1165,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentImage) {
             drawLiveGrid();
         }
+        if (!isApplyingHistoryState) {
+            saveHistoryStateDebounced();
+        }
     };
 
-    inputRows.addEventListener('input', handleParamsChange);
-    inputCols.addEventListener('input', handleParamsChange);
-    inputOffset.addEventListener('input', handleParamsChange);
+    const handleManualInputChange = (e) => {
+        resetSocialTemplateDropdown();
+        handleParamsChange(e);
+    };
+    inputRows.addEventListener('input', handleManualInputChange);
+    inputCols.addEventListener('input', handleManualInputChange);
+    inputOffset.addEventListener('input', handleManualInputChange);
 
     // --- Canvas Background Toggle (Caro / Trơn) ---
     const canvasBgModeText = document.getElementById('canvas-bg-mode-text');
@@ -1185,6 +1212,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (selectGridType) {
         selectGridType.addEventListener('change', () => {
+            resetSocialTemplateDropdown();
             gridType = selectGridType.value;
             
             if (gridType === 'even') {
@@ -1963,6 +1991,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (slicingMode === 'grid') {
             const target = findNearestGridLine(e.clientX, e.clientY);
             if (target) {
+                resetSocialTemplateDropdown();
                 dragTarget = target;
             } else {
                 isPanning = true;
@@ -1975,6 +2004,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Chế độ bình thường (không recut hoặc đã được chặn xử lý recut ở trên)
             if (interaction) {
+                resetSocialTemplateDropdown();
                 selectedBoxIdx = interaction.boxIndex;
                 if (interaction.actionType === 'delete') {
                     selectionBoxes.splice(interaction.boxIndex, 1);
@@ -1998,6 +2028,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     drawLiveGrid(); // Redraw to show yellow highlight border
                 }
             } else {
+                    resetSocialTemplateDropdown();
                     selectedBoxIdx = -1;
                     isDrawingNewBox = true;
                     newBoxStart = { x: imgX, y: imgY };
@@ -2306,6 +2337,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Ctrl + Z để Undo
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            undo();
+            return;
+        }
+
+        // Ctrl + Y để Redo
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            redo();
+            return;
+        }
+
         // Xử lý phím tắt cho Modal xem thử điện thoại (Mobile Preview)
         if (mobilePreviewModal && mobilePreviewModal.style.display === 'flex') {
             if (e.key === 'Escape') {
@@ -2471,20 +2516,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') {
                 e.preventDefault();
+                resetSocialTemplateDropdown();
                 box.y = Math.max(0, box.y - step);
-                drawLiveGrid();
+                handleParamsChange();
             } else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') {
                 e.preventDefault();
+                resetSocialTemplateDropdown();
                 box.y = Math.min(currentImage.naturalHeight - box.h, box.y + step);
-                drawLiveGrid();
+                handleParamsChange();
             } else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
                 e.preventDefault();
+                resetSocialTemplateDropdown();
                 box.x = Math.max(0, box.x - step);
-                drawLiveGrid();
+                handleParamsChange();
             } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
                 e.preventDefault();
+                resetSocialTemplateDropdown();
                 box.x = Math.min(currentImage.naturalWidth - box.w, box.x + step);
-                drawLiveGrid();
+                handleParamsChange();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
                 selectionBoxes.splice(selectedBoxIdx, 1);
@@ -2598,6 +2647,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     handleParamsChange();
                     setSlicingMode(slicingMode);
+                    initHistory(); // Khởi tạo lịch sử cho ảnh mới
                     // Hiển thị tab cắt ảnh và tự động chuyển sang tab cắt ảnh trên mobile
                     if (mobileNavEdit) mobileNavEdit.classList.remove('disabled');
                     if (mobileNavResult) mobileNavResult.classList.add('disabled');
@@ -3511,6 +3561,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnGenBoxes.addEventListener('click', () => {
         if (!currentImage) return;
+        resetSocialTemplateDropdown();
 
         const rows = parseInt(inputRows.value) || 1;
         const cols = parseInt(inputCols.value) || 1;
@@ -3541,6 +3592,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnClearBoxes.addEventListener('click', () => {
+        resetSocialTemplateDropdown();
         selectionBoxes = [];
         nextBoxId = 1;
         gridModeText.textContent = `Tự do (0 khung)`;
@@ -3581,6 +3633,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnDownloadZip) btnDownloadZip.style.display = 'inline-flex';
 
         let targetW, targetH;
+        const ext = exportFormat === 'png' ? 'png' : (exportFormat === 'jpeg' ? 'jpg' : 'webp');
 
         if (slicingMode === 'grid') {
             if (gridType === 'even') {
@@ -3647,7 +3700,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         const resultId = resultIdCounter++;
-                        const sliceName = `slide_${startIndex + count}.png`;
+                        const sliceName = `slide_${startIndex + count}.${ext}`;
                         const meta = {
                             slicingMode: 'grid',
                             gridType: 'even',
@@ -3775,7 +3828,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cropH = cell.cropH;
 
                     const resultId = resultIdCounter++;
-                    const sliceName = `slide_${startIndex + idx + 1}.png`;
+                    const sliceName = `slide_${startIndex + idx + 1}.${ext}`;
                     
                     const tW = cell.isLarge ? targetW_large : targetW_small;
                     const tH = cell.isLarge ? targetH_large : targetH_small;
@@ -3827,7 +3880,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const resultId = resultIdCounter++;
-                const sliceName = `slide_${startIndex + idx + 1}.png`;
+                const sliceName = `slide_${startIndex + idx + 1}.${ext}`;
                 const meta = {
                     slicingMode: 'box',
                     boxId: box.id,
@@ -3921,8 +3974,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const dataUrl = sliceCanvas.toDataURL('image/png');
-        slicedImages.push({ id: resultId, name: sliceName, dataUrl: dataUrl, meta: meta });
+        const mimeType = exportFormat === 'png' ? 'image/png' : (exportFormat === 'jpeg' ? 'image/jpeg' : 'image/webp');
+        const quality = exportFormat === 'png' ? undefined : exportQuality;
+        const dataUrl = sliceCanvas.toDataURL(mimeType, quality);
+        slicedImages.push({ 
+            id: resultId, 
+            name: sliceName, 
+            dataUrl: dataUrl, 
+            meta: meta,
+            sliceParams: { sx, sy, cropW, cropH, targetW, targetH }
+        });
 
         const isFacebookMode = (gridType === 'fb-1d3v' || gridType === 'fb-1n3v');
 
@@ -4011,7 +4072,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.classList.add('result-item-name-input');
-        const baseName = sliceName.replace('.png', '');
+        const baseName = sliceName.replace(/\.[^/.]+$/, "");
         nameInput.value = baseName;
         nameInput.title = "Nhấp chuột hoặc nhấn Enter để đổi tên";
         
@@ -4021,7 +4082,8 @@ document.addEventListener('DOMContentLoaded', () => {
         nameInput.addEventListener('blur', () => {
             resultItem.setAttribute('draggable', 'true');
             const newBaseName = nameInput.value.trim().replace(/[\\/:*?"<>|]/g, '');
-            const newFullName = newBaseName ? `${newBaseName}.png` : sliceName;
+            const ext = exportFormat === 'png' ? 'png' : (exportFormat === 'jpeg' ? 'jpg' : 'webp');
+            const newFullName = newBaseName ? `${newBaseName}.${ext}` : sliceName;
             nameInput.value = newBaseName || baseName;
             
             const imgObj = slicedImages.find(item => item.id === resultId);
@@ -4169,7 +4231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (slicedBlobs.length === slicedImages.length) {
                 btnDownloadZip.disabled = false;
             }
-        }, 'image/png');
+        }, mimeType, quality);
     }
 
     // --- Drag & Drop for Result Items ---
@@ -6132,8 +6194,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const dataUrl = sliceCanvas.toDataURL('image/png');
+        const mimeType = exportFormat === 'png' ? 'image/png' : (exportFormat === 'jpeg' ? 'image/jpeg' : 'image/webp');
+        const quality = exportFormat === 'png' ? undefined : exportQuality;
+        const dataUrl = sliceCanvas.toDataURL(mimeType, quality);
         recutItem.dataUrl = dataUrl;
+
+        // Cập nhật tọa độ sliceParams mới cho slide cắt lại
+        recutItem.sliceParams = { sx, sy, cropW, cropH, targetW, targetH };
+        
+        // Đồng bộ phần đuôi mở rộng của file slide theo định dạng hiện tại
+        const ext = exportFormat === 'png' ? 'png' : (exportFormat === 'jpeg' ? 'jpg' : 'webp');
+        recutItem.name = recutItem.name.replace(/\.[^/.]+$/, "") + "." + ext;
 
         // Lưu tọa độ cắt mới tùy theo chế độ
         if (recutItem.meta.slicingMode === 'grid') {
@@ -6173,10 +6244,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const blobObj = slicedBlobs.find(item => item.id === recutItem.id);
             if (blobObj) {
                 blobObj.blob = blob;
+                blobObj.name = recutItem.name;
             } else {
                 slicedBlobs.push({ id: recutItem.id, name: recutItem.name, blob: blob });
             }
-        }, 'image/png');
+        }, mimeType, quality);
 
         showToast("Đã cắt lại slide thành công!", "success");
 
@@ -6674,6 +6746,487 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // --- Undo/Redo Logic ---
+    function getHistoryState() {
+        return {
+            slicingMode: slicingMode,
+            cols: parseInt(inputCols ? inputCols.value : 3) || 1,
+            rows: parseInt(inputRows ? inputRows.value : 3) || 1,
+            colsX: JSON.parse(JSON.stringify(colsX)),
+            rowsY: JSON.parse(JSON.stringify(rowsY)),
+            isCustomGrid: isCustomGrid,
+            selectionBoxes: JSON.parse(JSON.stringify(selectionBoxes)),
+            nextBoxId: nextBoxId,
+            lockedRatio: lockedRatio,
+            isUniformSize: isUniformSize,
+            gridType: gridType,
+            selectRatioValue: selectRatio ? selectRatio.value : 'free',
+            selectGridTypeValue: selectGridType ? selectGridType.value : 'even',
+            selectSocialTemplateValue: selectSocialTemplate ? selectSocialTemplate.value : 'none'
+        };
+    }
+
+    function applyHistoryState(state) {
+        if (!state) return;
+        
+        isApplyingHistoryState = true;
+        
+        slicingMode = state.slicingMode;
+        colsX = JSON.parse(JSON.stringify(state.colsX));
+        rowsY = JSON.parse(JSON.stringify(state.rowsY));
+        isCustomGrid = state.isCustomGrid;
+        selectionBoxes = JSON.parse(JSON.stringify(state.selectionBoxes));
+        nextBoxId = state.nextBoxId;
+        lockedRatio = state.lockedRatio;
+        isUniformSize = state.isUniformSize;
+        gridType = state.gridType;
+        
+        if (inputCols) inputCols.value = state.cols;
+        if (inputRows) inputRows.value = state.rows;
+        if (selectRatio) selectRatio.value = state.selectRatioValue;
+        if (selectGridType) selectGridType.value = state.selectGridTypeValue;
+        if (selectSocialTemplate) selectSocialTemplate.value = state.selectSocialTemplateValue;
+        
+        setSlicingMode(slicingMode);
+        
+        if (slicingMode === 'grid') {
+            if (gridType === 'even') {
+                if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
+            } else {
+                if (gridEvenParameters) gridEvenParameters.style.display = 'none';
+            }
+        }
+        
+        if (switchUniform) switchUniform.checked = isUniformSize;
+        if (switchSnap) switchSnap.checked = isSnapEnabled;
+        
+        if (gridModeText) {
+            if (slicingMode === 'box') {
+                gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
+            } else {
+                gridModeText.textContent = "Chế độ lưới";
+            }
+        }
+        
+        handleParamsChange();
+        
+        isApplyingHistoryState = false;
+    }
+
+    function areStatesEqual(s1, s2) {
+        if (!s1 || !s2) return false;
+        if (s1.slicingMode !== s2.slicingMode) return false;
+        if (s1.cols !== s2.cols) return false;
+        if (s1.rows !== s2.rows) return false;
+        if (s1.isCustomGrid !== s2.isCustomGrid) return false;
+        if (s1.nextBoxId !== s2.nextBoxId) return false;
+        if (s1.lockedRatio !== s2.lockedRatio) return false;
+        if (s1.isUniformSize !== s2.isUniformSize) return false;
+        if (s1.gridType !== s2.gridType) return false;
+        if (s1.selectRatioValue !== s2.selectRatioValue) return false;
+        if (s1.selectGridTypeValue !== s2.selectGridTypeValue) return false;
+        if (s1.selectSocialTemplateValue !== s2.selectSocialTemplateValue) return false;
+        
+        if (s1.colsX.length !== s2.colsX.length) return false;
+        for (let i = 0; i < s1.colsX.length; i++) {
+            if (Math.abs(s1.colsX[i] - s2.colsX[i]) > 0.1) return false;
+        }
+        
+        if (s1.rowsY.length !== s2.rowsY.length) return false;
+        for (let i = 0; i < s1.rowsY.length; i++) {
+            if (Math.abs(s1.rowsY[i] - s2.rowsY[i]) > 0.1) return false;
+        }
+        
+        if (s1.selectionBoxes.length !== s2.selectionBoxes.length) return false;
+        for (let i = 0; i < s1.selectionBoxes.length; i++) {
+            const b1 = s1.selectionBoxes[i];
+            const b2 = s2.selectionBoxes[i];
+            if (b1.id !== b2.id || b1.x !== b2.x || b1.y !== b2.y || b1.w !== b2.w || b1.h !== b2.h) return false;
+        }
+        
+        return true;
+    }
+
+    function initHistory() {
+        historyStack = [];
+        historyPointer = -1;
+        saveHistoryState();
+    }
+
+    function saveHistoryState() {
+        if (!currentImage) return;
+        
+        if (historyPointer < historyStack.length - 1) {
+            historyStack = historyStack.slice(0, historyPointer + 1);
+        }
+        
+        const state = getHistoryState();
+        if (historyPointer >= 0 && areStatesEqual(historyStack[historyPointer], state)) {
+            return;
+        }
+        
+        historyStack.push(state);
+        historyPointer++;
+        
+        if (historyStack.length > 50) {
+            historyStack.shift();
+            historyPointer--;
+        }
+    }
+
+    function saveHistoryStateDebounced() {
+        if (saveStateTimeout) clearTimeout(saveStateTimeout);
+        saveStateTimeout = setTimeout(() => {
+            saveHistoryState();
+        }, 300);
+    }
+
+    function undo() {
+        if (historyPointer > 0) {
+            historyPointer--;
+            applyHistoryState(historyStack[historyPointer]);
+            showToast("Đã hoàn tác (Undo)", "info");
+        } else {
+            showToast("Không thể hoàn tác thêm", "warning");
+        }
+    }
+
+    function redo() {
+        if (historyPointer < historyStack.length - 1) {
+            historyPointer++;
+            applyHistoryState(historyStack[historyPointer]);
+            showToast("Đã làm lại (Redo)", "info");
+        } else {
+            showToast("Không thể làm lại thêm", "warning");
+        }
+    }
+
+    // --- Social Templates Logic ---
+    function applySocialTemplate(template) {
+        if (!currentImage) return;
+        
+        // Reset selection boxes trước khi áp dụng
+        selectionBoxes = [];
+        
+        switch (template) {
+            case 'insta-square':
+            case 'linkedin-square':
+                setSlicingMode('grid');
+                gridType = 'even';
+                if (selectGridType) selectGridType.value = 'even';
+                if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
+                
+                lockedRatio = 1.0;
+                if (selectRatio) selectRatio.value = '1:1';
+                
+                // Tự động tính số cột (cols) tối ưu dựa trên chiều rộng/cao ảnh
+                {
+                    const imgW = currentImage.naturalWidth;
+                    const imgH = currentImage.naturalHeight;
+                    const cols = Math.max(1, Math.round(imgW / imgH));
+                    if (inputCols) inputCols.value = cols;
+                    if (inputRows) inputRows.value = 1;
+                }
+                resetGridToEven();
+                break;
+                
+            case 'insta-portrait':
+            case 'linkedin-portrait':
+                setSlicingMode('grid');
+                gridType = 'even';
+                if (selectGridType) selectGridType.value = 'even';
+                if (gridEvenParameters) gridEvenParameters.style.display = 'grid';
+                
+                lockedRatio = 4 / 5;
+                if (selectRatio) selectRatio.value = '4:5';
+                
+                // Tự động tính số cột
+                {
+                    const imgW = currentImage.naturalWidth;
+                    const imgH = currentImage.naturalHeight;
+                    const cols = Math.max(1, Math.round(imgW / (imgH * 4 / 5)));
+                    if (inputCols) inputCols.value = cols;
+                    if (inputRows) inputRows.value = 1;
+                }
+                resetGridToEven();
+                break;
+                
+            case 'fb-profile-cover': // 851x315
+                setSlicingMode('box');
+                lockedRatio = 851 / 315;
+                if (selectRatio) selectRatio.value = 'free';
+                
+                {
+                    const imgW = currentImage.naturalWidth;
+                    const imgH = currentImage.naturalHeight;
+                    let boxW = imgW * 0.8;
+                    let boxH = boxW / lockedRatio;
+                    
+                    if (boxH > imgH) {
+                        boxH = imgH * 0.8;
+                        boxW = boxH * lockedRatio;
+                    }
+                    
+                    const boxX = (imgW - boxW) / 2;
+                    const boxY = (imgH - boxH) / 2;
+                    
+                    selectionBoxes.push({
+                        id: nextBoxId++,
+                        x: Math.round(boxX),
+                        y: Math.round(boxY),
+                        w: Math.round(boxW),
+                        h: Math.round(boxH)
+                    });
+                    selectedBoxIdx = 0;
+                    if (gridModeText) gridModeText.textContent = `Tự do (1 khung)`;
+                }
+                break;
+                
+            case 'fb-page-cover': // 820x312
+                setSlicingMode('box');
+                lockedRatio = 820 / 312;
+                if (selectRatio) selectRatio.value = 'free';
+                
+                {
+                    const imgW = currentImage.naturalWidth;
+                    const imgH = currentImage.naturalHeight;
+                    let boxW = imgW * 0.8;
+                    let boxH = boxW / lockedRatio;
+                    
+                    if (boxH > imgH) {
+                        boxH = imgH * 0.8;
+                        boxW = boxH * lockedRatio;
+                    }
+                    
+                    const boxX = (imgW - boxW) / 2;
+                    const boxY = (imgH - boxH) / 2;
+                    
+                    selectionBoxes.push({
+                        id: nextBoxId++,
+                        x: Math.round(boxX),
+                        y: Math.round(boxY),
+                        w: Math.round(boxW),
+                        h: Math.round(boxH)
+                    });
+                    selectedBoxIdx = 0;
+                    if (gridModeText) gridModeText.textContent = `Tự do (1 khung)`;
+                }
+                break;
+                
+            case 'fb-group-cover': // 1640x856
+                setSlicingMode('box');
+                lockedRatio = 1640 / 856;
+                if (selectRatio) selectRatio.value = 'free';
+                
+                {
+                    const imgW = currentImage.naturalWidth;
+                    const imgH = currentImage.naturalHeight;
+                    let boxW = imgW * 0.8;
+                    let boxH = boxW / lockedRatio;
+                    
+                    if (boxH > imgH) {
+                        boxH = imgH * 0.8;
+                        boxW = boxH * lockedRatio;
+                    }
+                    
+                    const boxX = (imgW - boxW) / 2;
+                    const boxY = (imgH - boxH) / 2;
+                    
+                    selectionBoxes.push({
+                        id: nextBoxId++,
+                        x: Math.round(boxX),
+                        y: Math.round(boxY),
+                        w: Math.round(boxW),
+                        h: Math.round(boxH)
+                    });
+                    selectedBoxIdx = 0;
+                    if (gridModeText) gridModeText.textContent = `Tự do (1 khung)`;
+                }
+                break;
+        }
+        
+        handleParamsChange();
+    }
+
+    function resetSocialTemplateDropdown() {
+        if (selectSocialTemplate) {
+            selectSocialTemplate.value = 'none';
+        }
+    }
+
+    // --- WebP Regenerate Logic ---
+    function regenerateSlicedImagesMimeType() {
+        if (slicedImages.length === 0) return;
+
+        const mimeType = exportFormat === 'png' ? 'image/png' : (exportFormat === 'jpeg' ? 'image/jpeg' : 'image/webp');
+        const ext = exportFormat === 'png' ? 'png' : (exportFormat === 'jpeg' ? 'jpg' : 'webp');
+        const quality = exportFormat === 'png' ? undefined : exportQuality;
+
+        // Vô hiệu hóa nút download ZIP trong lúc tạo lại blob
+        if (btnDownloadZip) btnDownloadZip.disabled = true;
+
+        let completedCount = 0;
+
+        slicedImages.forEach(item => {
+            if (!item.sliceParams) return;
+
+            const { sx, sy, cropW, cropH, targetW, targetH } = item.sliceParams;
+            
+            const sliceCanvas = document.createElement('canvas');
+            const sliceCtx = sliceCanvas.getContext('2d');
+            sliceCanvas.width = targetW;
+            sliceCanvas.height = targetH;
+            
+            if (targetW === cropW && targetH === cropH) {
+                sliceCtx.imageSmoothingEnabled = false;
+            } else {
+                sliceCtx.imageSmoothingEnabled = true;
+                sliceCtx.imageSmoothingQuality = 'high';
+            }
+            sliceCtx.clearRect(0, 0, targetW, targetH);
+
+            if (exportSharpness !== 'off') {
+                sliceCtx.filter = `url(#sharpen-${exportSharpness})`;
+            } else {
+                sliceCtx.filter = 'none';
+            }
+
+            sliceCtx.drawImage(currentImage, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+            sliceCtx.filter = 'none';
+
+            // Vẽ watermark
+            const isWatermarkEnabled = switchWatermark && switchWatermark.checked;
+            if (isWatermarkEnabled) {
+                const type = selectWatermarkType ? selectWatermarkType.value : 'text';
+                const position = selectWatermarkPosition ? selectWatermarkPosition.value : 'bottom-right';
+                const opacity = parseInt(inputWatermarkOpacity ? inputWatermarkOpacity.value : 50) || 50;
+                const size = parseInt(inputWatermarkSize ? inputWatermarkSize.value : 24) || 24;
+                const text = inputWatermarkText ? inputWatermarkText.value.trim() : '';
+                const scalePercent = parseInt(inputWatermarkImageScale ? inputWatermarkImageScale.value : 20) || 20;
+
+                if ((type === 'text' && text) || (type === 'image' && watermarkImageObj)) {
+                    const scaleFactor = targetW / cropW;
+                    const actualFontSize = Math.max(12, Math.round(size * scaleFactor));
+                    
+                    const cellConf = {
+                        type: type,
+                        text: text,
+                        fontSize: actualFontSize,
+                        imageObj: watermarkImageObj,
+                        scalePercent: scalePercent,
+                        cellX: 0,
+                        cellY: 0,
+                        cellW: targetW,
+                        cellH: targetH
+                    };
+                    drawWatermarkOnCtx(sliceCtx, position, opacity, cellConf);
+                }
+            }
+
+            // Sinh data URL mới
+            const newDataUrl = sliceCanvas.toDataURL(mimeType, quality);
+            item.dataUrl = newDataUrl;
+            
+            // Cập nhật tên file (ví dụ slide_1.png -> slide_1.webp)
+            item.name = item.name.replace(/\.[^/.]+$/, "") + "." + ext;
+
+            // Cập nhật UI hiển thị
+            const resultItem = resultGrid.querySelector(`.result-item[data-id="${item.id}"]`);
+            if (resultItem) {
+                const imgEl = resultItem.querySelector('.result-img');
+                if (imgEl) imgEl.src = newDataUrl;
+
+                // Cập nhật tên hiển thị nếu có
+                const nameInput = resultItem.querySelector('.result-item-name-input');
+                if (nameInput) {
+                    nameInput.value = item.name.replace(/\.[^/.]+$/, "");
+                }
+
+                // Cập nhật nút tải đơn lẻ
+                const btnDl = resultItem.querySelector('.result-item-btn-dl');
+                if (btnDl) {
+                    const newBtnDl = btnDl.cloneNode(true);
+                    newBtnDl.addEventListener('click', () => {
+                        const a = document.createElement('a');
+                        a.href = newDataUrl;
+                        a.download = item.name;
+                        a.click();
+                    });
+                    btnDl.parentNode.replaceChild(newBtnDl, btnDl);
+                }
+            }
+
+            // Cập nhật blob
+            sliceCanvas.toBlob((blob) => {
+                const blobObj = slicedBlobs.find(b => b.id === item.id);
+                if (blobObj) {
+                    blobObj.blob = blob;
+                    blobObj.name = item.name;
+                } else {
+                    slicedBlobs.push({ id: item.id, name: item.name, blob: blob });
+                }
+
+                completedCount++;
+                if (completedCount === slicedImages.length && btnDownloadZip) {
+                    btnDownloadZip.disabled = false;
+                }
+            }, mimeType, quality);
+        });
+    }
+
+    // --- Init new UI Event Listeners ---
+    const initNewFeaturesListeners = () => {
+        // Event listener chọn template mạng xã hội
+        if (selectSocialTemplate) {
+            selectSocialTemplate.addEventListener('change', () => {
+                const val = selectSocialTemplate.value;
+                if (val !== 'none') {
+                    if (!currentImage) {
+                        showToast("Vui lòng tải ảnh lên trước khi áp dụng template!", "warning");
+                        selectSocialTemplate.value = 'none';
+                        return;
+                    }
+                    applySocialTemplate(val);
+                }
+            });
+        }
+
+        // Event listener chọn định dạng xuất
+        if (selectExportFormat) {
+            selectExportFormat.addEventListener('change', () => {
+                exportFormat = selectExportFormat.value;
+                
+                // Show/hide quality slider
+                if (exportFormat === 'jpeg' || exportFormat === 'webp') {
+                    if (containerExportQuality) containerExportQuality.style.display = 'block';
+                } else {
+                    if (containerExportQuality) containerExportQuality.style.display = 'none';
+                }
+                
+                // Tái tạo lại toàn bộ slide kết quả nếu có
+                if (slicedImages.length > 0) {
+                    regenerateSlicedImagesMimeType();
+                }
+            });
+        }
+
+        // Event listener chọn chất lượng xuất
+        if (inputExportQuality) {
+            inputExportQuality.addEventListener('input', () => {
+                const val = inputExportQuality.value;
+                if (exportQualityVal) exportQualityVal.textContent = val + '%';
+                exportQuality = parseInt(val) / 100;
+            });
+            
+            // Chỉ regenerate khi nhả chuột kéo chất lượng ra để tránh lag
+            inputExportQuality.addEventListener('change', () => {
+                if (slicedImages.length > 0) {
+                    regenerateSlicedImagesMimeType();
+                }
+            });
+        }
+    };
+
     // --- Initialize Features ---
     loadHistoryFromDB();
     checkPasswordLock();
@@ -6681,4 +7234,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initCustomTooltips();
     initHistoryViewToggle();
     applyHistoryViewMode(historyViewMode);
+    initNewFeaturesListeners();
 });
