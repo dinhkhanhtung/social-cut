@@ -928,7 +928,7 @@ input[type="number"] {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 0 !important;
     overflow: auto;
     position: relative;
     user-select: none;
@@ -2410,7 +2410,7 @@ input[type="number"] {
 
     /* Canvas hiển thị to rõ ràng ở trên */
     .canvas-wrapper {
-        padding: 4px !important;
+        padding: 0 !important;
         min-height: 180px !important;
     }
 

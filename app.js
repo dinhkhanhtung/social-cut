@@ -2159,7 +2159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartPanY = 0;
     let touchStartCenter = { x: 0, y: 0 };
     let isPinching = false;
-    let cachedWrapperRect = null;
+    let cachedWrapperWidth = null;
+    let cachedWrapperHeight = null;
+    let cachedWrapperLeft = null;
+    let cachedWrapperTop = null;
 
     // Touch support mapping for main canvas
     previewCanvas.addEventListener('touchstart', (e) => {
@@ -2209,7 +2212,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wrapper) {
                 startScrollLeft = wrapper.scrollLeft;
                 startScrollTop = wrapper.scrollTop;
-                cachedWrapperRect = wrapper.getBoundingClientRect(); // Cache rect khi bắt đầu pinch
+                cachedWrapperWidth = wrapper.clientWidth;
+                cachedWrapperHeight = wrapper.clientHeight;
+                const rect = wrapper.getBoundingClientRect();
+                cachedWrapperLeft = rect.left;
+                cachedWrapperTop = rect.top;
             }
             
             touchStartPanX = panX;
@@ -2254,12 +2261,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const wrapper = document.querySelector('.canvas-wrapper');
                 if (wrapper) {
-                    const wrapperRect = cachedWrapperRect || wrapper.getBoundingClientRect();
-                    const viewX_start = touchStartCenter.x - wrapperRect.left;
-                    const viewY_start = touchStartCenter.y - wrapperRect.top;
+                    const wrapperW = (cachedWrapperWidth !== null) ? cachedWrapperWidth : wrapper.clientWidth;
+                    const wrapperH = (cachedWrapperHeight !== null) ? cachedWrapperHeight : wrapper.clientHeight;
+                    const wrapperLeft = (cachedWrapperLeft !== null) ? cachedWrapperLeft : wrapper.getBoundingClientRect().left;
+                    const wrapperTop = (cachedWrapperTop !== null) ? cachedWrapperTop : wrapper.getBoundingClientRect().top;
                     
-                    const marginX = Math.floor(wrapperRect.width * 0.5);
-                    const marginY = Math.floor(wrapperRect.height * 0.5);
+                    const viewX_start = touchStartCenter.x - wrapperLeft;
+                    const viewY_start = touchStartCenter.y - wrapperTop;
+                    
+                    const marginX = Math.round(wrapperW * 0.5);
+                    const marginY = Math.round(wrapperH * 0.5);
                     
                     const zoomRatio = newZoomScale / startZoomScale;
                     
@@ -2270,10 +2281,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const scrollTop_new = startScrollTop * zoomRatio + (viewY_start - marginY) * (zoomRatio - 1) - dy;
                     
                     zoomScale = newZoomScale;
-                    updateCanvasDisplaySize(wrapperRect);
+                    updateCanvasDisplaySize(wrapperW, wrapperH);
                     
-                    wrapper.scrollLeft = scrollLeft_new;
-                    wrapper.scrollTop = scrollTop_new;
+                    wrapper.scrollLeft = Math.round(scrollLeft_new);
+                    wrapper.scrollTop = Math.round(scrollTop_new);
                 }
             }
             
@@ -2284,12 +2295,18 @@ document.addEventListener('DOMContentLoaded', () => {
     previewCanvas.addEventListener('touchend', (e) => {
         if (e.touches.length === 0) {
             isPinching = false;
-            cachedWrapperRect = null; // Clear cache
+            cachedWrapperWidth = null;
+            cachedWrapperHeight = null;
+            cachedWrapperLeft = null;
+            cachedWrapperTop = null;
             const mouseEvent = new MouseEvent('mouseup', {});
             window.dispatchEvent(mouseEvent);
         } else if (e.touches.length === 1) {
             isPinching = false;
-            cachedWrapperRect = null; // Clear cache
+            cachedWrapperWidth = null;
+            cachedWrapperHeight = null;
+            cachedWrapperLeft = null;
+            cachedWrapperTop = null;
             const touch = e.touches[0];
             const mouseEvent = new MouseEvent('mousedown', {
                 clientX: touch.clientX,
@@ -2307,12 +2324,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.querySelector('.canvas-wrapper');
         if (!wrapper) return;
 
+        const wrapperW = wrapper.clientWidth;
+        const wrapperH = wrapper.clientHeight;
         const wrapperRect = wrapper.getBoundingClientRect();
-        const viewX = e.clientX - wrapperRect.left;
-        const viewY = e.clientY - wrapperRect.top;
+        
+        // Trừ border (clientLeft/clientTop) để có tọa độ chính xác bên trong viewport
+        const borderLeft = wrapper.clientLeft || 0;
+        const borderTop = wrapper.clientTop || 0;
+        const viewX = e.clientX - wrapperRect.left - borderLeft;
+        const viewY = e.clientY - wrapperRect.top - borderTop;
 
-        const marginX = Math.floor(wrapperRect.width * 0.5);
-        const marginY = Math.floor(wrapperRect.height * 0.5);
+        const marginX = Math.round(wrapperW * 0.5);
+        const marginY = Math.round(wrapperH * 0.5);
 
         const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
         const newZoomScale = Math.max(0.05, Math.min(10.0, zoomScale * zoomFactor));
@@ -2329,8 +2352,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ép reflow đồng bộ
             const _ = wrapper.scrollWidth;
 
-            wrapper.scrollLeft = scrollLeft_new;
-            wrapper.scrollTop = scrollTop_new;
+            wrapper.scrollLeft = Math.round(scrollLeft_new);
+            wrapper.scrollTop = Math.round(scrollTop_new);
 
             drawLiveGrid();
         }
@@ -2357,8 +2380,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ép reflow đồng bộ
             const _ = wrapper.scrollWidth;
 
-            wrapper.scrollLeft = scrollLeft_new;
-            wrapper.scrollTop = scrollTop_new;
+            wrapper.scrollLeft = Math.round(scrollLeft_new);
+            wrapper.scrollTop = Math.round(scrollTop_new);
 
             drawLiveGrid();
         }
@@ -2514,13 +2537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (e.key === '0') {
             e.preventDefault();
             zoomScale = 1.0;
-            updateCanvasDisplaySize();
-            const canvasWrapper = document.querySelector('.canvas-wrapper');
-            if (canvasWrapper) {
-                const rect = previewCanvas.getBoundingClientRect();
-                canvasWrapper.scrollLeft = rect.width * 0.5;
-                canvasWrapper.scrollTop = rect.height * 0.5;
-            }
+            centerCanvas();
             drawLiveGrid();
         }
 
@@ -2819,39 +2836,36 @@ document.addEventListener('DOMContentLoaded', () => {
         targetCtx.restore();
     }
 
-    function updateCanvasDisplaySize(cachedRect = null) {
+    function updateCanvasDisplaySize(cachedW = null, cachedH = null) {
         if (!currentImage || !previewCanvas) return;
         const canvasWrapper = document.querySelector('.canvas-wrapper');
         if (!canvasWrapper) return;
 
-        const rect = cachedRect || canvasWrapper.getBoundingClientRect();
+        const wrapperW = (cachedW !== null) ? cachedW : canvasWrapper.clientWidth;
+        const wrapperH = (cachedH !== null) ? cachedH : canvasWrapper.clientHeight;
 
         // Không cho phép tính toán base size nếu wrapper chưa hiển thị (height hoặc width = 0)
-        if (rect.height <= 0 || rect.width <= 0) {
+        if (wrapperH <= 0 || wrapperW <= 0) {
             return;
         }
 
         // Luôn tính toán base size động dựa trên chiều cao hiện tại của wrapper để co giãn mượt mà
-        const padding = 0;
-        baseCanvasHeight = Math.max(200, rect.height - padding);
+        baseCanvasHeight = wrapperH;
         baseCanvasWidth = baseCanvasHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
 
-        const canvasW = baseCanvasWidth * zoomScale;
-        const canvasH = baseCanvasHeight * zoomScale;
+        const canvasW = Math.round(baseCanvasWidth * zoomScale);
+        const canvasH = Math.round(baseCanvasHeight * zoomScale);
 
         previewCanvas.style.height = canvasH + 'px';
         previewCanvas.style.width = canvasW + 'px';
-
-        const wrapperW = rect.width;
-        const wrapperH = rect.height;
 
         // Luôn sử dụng flex-start để khắc phục lỗi Flexbox overflow scroll
         canvasWrapper.style.justifyContent = 'flex-start';
         canvasWrapper.style.alignItems = 'flex-start';
 
         // Luôn áp dụng margin bằng 50% kích thước wrapper để pan tự do mọi phía
-        const marginX = Math.floor(wrapperW * 0.5);
-        const marginY = Math.floor(wrapperH * 0.5);
+        const marginX = Math.round(wrapperW * 0.5);
+        const marginY = Math.round(wrapperH * 0.5);
         
         previewCanvas.style.margin = `${marginY}px ${marginX}px`;
     }
@@ -2867,12 +2881,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ép reflow đồng bộ
         const _ = canvasWrapper.scrollWidth;
         
-        const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
-        const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
+        const canvasW = Math.round(parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0);
+        const canvasH = Math.round(parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0);
         
         // Cuộn về chính giữa
-        canvasWrapper.scrollLeft = canvasW * 0.5;
-        canvasWrapper.scrollTop = canvasH * 0.5;
+        canvasWrapper.scrollLeft = Math.round(canvasW * 0.5);
+        canvasWrapper.scrollTop = Math.round(canvasH * 0.5);
     }
 
     // --- Draw Live Preview Grid & Selection Boxes ---
