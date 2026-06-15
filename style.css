@@ -3184,7 +3184,8 @@ input[type="number"] {
     left: 50%;
     transform: translate(-50%, -45%) scale(0.95);
     width: 650px; /* Tăng rộng nhẹ */
-    height: 600px; /* Tăng cao cố định cho hài hòa */
+    height: auto; /* Tự động co giãn theo số lượng dự án để không bị thừa mép dưới */
+    min-height: 250px; /* Chiều cao tối thiểu khi rỗng hoặc ít */
     max-width: 90vw;
     max-height: 85vh;
     background: rgba(15, 23, 42, 0.98);
@@ -3443,7 +3444,7 @@ input[type="number"] {
     gap: 6px !important;
     position: relative !important;
     height: auto !important;
-    min-height: 146px !important;
+    min-height: 135px !important; /* Giảm xuống để ôm khít nội dung, không bị thừa mép dưới */
     justify-content: space-between !important;
 }
 
@@ -3477,6 +3478,9 @@ input[type="number"] {
     text-align: center !important;
     font-size: 0.72rem !important;
     font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .history-list.grid-view .history-date {

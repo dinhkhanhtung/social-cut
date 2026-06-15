@@ -913,16 +913,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tabId === 'edit') {
             switchTab('tab-live-grid');
             if (currentImage) {
-                setTimeout(() => {
-                    const canvasWrapper = document.querySelector('.canvas-wrapper');
-                    if (canvasWrapper) {
-                        const _ = canvasWrapper.scrollWidth;
-                        const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
-                        const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
-                        canvasWrapper.scrollLeft = canvasW * 0.5;
-                        canvasWrapper.scrollTop = canvasH * 0.5;
-                    }
-                }, 100);
+                setTimeout(centerCanvas, 150);
             }
         } else if (tabId === 'result') {
             switchTab('tab-result-grid');
@@ -954,6 +945,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnMobileToggleParams.innerHTML = '<i class="fa-solid fa-sliders"></i> Tùy chỉnh thông số';
                 btnMobileToggleParams.classList.remove('active');
             }
+            // Sau khi toggle sidebar (transition 300ms), căn giữa lại ảnh để tránh ảnh bị biến mất hoặc co xíu
+            setTimeout(centerCanvas, 350);
         });
     }
 
@@ -2159,6 +2152,23 @@ document.addEventListener('DOMContentLoaded', () => {
             isPinching = true;
             e.preventDefault();
             
+            // Dọn dẹp trạng thái kéo thả chuột giả của 1 ngón tay trước đó để tránh loạn
+            isPanning = false;
+            isDrawingNewBox = false;
+            dragTarget = null;
+            dragBoxTarget = null;
+            dragRecutTarget = null;
+            
+            // Xóa box rác nếu vừa được tạo khi chạm ngón 1
+            if (slicingMode === 'box' && selectionBoxes.length > 0) {
+                const lastBox = selectionBoxes[selectionBoxes.length - 1];
+                if (lastBox.w === 0 || lastBox.h === 0) {
+                    selectionBoxes.pop();
+                    nextBoxId = selectionBoxes.length + 1;
+                    gridModeText.textContent = `Tự do (${selectionBoxes.length} khung)`;
+                }
+            }
+            
             const t1 = e.touches[0];
             const t2 = e.touches[1];
             
@@ -2205,7 +2215,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-            if (touchStartDist > 0 && currentDist > 0) {
+            
+            // Nếu khoảng cách chạm ban đầu quá nhỏ, gán lại để tránh chia cho số quá nhỏ gây giật zoom
+            if (touchStartDist <= 10) {
+                touchStartDist = currentDist;
+                startZoomScale = zoomScale;
+            }
+            
+            if (touchStartDist > 10 && currentDist > 0) {
                 const factor = currentDist / touchStartDist;
                 const newZoomScale = Math.max(0.05, Math.min(10.0, startZoomScale * factor));
                 
@@ -2663,17 +2680,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     switchMobileTab('edit');
                     
                     // Cuộn wrapper về tâm của canvas sau khi tab hiển thị và layout hoàn tất
-                    setTimeout(() => {
-                        const canvasWrapper = document.querySelector('.canvas-wrapper');
-                        if (canvasWrapper) {
-                            // Ép reflow đồng bộ scroll container bằng cách đọc scrollWidth
-                            const _ = canvasWrapper.scrollWidth;
-                            const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
-                            const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
-                            canvasWrapper.scrollLeft = canvasW * 0.5;
-                            canvasWrapper.scrollTop = canvasH * 0.5;
-                        }
-                    }, 100);
+                    setTimeout(centerCanvas, 150);
                 }, 50);
             };
             img.src = event.target.result;
@@ -2784,15 +2791,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvasWrapper = document.querySelector('.canvas-wrapper');
         if (!canvasWrapper) return;
 
+        const rect = canvasWrapper.getBoundingClientRect();
+
+        // Không cho phép tính toán base size nếu wrapper chưa hiển thị (height hoặc width = 0)
+        if (rect.height <= 0 || rect.width <= 0) {
+            return;
+        }
+
         // Nếu chưa khởi tạo base size, tự động tính toán
         if (!baseCanvasWidth || !baseCanvasHeight) {
-            const rect = canvasWrapper.getBoundingClientRect();
             const padding = 32;
             baseCanvasHeight = Math.max(200, rect.height - padding);
             baseCanvasWidth = baseCanvasHeight * (currentImage.naturalWidth / currentImage.naturalHeight);
         }
-
-        const rect = canvasWrapper.getBoundingClientRect();
 
         const canvasW = baseCanvasWidth * zoomScale;
         const canvasH = baseCanvasHeight * zoomScale;
@@ -2812,6 +2823,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const marginY = Math.floor(wrapperH * 0.5);
         
         previewCanvas.style.margin = `${marginY}px ${marginX}px`;
+    }
+
+    function centerCanvas() {
+        if (!currentImage || !previewCanvas) return;
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        if (!canvasWrapper) return;
+        
+        // Cập nhật kích thước hiển thị canvas trước
+        updateCanvasDisplaySize();
+        
+        // Ép reflow đồng bộ
+        const _ = canvasWrapper.scrollWidth;
+        
+        const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
+        const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
+        
+        // Cuộn về chính giữa
+        canvasWrapper.scrollLeft = canvasW * 0.5;
+        canvasWrapper.scrollTop = canvasH * 0.5;
     }
 
     // --- Draw Live Preview Grid & Selection Boxes ---
@@ -5744,16 +5774,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     switchMobileTab('edit');
 
                     // Cuộn wrapper về tâm của canvas sau khi canvas hiển thị và layout hoàn tất
-                    setTimeout(() => {
-                        const canvasWrapper = document.querySelector('.canvas-wrapper');
-                        if (canvasWrapper) {
-                            const _ = canvasWrapper.scrollWidth;
-                            const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
-                            const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
-                            canvasWrapper.scrollLeft = canvasW * 0.5;
-                            canvasWrapper.scrollTop = canvasH * 0.5;
-                        }
-                    }, 100);
+                    setTimeout(centerCanvas, 150);
 
                     showToast(`Đã nạp dự án: ${proj.name}`, "success");
                 };
@@ -6624,16 +6645,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         if (currentImage) {
-            updateCanvasDisplaySize();
-            // Căn giữa lại sau khi resize
-            const canvasWrapper = document.querySelector('.canvas-wrapper');
-            if (canvasWrapper) {
-                const _ = canvasWrapper.scrollWidth;
-                const canvasW = parseFloat(previewCanvas.style.width) || previewCanvas.clientWidth || 0;
-                const canvasH = parseFloat(previewCanvas.style.height) || previewCanvas.clientHeight || 0;
-                canvasWrapper.scrollLeft = canvasW * 0.5;
-                canvasWrapper.scrollTop = canvasH * 0.5;
-            }
+            centerCanvas();
         }
     });
 
