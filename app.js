@@ -1711,15 +1711,80 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (dragTarget.type === 'col') {
-                    const idx = dragTarget.index;
+                    let idx = dragTarget.index;
+                    const width = currentImage.naturalWidth;
+                    
+                    let currentDeltaX = imgX - lastDragMouseX;
+                    if (e.altKey) {
+                        currentDeltaX *= 0.15; // Hãm chậm khi giữ Alt
+                    }
+                    
+                    let targetX = colsX[idx] + currentDeltaX;
+                    targetX = Math.max(20, Math.min(width - 20, targetX));
+                    
+                    // Thực hiện swap liên tục nếu chuột vượt qua các cột lân cận
+                    let swapped = true;
+                    while (swapped) {
+                        swapped = false;
+                        if (idx < colsX.length - 1 && imgX > colsX[idx + 1]) {
+                            const temp = colsX[idx];
+                            colsX[idx] = colsX[idx + 1];
+                            colsX[idx + 1] = temp;
+                            idx++;
+                            swapped = true;
+                        } else if (idx > 0 && imgX < colsX[idx - 1]) {
+                            const temp = colsX[idx];
+                            colsX[idx] = colsX[idx - 1];
+                            colsX[idx - 1] = temp;
+                            idx--;
+                            swapped = true;
+                        }
+                    }
+                    
+                    dragTarget.index = idx;
+                    
+                    // Giới hạn khoảng cách tối thiểu 20px với cột lân cận
                     const minLimit = (idx === 0) ? 0 : colsX[idx - 1];
-                    const maxLimit = (idx === colsX.length - 1) ? currentImage.naturalWidth : colsX[idx + 1];
-                    colsX[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, colsX[idx] + deltaX));
+                    const maxLimit = (idx === colsX.length - 1) ? width : colsX[idx + 1];
+                    colsX[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, targetX));
+                    
                 } else if (dragTarget.type === 'row') {
-                    const idx = dragTarget.index;
+                    let idx = dragTarget.index;
+                    const height = currentImage.naturalHeight;
+                    
+                    let currentDeltaY = imgY - lastDragMouseY;
+                    if (e.altKey) {
+                        currentDeltaY *= 0.15; // Hãm chậm khi giữ Alt
+                    }
+                    
+                    let targetY = rowsY[idx] + currentDeltaY;
+                    targetY = Math.max(20, Math.min(height - 20, targetY));
+                    
+                    // Thực hiện swap liên tục nếu chuột vượt qua các hàng lân cận
+                    let swapped = true;
+                    while (swapped) {
+                        swapped = false;
+                        if (idx < rowsY.length - 1 && imgY > rowsY[idx + 1]) {
+                            const temp = rowsY[idx];
+                            rowsY[idx] = rowsY[idx + 1];
+                            rowsY[idx + 1] = temp;
+                            idx++;
+                            swapped = true;
+                        } else if (idx > 0 && imgY < rowsY[idx - 1]) {
+                            const temp = rowsY[idx];
+                            rowsY[idx] = rowsY[idx - 1];
+                            rowsY[idx - 1] = temp;
+                            idx--;
+                            swapped = true;
+                        }
+                    }
+                    
+                    dragTarget.index = idx;
+                    
+                    // Giới hạn khoảng cách tối thiểu 20px với hàng lân cận
                     const minLimit = (idx === 0) ? 0 : rowsY[idx - 1];
-                    const maxLimit = (idx === rowsY.length - 1) ? currentImage.naturalHeight : rowsY[idx + 1];
-                    rowsY[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, rowsY[idx] + deltaY));
+                    const maxLimit = (idx === rowsY.length - 1) ? height : rowsY[idx + 1];
+                    rowsY[idx] = Math.max(minLimit + 20, Math.min(maxLimit - 20, targetY));
                 }
 
                 isCustomGrid = true;
