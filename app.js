@@ -2213,6 +2213,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Ctrl + O hoặc Cmd + O để tải ảnh lên (Photoshop style)
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+            e.preventDefault();
+            if (fileInput) fileInput.click();
+            return;
+        }
+
         // Xử lý phím tắt cho Modal xem thử điện thoại (Mobile Preview)
         if (mobilePreviewModal && mobilePreviewModal.style.display === 'flex') {
             if (e.key === 'Escape') {
