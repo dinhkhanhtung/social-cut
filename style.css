@@ -2140,9 +2140,9 @@ input[type="number"] {
 
     /* Khi nhấn nút Mở rộng bảng tùy chỉnh */
     .app-container.mobile-tab-edit #sidebar.active-params {
-        flex: 0 0 50vh !important;
-        height: 50vh !important;
-        max-height: 50vh !important;
+        flex: 0 0 40vh !important;
+        height: 40vh !important;
+        max-height: 40vh !important;
         overflow: hidden !important; /* Khóa cuộn toàn bộ sidebar, chỉ cho phép phần thông số cuộn */
         padding: 8px !important;
         display: flex !important;
@@ -3442,11 +3442,11 @@ input[type="number"] {
     flex-direction: column !important;
     align-items: center !important;
     text-align: center !important;
-    padding: 10px 8px 10px 8px !important;
+    padding: 10px 8px 14px 8px !important;
     gap: 6px !important;
     position: relative !important;
     height: auto !important;
-    min-height: 135px !important; /* Giảm xuống để ôm khít nội dung, không bị thừa mép dưới */
+    min-height: 138px !important; /* Giảm xuống để ôm khít nội dung, không bị thừa mép dưới */
     justify-content: space-between !important;
 }
 
