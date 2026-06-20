@@ -5,7 +5,7 @@ import { drawWatermarkOnCtx } from './watermark.js';
 import { autoDetectOptimalGrid } from './auto-detect.js';
 import { showToast, showConfirm, switchTab, switchMobileTab, restoreResultGrid } from './ui-helpers.js';
 import { initShortcuts } from './shortcuts.js';
-import { downloadZip } from './zip-helper.js';
+import { downloadAllImages } from './download-helper.js';
 
 // Destructure DOM Elements for local access
 const {
@@ -4282,7 +4282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btnDownloadZip) {
-        btnDownloadZip.addEventListener('click', downloadZip);
+        btnDownloadZip.addEventListener('click', downloadAllImages);
     }
 
     // PC Tab Switcher Events
