@@ -201,7 +201,7 @@ export const state = {
 
     // Sync & Auth Info
     historyViewMode: localStorage.getItem('history_view_mode') || 'list',
-    syncKey: null,
+    syncKey: localStorage.getItem('carousel_logged_user') || '',
     supabase: null
 };
 
