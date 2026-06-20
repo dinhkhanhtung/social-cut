@@ -1,0 +1,5 @@
+# Backups
+app.backup.js
+app.backup.refactor.js
+*.backup.js
+*.backup.refactor.js

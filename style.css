@@ -1174,7 +1174,8 @@ input[type="number"] {
     font-weight: inherit;
     padding: 0;
     margin: 0;
-    width: 75px;
+    width: auto;
+    min-width: 12px;
     outline: none;
     cursor: text;
 }
@@ -2513,11 +2514,10 @@ input[type="number"] {
         object-fit: contain !important;
     }
 
-    .result-item .result-item-btn-del {
-        opacity: 1 !important; /* Luôn hiển thị trên di động vì không có sự kiện hover */
-    }
-
-    .result-item .result-item-btn-dl {
+    .result-item .result-item-btn-del,
+    .result-item .result-item-btn-dl,
+    .result-item .result-item-btn-edit,
+    .result-item .result-item-btn-copy {
         opacity: 1 !important; /* Luôn hiển thị trên di động vì không có sự kiện hover */
     }
 
@@ -4272,10 +4272,23 @@ input[type="number"] {
     color: var(--accent);
 }
 
+#global-settings-wrapper {
+    position: relative;
+    width: 100%;
+}
+
 .collapsible-content {
+    position: absolute;
+    bottom: calc(100% + 4px); /* Bay lơ lửng lên trên hàng tiêu đề */
+    left: 0;
+    width: 100%;
+    z-index: 1050;
+    box-sizing: border-box;
     padding: 12px;
-    border-top: 1px solid var(--border-color);
-    background: rgba(0, 0, 0, 0.2);
+    background: #111827; /* Nền tối, đặc che nút bên dưới */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.55);
 }
 
 /* Hide scrollbars for the horizontal color scroller */
@@ -4513,11 +4526,46 @@ input[type="number"] {
     transform: scale(1.15);
 }
 
+/* Nút Sao chép ảnh kết quả */
+.result-item-btn-copy {
+    position: absolute;
+    top: 6px;
+    right: 96px; /* 6 (del) + 30 (dl) + 30 (edit) + 30 (copy) */
+    background: rgba(16, 185, 129, 0.85); /* Màu xanh lá */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: var(--transition-smooth);
+    opacity: 0;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.result-item:hover .result-item-btn-copy {
+    opacity: 1;
+}
+.result-item-btn-copy:hover {
+    background: #34d399;
+    transform: scale(1.15);
+}
+
 /* Hiển thị nút trên giao diện di động (do không có sự kiện hover) */
 @media (max-width: 768px) {
     .result-item .result-item-btn-edit {
         opacity: 1 !important;
-        right: 66px !important; /* Cố định ở góc phải cạnh nút tải trên di động */
+        right: 66px !important;
+        left: auto !important;
+        top: 6px !important;
+    }
+    .result-item .result-item-btn-copy {
+        opacity: 1 !important;
+        right: 96px !important;
         left: auto !important;
         top: 6px !important;
     }
@@ -4619,7 +4667,8 @@ input[type="number"] {
 }
 
 .result-item.recut-dimmed .result-item-btn-del,
-.result-item.recut-dimmed .result-item-btn-edit {
+.result-item.recut-dimmed .result-item-btn-edit,
+.result-item.recut-dimmed .result-item-btn-copy {
     display: none !important;
 }
 
@@ -4958,3 +5007,37 @@ input[type="number"] {
     font-size: 0.65rem;
     font-weight: 600;
 }
+
+/* Checkbox Keep Slide */
+.keep-slide-label {
+    position: absolute;
+    top: 6px;
+    left: 36px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #34d399; /* Emerald text */
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition-smooth);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.keep-slide-label:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #34d399;
+}
+
+.keep-slide-checkbox {
+    accent-color: #10b981;
+    cursor: pointer;
+    margin: 0;
+}
+

@@ -37,7 +37,7 @@
     <!-- Supabase Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- App Logic -->
-    <script src="app.js?v=2.7.0" defer></script>
+    <script type="module" src="js/main.js"></script>
 </head>
 <body>
     <div class="app-container mobile-tab-upload">
@@ -140,7 +140,7 @@
                                     </label>
                                     <div class="input-number-group">
                                         <button type="button" class="btn-spinner btn-minus" data-target="input-rows" title="Giảm số hàng (Phím S hoặc Mũi tên xuống)"><i class="fa-solid fa-minus"></i></button>
-                                        <input type="number" id="input-rows" min="1" max="20" value="3" title="Số hàng (Phím W / Mũi tên lên để tăng, S / Mũi tên xuống để giảm)">
+                                        <input type="number" id="input-rows" min="1" max="20" value="4" title="Số hàng (Phím W / Mũi tên lên để tăng, S / Mũi tên xuống để giảm)">
                                         <button type="button" class="btn-spinner btn-plus" data-target="input-rows" title="Tăng số hàng (Phím W hoặc Mũi tên lên)"><i class="fa-solid fa-plus"></i></button>
                                     </div>
                                 </div>
@@ -192,6 +192,10 @@
                                 <optgroup label="Template Instagram / LinkedIn">
                                     <option value="insta-square">IG/LI Carousel: Vuông 1:1</option>
                                     <option value="insta-portrait">IG/LI Carousel: Dọc 4:5</option>
+                                </optgroup>
+                                <optgroup label="Template TikTok">
+                                    <option value="tiktok-carousel-916">TikTok Carousel: Dọc 9:16</option>
+                                    <option value="tiktok-carousel-34">TikTok Carousel: Dọc 3:4</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -294,7 +298,7 @@
                         <!-- Vùng nội dung cấu hình chung (nằm dưới dòng tiêu đề, rộng 100%) -->
                         <div class="collapsible-contents-row" style="width: 100%;">
                             <!-- Nội dung Đóng dấu bản quyền -->
-                            <div class="collapsible-content" id="content-watermark" style="display: none; margin-top: 8px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 12px; background: rgba(0, 0, 0, 0.25);">
+                            <div class="collapsible-content" id="content-watermark" style="display: none; margin-top: 8px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 12px;">
                                     <!-- Checkbox bật tắt watermark -->
                                     <div class="control-item" style="margin-bottom: 12px; margin-top: 4px;">
                                         <div class="switch-inline-container">
@@ -382,7 +386,7 @@
                             </div>
 
                             <!-- Nội dung Cấu hình xuất ảnh -->
-                            <div class="collapsible-content" id="content-export-settings" style="display: none; margin-top: 8px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 12px; background: rgba(0, 0, 0, 0.25);">
+                            <div class="collapsible-content" id="content-export-settings" style="display: none; margin-top: 8px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 12px;">
                                     <!-- Dropdown chọn độ phân giải -->
                                     <div class="control-item" style="margin-bottom: 12px; margin-top: 4px;">
                                         <label for="select-export-resolution" style="font-size: 0.78rem; color: var(--text-secondary);">
@@ -854,7 +858,7 @@
                                 <i class="fa-solid fa-gear"></i> Cấu hình & Đóng dấu
                             </button>
 
-                            <button type="button" class="btn-auth-logout" id="btn-mobile-logout" title="Đăng xuất">
+                            <button type="button" class="btn-auth-logout" id="btn-mobile-logout">
                                 <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
                             </button>
                         </div>
