@@ -5570,6 +5570,84 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
     }
 
+    // --- Mouse Up Event Listener ---
+    window.addEventListener('mouseup', (e) => {
+        if (state.dragRecutTarget) {
+            state.dragRecutTarget = null;
+            drawLiveGrid();
+        }
+
+        if (state.snapGuides.length > 0) {
+            state.snapGuides = [];
+            drawLiveGrid();
+        }
+
+        if (state.isPanning) {
+            state.isPanning = false;
+            previewCanvas.style.cursor = state.spacePressed ? 'grab' : 'default';
+            return;
+        }
+
+        if (state.slicingMode === 'grid') {
+            if (state.dragTarget) {
+                const idx = state.dragTarget.index;
+                let deleted = false;
+                if (state.dragTarget.type === 'col') {
+                    const width = state.currentImage.naturalWidth;
+                    const val = state.colsX[idx];
+                    if (val < 15 || val > width - 15) {
+                        state.colsX.splice(idx, 1);
+                        if (inputCols) {
+                            inputCols.value = state.colsX.length + 1;
+                        }
+                        deleted = true;
+                        showToast("Đã xóa đường lưới cột!", "success");
+                    }
+                } else if (state.dragTarget.type === 'row') {
+                    const height = state.currentImage.naturalHeight;
+                    const val = state.rowsY[idx];
+                    if (val < 15 || val > height - 15) {
+                        state.rowsY.splice(idx, 1);
+                        if (inputRows) {
+                            inputRows.value = state.rowsY.length + 1;
+                        }
+                        deleted = true;
+                        showToast("Đã xóa đường lưới hàng!", "success");
+                    }
+                }
+
+                if (deleted) {
+                    state.isCustomGrid = true;
+                    if (gridModeText) {
+                        gridModeText.textContent = "Tùy chỉnh";
+                        gridModeText.style.color = "var(--accent)";
+                    }
+                }
+
+                state.dragTarget = null;
+                handleParamsChange();
+                saveLocalProjectState(); // Lưu trạng thái local sau khi xóa đường lưới
+            }
+        } else {
+            if (state.isDrawingNewBox) {
+                state.isDrawingNewBox = false;
+                const lastBox = state.selectionBoxes[state.selectionBoxes.length - 1];
+                if (lastBox.w < 10 || lastBox.h < 10) {
+                    state.selectionBoxes.pop();
+                    state.nextBoxId--;
+                    if (gridModeText) {
+                        gridModeText.textContent = `Tự do (${state.selectionBoxes.length} khung)`;
+                    }
+                }
+                handleParamsChange();
+            }
+            if (state.dragBoxTarget) {
+                state.dragBoxTarget = null;
+                handleParamsChange();
+            }
+        }
+    });
+
     // 12. Quality export parameters
     if (selectExportFormat) {
         selectExportFormat.addEventListener('change', () => {
