@@ -1154,7 +1154,7 @@ input[type="number"] {
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    max-width: calc(100% - 46px);
+    max-width: calc(100% - 65px);
     z-index: 10;
     transition: var(--transition-smooth);
 }
@@ -5011,8 +5011,8 @@ input[type="number"] {
 /* Checkbox Keep Slide */
 .keep-slide-label {
     position: absolute;
-    top: 6px;
-    left: 36px;
+    bottom: 6px;
+    right: 6px;
     z-index: 10;
     display: flex;
     align-items: center;

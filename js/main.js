@@ -3857,6 +3857,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Gán sự kiện click cho các nút spinner (+/-)
+    document.querySelectorAll('.btn-spinner').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (!input) return;
+
+            const isPlus = btn.classList.contains('btn-plus');
+            const min = parseInt(input.min) || 0;
+            const max = parseInt(input.max) || 100;
+            const step = parseInt(input.step) || 1;
+            let val = parseInt(input.value) || 0;
+
+            if (isPlus) {
+                val = Math.min(max, val + step);
+            } else {
+                val = Math.max(min, val - step);
+            }
+
+            input.value = val;
+            input.dispatchEvent(new Event('input'));
+        });
+    });
+
     // Color picker events
     document.querySelectorAll('.color-dot').forEach(dot => {
         dot.addEventListener('click', () => {
@@ -5647,6 +5672,51 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Mouse Wheel Zoom Listener
+    if (previewCanvas) {
+        previewCanvas.addEventListener('wheel', (e) => {
+            if (!state.currentImage) return;
+            e.preventDefault();
+
+            const wrapper = document.querySelector('.canvas-wrapper');
+            if (!wrapper) return;
+
+            const wrapperW = wrapper.clientWidth;
+            const wrapperH = wrapper.clientHeight;
+            const wrapperRect = wrapper.getBoundingClientRect();
+            
+            // Trừ border (clientLeft/clientTop) để có tọa độ chính xác bên trong viewport
+            const borderLeft = wrapper.clientLeft || 0;
+            const borderTop = wrapper.clientTop || 0;
+            const viewX = e.clientX - wrapperRect.left - borderLeft;
+            const viewY = e.clientY - wrapperRect.top - borderTop;
+
+            const marginX = Math.round(wrapperW * 0.5);
+            const marginY = Math.round(wrapperH * 0.5);
+
+            const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+            const newZoomScale = Math.max(0.05, Math.min(10.0, state.zoomScale * zoomFactor));
+
+            if (newZoomScale !== state.zoomScale) {
+                const zoomRatio = newZoomScale / state.zoomScale;
+                
+                const scrollLeft_new = wrapper.scrollLeft * zoomRatio + (viewX - marginX) * (zoomRatio - 1);
+                const scrollTop_new = wrapper.scrollTop * zoomRatio + (viewY - marginY) * (zoomRatio - 1);
+
+                state.zoomScale = newZoomScale;
+                updateCanvasDisplaySize();
+
+                // Ép reflow đồng bộ
+                const _ = wrapper.scrollWidth;
+
+                wrapper.scrollLeft = Math.round(scrollLeft_new);
+                wrapper.scrollTop = Math.round(scrollTop_new);
+
+                drawLiveGrid();
+            }
+        }, { passive: false });
+    }
 
     // 12. Quality export parameters
     if (selectExportFormat) {
