@@ -3512,6 +3512,16 @@ export function redo() {
     }
 }
 
+export function updateColorPickerUI(color) {
+    document.querySelectorAll('.color-dot').forEach(dot => {
+        if (dot.getAttribute('data-color') === color) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+}
+
 // --- Init Event Listeners on DOM ---
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Drag & Drop for Upload Events
@@ -5760,6 +5770,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         resizeObserver.observe(wrapperEl);
     }
+
+    window.addEventListener('resize', () => {
+        if (state.currentImage) {
+            centerCanvas();
+        }
+    });
 
     // --- Init Features ---
     loadAppSettings();
