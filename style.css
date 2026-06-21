@@ -2041,6 +2041,17 @@ input[type="number"] {
         box-sizing: border-box !important;
         padding: 10px !important;
     }
+    .app-container.mobile-tab-upload .view-panel .tab-content,
+    .app-container.mobile-tab-upload .view-panel .tab-pane,
+    .app-container.mobile-tab-upload .canvas-wrapper {
+        height: 100% !important;
+    }
+    .app-container.mobile-tab-upload .canvas-placeholder {
+        min-height: 0 !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+        padding: 15px !important;
+    }
     .app-container.mobile-tab-upload #sidebar {
         display: flex !important;
         flex: 1 !important;
