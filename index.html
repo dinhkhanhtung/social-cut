@@ -75,22 +75,26 @@
                 </div>
 
                 <div class="sidebar-scroll-content">
-                    <!-- File Dropzone -->
-                    <div class="dropzone" id="dropzone" title="Tải ảnh lên từ máy tính (Phím Ctrl + O)">
-                        <input type="file" id="file-input" accept="image/*" class="file-input">
-                        <div class="dropzone-prompt" id="dropzone-prompt">
-                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                            <p class="dropzone-text-main">Kéo thả ảnh vào đây</p>
-                            <p class="dropzone-text-sub">hoặc nhấp chuột để chọn từ máy tính</p>
-                            <span class="file-format-badge">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
-                        </div>
-                        <!-- Mini Preview when file selected -->
-                        <div class="dropzone-file-info" id="file-info" style="display: none;">
+                    <!-- Upload Button (Show when no image loaded) -->
+                    <button type="button" class="btn btn-primary btn-upload-trigger" id="btn-upload-trigger" title="Tải ảnh lên từ máy tính (Phím Ctrl + O)">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Chọn ảnh từ thiết bị
+                    </button>
+
+                    <!-- Selected File Info (Compact) -->
+                    <div class="selected-file-bar" id="file-info" style="display: none;">
+                        <div class="file-meta-details">
                             <i class="fa-solid fa-image file-icon"></i>
-                            <span class="file-name" id="file-name">filename.jpg</span>
-                            <span class="file-size" id="file-size">(0 KB)</span>
-                            <button type="button" class="btn-remove-file" id="btn-remove-file" title="Xóa ảnh">
-                                <i class="fa-solid fa-xmark"></i>
+                            <div class="file-text-wrapper">
+                                <span class="file-name" id="file-name">filename.jpg</span>
+                                <span class="file-size" id="file-size">(0 KB)</span>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button type="button" class="btn-change-file" id="btn-change-file" title="Chọn ảnh khác">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </button>
+                            <button type="button" class="btn-remove-file" id="btn-remove-file" title="Xóa ảnh và reset thiết lập">
+                                <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
                     </div>
@@ -568,9 +572,14 @@
                             <span id="tip-text">Mẹo: Bạn có thể kéo thả trực tiếp các đường lưới màu xanh trên ảnh để chỉnh vị trí cắt tùy ý!</span>
                         </div>
                         <div class="canvas-wrapper">
-                            <div class="canvas-placeholder" id="canvas-placeholder">
-                                <i class="fa-solid fa-wand-magic-sparkles placeholder-icon"></i>
-                                <p>Tải ảnh lên để xem trước ranh giới cắt lưới</p>
+                            <!-- Hidden File Input for Drag & Drop / Click Upload -->
+                            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                            
+                            <div class="canvas-placeholder" id="canvas-placeholder" title="Kéo thả ảnh vào đây hoặc nhấp chuột để chọn ảnh">
+                                <i class="fa-solid fa-cloud-arrow-up placeholder-icon"></i>
+                                <p class="placeholder-text-main">Kéo thả ảnh vào đây</p>
+                                <p class="placeholder-text-sub">hoặc nhấp chuột để chọn từ thiết bị</p>
+                                <span class="file-format-badge">Hỗ trợ PNG, JPG, JPEG, WEBP</span>
                             </div>
                             <!-- Canvas containing image and grid lines -->
                             <canvas id="preview-canvas" style="display: none;"></canvas>

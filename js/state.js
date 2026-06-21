@@ -3,12 +3,14 @@
 // DOM Elements
 export const elements = {
     fileInput: document.getElementById('file-input'),
-    dropzone: document.getElementById('dropzone'),
-    dropzonePrompt: document.getElementById('dropzone-prompt'),
+    dropzone: document.querySelector('.canvas-wrapper'),
+    dropzonePrompt: document.getElementById('canvas-placeholder'),
     fileInfo: document.getElementById('file-info'),
     fileName: document.getElementById('file-name'),
     fileSize: document.getElementById('file-size'),
     btnRemoveFile: document.getElementById('btn-remove-file'),
+    btnChangeFile: document.getElementById('btn-change-file'),
+    btnUploadTrigger: document.getElementById('btn-upload-trigger'),
     
     modeGridBtn: document.getElementById('mode-grid'),
     modeBoxBtn: document.getElementById('mode-box'),

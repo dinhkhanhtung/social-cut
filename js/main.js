@@ -16,6 +16,8 @@ const {
     fileName,
     fileSize,
     btnRemoveFile,
+    btnChangeFile,
+    btnUploadTrigger,
     modeGridBtn,
     modeBoxBtn,
     controlsGridMode,
@@ -1547,6 +1549,7 @@ export function handleImageSelection(file) {
     fileName.textContent = file.name || 'Ảnh từ Clipboard';
     fileSize.textContent = file.size ? `(${(file.size / 1024).toFixed(1)} KB)` : '';
     dropzonePrompt.style.display = 'none';
+    if (btnUploadTrigger) btnUploadTrigger.style.display = 'none';
     fileInfo.style.display = 'flex';
     dropzone.classList.add('has-image');
     appContent.classList.add('has-image');
@@ -2084,6 +2087,7 @@ function resetApp() {
     }
     
     dropzonePrompt.style.display = 'flex';
+    if (btnUploadTrigger) btnUploadTrigger.style.display = 'flex';
     fileInfo.style.display = 'none';
     
     btnSlice.disabled = true;
@@ -2926,6 +2930,7 @@ async function loadProject(id) {
         fileName.textContent = proj.name;
         fileSize.textContent = `(${(blob.size / 1024).toFixed(1)} KB)`;
         dropzonePrompt.style.display = 'none';
+        if (btnUploadTrigger) btnUploadTrigger.style.display = 'none';
         fileInfo.style.display = 'flex';
         dropzone.classList.add('has-image');
         appContent.classList.add('has-image');
@@ -3555,6 +3560,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.files.length > 0) {
                 handleImageSelection(e.target.files[0]);
             }
+        });
+    }
+
+    if (dropzonePrompt) {
+        dropzonePrompt.addEventListener('click', () => {
+            if (fileInput) fileInput.click();
+        });
+    }
+
+    if (btnChangeFile) {
+        btnChangeFile.addEventListener('click', () => {
+            if (fileInput) fileInput.click();
+        });
+    }
+
+    if (btnUploadTrigger) {
+        btnUploadTrigger.addEventListener('click', () => {
+            if (fileInput) fileInput.click();
         });
     }
 

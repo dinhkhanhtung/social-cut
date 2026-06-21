@@ -149,6 +149,7 @@ export async function loadLocalProjectState() {
             elements.fileName.textContent = stateData.name;
             elements.fileSize.textContent = `(${(stateData.size / 1024).toFixed(1)} KB)`;
             elements.dropzonePrompt.style.display = 'none';
+            if (elements.btnUploadTrigger) elements.btnUploadTrigger.style.display = 'none';
             elements.fileInfo.style.display = 'flex';
             elements.dropzone.classList.add('has-image');
             elements.appContent.classList.add('has-image');
