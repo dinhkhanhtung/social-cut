@@ -548,24 +548,25 @@
                             <i class="fa-solid fa-circle-info animated-info"></i> 
                             <span id="tip-text">Mẹo: Bạn có thể kéo thả trực tiếp các đường lưới màu xanh trên ảnh để chỉnh vị trí cắt tùy ý!</span>
                         </div>
+
+                        <!-- Corner File Actions Badge (Float) - Moved outside canvas-wrapper to prevent scroll overflow -->
+                        <div class="canvas-file-badge" id="canvas-file-badge" style="display: none;">
+                            <div class="badge-avatar" title="Thông tin ảnh (Click để hiện thao tác)">
+                                <i class="fa-solid fa-image"></i>
+                            </div>
+                            <div class="badge-actions">
+                                <button type="button" class="badge-btn btn-change-file-badge" id="btn-change-file-badge" title="Chọn ảnh khác">
+                                    <i class="fa-solid fa-folder-open"></i>
+                                </button>
+                                <button type="button" class="badge-btn btn-remove-file-badge" id="btn-remove-file-badge" title="Xóa ảnh và reset thiết lập">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="canvas-wrapper">
                             <!-- Hidden File Input for Drag & Drop / Click Upload -->
                             <input type="file" id="file-input" accept="image/*" style="display: none;">
-
-                            <!-- Corner File Actions Badge (Float) -->
-                            <div class="canvas-file-badge" id="canvas-file-badge" style="display: none;">
-                                <div class="badge-avatar" title="Thông tin ảnh (Click để hiện thao tác)">
-                                    <i class="fa-solid fa-image"></i>
-                                </div>
-                                <div class="badge-actions">
-                                    <button type="button" class="badge-btn btn-change-file-badge" id="btn-change-file-badge" title="Chọn ảnh khác">
-                                        <i class="fa-solid fa-folder-open"></i>
-                                    </button>
-                                    <button type="button" class="badge-btn btn-remove-file-badge" id="btn-remove-file-badge" title="Xóa ảnh và reset thiết lập">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                </div>
-                            </div>
                             
                             <div class="canvas-placeholder" id="canvas-placeholder" title="Kéo thả ảnh vào đây hoặc nhấp chuột để chọn ảnh">
                                 <i class="fa-solid fa-cloud-arrow-up placeholder-icon"></i>

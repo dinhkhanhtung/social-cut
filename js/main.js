@@ -3731,6 +3731,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const expandMobileParams = () => {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            const sidebar = document.getElementById('sidebar');
+            const btnMobileToggleParams = document.getElementById('btn-mobile-toggle-params');
+            if (sidebar && !sidebar.classList.contains('active-params')) {
+                sidebar.classList.add('active-params');
+                if (btnMobileToggleParams) {
+                    btnMobileToggleParams.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    btnMobileToggleParams.classList.add('active');
+                }
+            }
+        }
+    };
+
     // 3. Mode changes and input parameters change
     if (modeGridBtn) {
         modeGridBtn.addEventListener('click', () => {
@@ -3739,6 +3753,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             setSlicingMode('grid');
+            expandMobileParams();
         });
     }
     if (modeBoxBtn) {
@@ -3748,6 +3763,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             setSlicingMode('box');
+            expandMobileParams();
         });
     }
     if (selectRatio) {

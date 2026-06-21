@@ -292,6 +292,10 @@ body {
     color: #000;
 }
 
+#tab-live-grid {
+    position: relative;
+}
+
 /* File Dropzone */
 /* Corner File Actions Badge (Float) */
 .canvas-file-badge {
