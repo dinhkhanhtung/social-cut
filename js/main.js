@@ -13,11 +13,8 @@ const {
     dropzone,
     dropzonePrompt,
     fileInfo,
-    fileName,
-    fileSize,
     btnRemoveFile,
     btnChangeFile,
-    btnUploadTrigger,
     modeGridBtn,
     modeBoxBtn,
     controlsGridMode,
@@ -1546,10 +1543,7 @@ export function handleImageSelection(file) {
     if (btnRenumberResults) btnRenumberResults.style.display = 'none';
     if (btnMobilePreview) btnMobilePreview.style.display = 'none';
 
-    fileName.textContent = file.name || 'Ảnh từ Clipboard';
-    fileSize.textContent = file.size ? `(${(file.size / 1024).toFixed(1)} KB)` : '';
     dropzonePrompt.style.display = 'none';
-    if (btnUploadTrigger) btnUploadTrigger.style.display = 'none';
     fileInfo.style.display = 'flex';
     dropzone.classList.add('has-image');
     appContent.classList.add('has-image');
@@ -2087,8 +2081,8 @@ function resetApp() {
     }
     
     dropzonePrompt.style.display = 'flex';
-    if (btnUploadTrigger) btnUploadTrigger.style.display = 'flex';
     fileInfo.style.display = 'none';
+    fileInfo.classList.remove('active');
     
     btnSlice.disabled = true;
     if (btnAutoDetect) btnAutoDetect.disabled = true;
@@ -2927,10 +2921,7 @@ async function loadProject(id) {
             gridEvenParameters.style.display = (state.gridType === 'even' || state.gridType === 'insta-square' || state.gridType === 'insta-portrait' || state.gridType === 'tiktok-carousel-916' || state.gridType === 'tiktok-carousel-34') ? 'flex' : 'none';
         }
 
-        fileName.textContent = proj.name;
-        fileSize.textContent = `(${(blob.size / 1024).toFixed(1)} KB)`;
         dropzonePrompt.style.display = 'none';
-        if (btnUploadTrigger) btnUploadTrigger.style.display = 'none';
         fileInfo.style.display = 'flex';
         dropzone.classList.add('has-image');
         appContent.classList.add('has-image');
@@ -3569,17 +3560,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const badgeAvatar = fileInfo ? fileInfo.querySelector('.badge-avatar') : null;
+    if (badgeAvatar && fileInfo) {
+        badgeAvatar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInfo.classList.toggle('active');
+        });
+    }
+
     if (btnChangeFile) {
         btnChangeFile.addEventListener('click', () => {
             if (fileInput) fileInput.click();
         });
     }
 
-    if (btnUploadTrigger) {
-        btnUploadTrigger.addEventListener('click', () => {
-            if (fileInput) fileInput.click();
-        });
-    }
+
 
     // Ctrl + V Paste Image
     window.addEventListener('paste', (e) => {
@@ -5031,6 +5026,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!pcAuthPopup.contains(e.target) && e.target !== sidebarAccountPanel && !sidebarAccountPanel.contains(e.target)) {
                 pcAuthPopup.classList.remove('active');
                 setTimeout(switchToPcAuth, 300);
+            }
+        }
+
+        // Close canvas file badge when clicked outside
+        if (fileInfo && fileInfo.classList.contains('active')) {
+            if (!fileInfo.contains(e.target)) {
+                fileInfo.classList.remove('active');
             }
         }
     });

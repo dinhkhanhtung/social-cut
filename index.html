@@ -75,29 +75,6 @@
                 </div>
 
                 <div class="sidebar-scroll-content">
-                    <!-- Upload Button (Show when no image loaded) -->
-                    <button type="button" class="btn btn-primary btn-upload-trigger" id="btn-upload-trigger" title="Tải ảnh lên từ máy tính (Phím Ctrl + O)">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Chọn ảnh từ thiết bị
-                    </button>
-
-                    <!-- Selected File Info (Compact) -->
-                    <div class="selected-file-bar" id="file-info" style="display: none;">
-                        <div class="file-meta-details">
-                            <i class="fa-solid fa-image file-icon"></i>
-                            <div class="file-text-wrapper">
-                                <span class="file-name" id="file-name">filename.jpg</span>
-                                <span class="file-size" id="file-size">(0 KB)</span>
-                            </div>
-                        </div>
-                        <div class="file-actions">
-                            <button type="button" class="btn-change-file" id="btn-change-file" title="Chọn ảnh khác">
-                                <i class="fa-solid fa-folder-open"></i>
-                            </button>
-                            <button type="button" class="btn-remove-file" id="btn-remove-file" title="Xóa ảnh và reset thiết lập">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                    </div>
 
                     <!-- Project History Section (Mobile Only in Sidebar) -->
                     <div class="history-section" id="history-section">
@@ -574,6 +551,21 @@
                         <div class="canvas-wrapper">
                             <!-- Hidden File Input for Drag & Drop / Click Upload -->
                             <input type="file" id="file-input" accept="image/*" style="display: none;">
+
+                            <!-- Corner File Actions Badge (Float) -->
+                            <div class="canvas-file-badge" id="canvas-file-badge" style="display: none;">
+                                <div class="badge-avatar" title="Thông tin ảnh (Click để hiện thao tác)">
+                                    <i class="fa-solid fa-image"></i>
+                                </div>
+                                <div class="badge-actions">
+                                    <button type="button" class="badge-btn btn-change-file-badge" id="btn-change-file-badge" title="Chọn ảnh khác">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                    </button>
+                                    <button type="button" class="badge-btn btn-remove-file-badge" id="btn-remove-file-badge" title="Xóa ảnh và reset thiết lập">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
                             
                             <div class="canvas-placeholder" id="canvas-placeholder" title="Kéo thả ảnh vào đây hoặc nhấp chuột để chọn ảnh">
                                 <i class="fa-solid fa-cloud-arrow-up placeholder-icon"></i>
