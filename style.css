@@ -310,7 +310,7 @@ body {
     -webkit-backdrop-filter: blur(8px);
     border: 1.5px dashed rgba(6, 182, 212, 0.5);
     border-radius: 30px;
-    padding: 4px;
+    padding: 3px 4px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     max-width: 44px;
@@ -327,8 +327,8 @@ body {
 }
 
 .badge-avatar {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: rgba(6, 182, 212, 0.1);
     color: var(--accent);
@@ -2038,14 +2038,20 @@ input[type="number"] {
         overflow: hidden !important;
     }
     .app-container.mobile-tab-upload .view-panel {
-        display: block !important;
+        display: flex !important;
+        flex-direction: column !important;
         height: 280px !important;
         flex: none !important;
         order: 1 !important;
         box-sizing: border-box !important;
         padding: 10px !important;
     }
-    .app-container.mobile-tab-upload .view-panel .tab-content,
+    .app-container.mobile-tab-upload .view-panel .tab-content {
+        flex: 1 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin-top: 5px !important;
+    }
     .app-container.mobile-tab-upload .view-panel .tab-pane,
     .app-container.mobile-tab-upload .canvas-wrapper {
         height: 100% !important;
