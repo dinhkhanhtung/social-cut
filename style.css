@@ -5059,18 +5059,18 @@ input[type="number"] {
     z-index: 10;
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid rgba(16, 185, 129, 0.4);
-    padding: 3px 6px;
+    padding: 0;
     border-radius: 4px;
-    font-size: 0.68rem;
-    font-weight: 600;
-    color: #34d399; /* Emerald text */
     cursor: pointer;
     user-select: none;
     transition: var(--transition-smooth);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    width: 22px;
+    height: 22px;
+    box-sizing: border-box;
 }
 
 .keep-slide-label:hover {

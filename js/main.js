@@ -1859,6 +1859,7 @@ export const handleConfirmRecut = () => {
     state.recutBoxId = null;
     state.recutTempCoords = null;
     if (btnSlice) btnSlice.disabled = false;
+    if (fileInfo) fileInfo.style.display = 'flex';
     updateSidebarControlsState();
     drawLiveGrid();
 
@@ -1872,6 +1873,7 @@ export const handleCancelRecut = () => {
     state.recutBoxId = null;
     state.recutTempCoords = null;
     if (btnSlice) btnSlice.disabled = false;
+    if (fileInfo) fileInfo.style.display = 'flex';
     updateSidebarControlsState();
     drawLiveGrid();
     showToast("Đã hủy cắt lại", "info");
@@ -4155,9 +4157,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             const kept = keptImages.find(img => img.meta && img.meta.slicingMode === 'grid' && img.meta.row === r && img.meta.col === c);
                             if (kept) {
                                 const currentExt = kept.name.split('.').pop() || ext;
-                                const nameIsDefault = /^slide_\d+$/.test(kept.name.replace(/\.[^/.]+$/, ""));
+                                const nameIsDefault = /^slide_\d+$/.test(kept.name.replace(/\.[^/.]+$/, "")) || /^\d+$/.test(kept.name.replace(/\.[^/.]+$/, ""));
                                 if (nameIsDefault) {
-                                    kept.name = `slide_${startIndex + count}.${currentExt}`;
+                                    kept.name = `${String(startIndex + count).padStart(2, '0')}.${currentExt}`;
                                 }
                                 if (kept.meta) {
                                     kept.meta.cellIndex = count - 1;
@@ -4168,7 +4170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
 
                             const resultId = state.resultIdCounter++;
-                            const sliceName = `slide_${startIndex + count}.${ext}`;
+                            const sliceName = `${String(startIndex + count).padStart(2, '0')}.${ext}`;
                             const meta = {
                                 slicingMode: 'grid',
                                 gridType: state.gridType,
@@ -4237,16 +4239,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         const kept = keptImages.find(img => img.meta && img.meta.slicingMode === 'grid' && img.meta.cellIndex === idx);
                         if (kept) {
                             const currentExt = kept.name.split('.').pop() || ext;
-                            const nameIsDefault = /^slide_\d+$/.test(kept.name.replace(/\.[^/.]+$/, ""));
+                            const nameIsDefault = /^slide_\d+$/.test(kept.name.replace(/\.[^/.]+$/, "")) || /^\d+$/.test(kept.name.replace(/\.[^/.]+$/, ""));
                             if (nameIsDefault) {
-                                kept.name = `slide_${startIndex + idx + 1}.${currentExt}`;
+                                kept.name = `${String(startIndex + idx + 1).padStart(2, '0')}.${currentExt}`;
+                            }
+                            if (kept.meta) {
+                                kept.meta.cellIndex = idx;
                             }
                             state.slicedImages.push(kept);
                             return;
                         }
 
                         const resultId = state.resultIdCounter++;
-                        const sliceName = `slide_${startIndex + idx + 1}.${ext}`;
+                        const sliceName = `${String(startIndex + idx + 1).padStart(2, '0')}.${ext}`;
                         
                         const meta = {
                             slicingMode: 'grid',
@@ -4296,16 +4301,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const kept = keptImages.find(img => img.meta && img.meta.slicingMode === 'box' && img.meta.boxId === box.id);
                     if (kept) {
                         const currentExt = kept.name.split('.').pop() || ext;
-                        const nameIsDefault = /^slide_\d+$/.test(kept.name.replace(/\.[^/.]+$/, ""));
+                        const nameIsDefault = /^slide_\d+$/.test(kept.name.replace(/\.[^/.]+$/, "")) || /^\d+$/.test(kept.name.replace(/\.[^/.]+$/, ""));
                         if (nameIsDefault) {
-                            kept.name = `slide_${startIndex + idx + 1}.${currentExt}`;
+                            kept.name = `${String(startIndex + idx + 1).padStart(2, '0')}.${currentExt}`;
                         }
                         state.slicedImages.push(kept);
                         return;
                     }
 
                     const resultId = state.resultIdCounter++;
-                    const sliceName = `slide_${startIndex + idx + 1}.${ext}`;
+                    const sliceName = `${String(startIndex + idx + 1).padStart(2, '0')}.${ext}`;
                     const meta = {
                         slicingMode: 'box',
                         boxId: box.id,
@@ -4405,17 +4410,19 @@ document.addEventListener('DOMContentLoaded', () => {
         btnRenumberResults.addEventListener('click', () => {
             if (state.slicedImages.length === 0) return;
             
-            showConfirm("Bạn có chắc chắn muốn đổi tên và đánh số lại toàn bộ các slide kết quả hiện tại theo thứ tự từ 1 đến " + state.slicedImages.length + "?", () => {
+            showConfirm("Bạn có chắc chắn muốn đổi tên và đánh số lại toàn bộ các slide kết quả hiện tại theo thứ tự từ 01 đến " + String(state.slicedImages.length).padStart(2, '0') + "?", () => {
                 const orderedItems = Array.from(resultGrid.children);
                 orderedItems.forEach((resultItem, index) => {
                     const resultId = parseInt(resultItem.dataset.id);
-                    const newIndex = index + 1;
-                    const newName = `slide_${newIndex}.png`;
-                    const newBaseName = `slide_${newIndex}`;
+                    const newIndexStr = String(index + 1).padStart(2, '0');
+                    const extVal = state.exportFormat === 'png' ? 'png' : (state.exportFormat === 'jpeg' ? 'jpg' : 'webp');
+                    const newName = `${newIndexStr}.${extVal}`;
+                    const newBaseName = newIndexStr;
 
                     const nameInput = resultItem.querySelector('.result-item-name-input');
                     if (nameInput) {
                         nameInput.value = newBaseName;
+                        nameInput.style.width = Math.max(12, Math.min(120, nameInput.value.length * 7.5)) + 'px';
                     }
 
                     const btnDl = resultItem.querySelector('.result-item-btn-dl');

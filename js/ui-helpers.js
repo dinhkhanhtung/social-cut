@@ -201,11 +201,11 @@ export function restoreResultGrid(loadedSlicedImages) {
         grip.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
         resultItem.appendChild(grip);
 
-        // Checkbox giữ lại slide kết quả
+        // Checkbox giữ lại slide kết quả (Chỉ hiển thị ô checkbox)
         const keepLabel = document.createElement('label');
         keepLabel.classList.add('keep-slide-label');
         keepLabel.title = "Khóa slide này để không bị cắt đè khi điều chỉnh lưới cắt";
-        keepLabel.innerHTML = `<input type="checkbox" class="keep-slide-checkbox"${item.keep ? ' checked' : ''}> Giữ`;
+        keepLabel.innerHTML = `<input type="checkbox" class="keep-slide-checkbox"${item.keep ? ' checked' : ''}>`;
         const keepCb = keepLabel.querySelector('.keep-slide-checkbox');
         keepCb.addEventListener('change', () => {
             item.keep = keepCb.checked;
@@ -262,39 +262,7 @@ export function restoreResultGrid(loadedSlicedImages) {
         });
         resultItem.appendChild(btnCopy);
 
-        const btnEdit = document.createElement('button');
-        btnEdit.classList.add('result-item-btn-edit');
-        btnEdit.innerHTML = '<i class="fa-solid fa-crop-simple"></i>';
-        btnEdit.title = `Cắt lại ô này`;
-        btnEdit.addEventListener('click', (e) => {
-            e.stopPropagation();
-            state.recutSlideId = resultId;
-            const recutItem = state.slicedImages.find(img => img.id === resultId);
-            if (recutItem) {
-                state.recutBoxId = (recutItem.meta && recutItem.meta.slicingMode === 'box') ? recutItem.meta.boxId : null;
-                const coords = getRecutSlideCoords(recutItem);
-                if (coords) {
-                    state.recutTempCoords = {
-                        sx: coords.sx,
-                        sy: coords.sy,
-                        cropW: coords.cropW,
-                        cropH: coords.cropH
-                    };
-                }
-            }
-            if (elements.btnSlice) elements.btnSlice.disabled = true;
-            updateSidebarControlsState();
-            switchTab('tab-live-grid');
-            switchMobileTab('edit');
-            drawLiveGrid();
-            
-            setTimeout(() => {
-                focusOnRecutArea();
-            }, 100);
-            
-            showToast("Hãy điều chỉnh lưới/khung vẽ, sau đó bấm ✓ trên ảnh để lưu hoặc ✕ để hủy!", "info", 5000);
-        });
-        resultItem.appendChild(btnEdit);
+
 
         const imgEl = document.createElement('img');
         imgEl.src = dataUrl;
