@@ -4573,7 +4573,7 @@ input[type="number"] {
 .result-item-btn-copy {
     position: absolute;
     top: 6px;
-    right: 96px; /* 6 (del) + 30 (dl) + 30 (edit) + 30 (copy) */
+    right: 66px; /* 6 (del) + 30 (dl) + 30 (copy) */
     background: rgba(16, 185, 129, 0.85); /* Màu xanh lá */
     border: 1px solid rgba(255, 255, 255, 0.25);
     color: #fff;
