@@ -146,13 +146,13 @@ export async function loadLocalProjectState() {
         }
 
         if (stateData.imageBase64) {
-            elements.fileName.textContent = stateData.name;
-            elements.fileSize.textContent = `(${(stateData.size / 1024).toFixed(1)} KB)`;
-            elements.dropzonePrompt.style.display = 'none';
+            if (elements.fileName) elements.fileName.textContent = stateData.name;
+            if (elements.fileSize) elements.fileSize.textContent = `(${(stateData.size / 1024).toFixed(1)} KB)`;
+            if (elements.dropzonePrompt) elements.dropzonePrompt.style.display = 'none';
             if (elements.btnUploadTrigger) elements.btnUploadTrigger.style.display = 'none';
-            elements.fileInfo.style.display = 'flex';
-            elements.dropzone.classList.add('has-image');
-            elements.appContent.classList.add('has-image');
+            if (elements.fileInfo) elements.fileInfo.style.display = 'flex';
+            if (elements.dropzone) elements.dropzone.classList.add('has-image');
+            if (elements.appContent) elements.appContent.classList.add('has-image');
 
             const img = new Image();
             img.onload = () => {

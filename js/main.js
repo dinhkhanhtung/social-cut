@@ -866,20 +866,45 @@ const getRecutInteractionTarget = (imgX, imgY, scaleX, scaleY) => {
     return null;
 };
 
+const getCanvasScale = () => {
+    if (!state.currentImage || !previewCanvas) return { scaleX: 1, scaleY: 1 };
+    const rect = previewCanvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return { scaleX: 1, scaleY: 1 };
+    
+    const canvasW = rect.width;
+    const canvasH = rect.height;
+    const imgRatio = state.currentImage.naturalWidth / state.currentImage.naturalHeight;
+    const canvasRatio = canvasW / canvasH;
+    
+    let actualRenderedW = canvasW;
+    let actualRenderedH = canvasH;
+
+    if (canvasRatio > imgRatio) {
+        actualRenderedW = canvasH * imgRatio;
+    } else {
+        actualRenderedH = canvasW / imgRatio;
+    }
+
+    const scaleX = state.currentImage.naturalWidth / actualRenderedW;
+    const scaleY = state.currentImage.naturalHeight / actualRenderedH;
+    return { scaleX, scaleY };
+};
+
 const checkRecutButtonInteraction = (imgX, imgY) => {
     if (state.recutSlideId === null || !state.recutTempCoords) return null;
 
+    const { scaleX, scaleY } = getCanvasScale();
     const { sx, sy, cropW, cropH } = state.recutTempCoords;
     const centerX = sx + cropW / 2;
-    const btnRad = 24;
-    const btnY = sy + cropH - 35;
-    const confirmX = centerX + 35;
-    const cancelX = centerX - 35;
+    const btnRad = 24 * scaleX;
+    const btnY = sy + cropH - 35 * scaleY;
+    const confirmX = centerX + 35 * scaleX;
+    const cancelX = centerX - 35 * scaleX;
 
     const distConfirm = Math.hypot(imgX - confirmX, imgY - btnY);
     const distCancel = Math.hypot(imgX - cancelX, imgY - btnY);
 
-    const hitRad = 32;
+    const hitRad = 32 * scaleX;
     if (distConfirm <= hitRad) return 'confirm';
     if (distCancel <= hitRad) return 'cancel';
 
@@ -1406,36 +1431,37 @@ export function drawLiveGrid() {
             ctx.stroke();
         });
 
+        const { scaleX, scaleY } = getCanvasScale();
         const centerX = sx + cropW / 2;
-        const btnRad = 24;
-        const btnY = sy + cropH - 35;
-        const confirmX = centerX + 35;
-        const cancelX = centerX - 35;
+        const btnRad = 24 * scaleX;
+        const btnY = sy + cropH - 35 * scaleY;
+        const confirmX = centerX + 35 * scaleX;
+        const cancelX = centerX - 35 * scaleX;
 
         ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 8 * scaleX;
         ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 4;
+        ctx.shadowOffsetY = 4 * scaleY;
 
-        ctx.beginPath(); ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = gridLineColor; ctx.stroke();
-        ctx.beginPath(); ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI); ctx.fillStyle = '#10b981'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = gridLineColor; ctx.stroke();
+        ctx.beginPath(); ctx.arc(cancelX, btnY, btnRad, 0, 2 * Math.PI); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.lineWidth = 2.5 * scaleX; ctx.strokeStyle = gridLineColor; ctx.stroke();
+        ctx.beginPath(); ctx.arc(confirmX, btnY, btnRad, 0, 2 * Math.PI); ctx.fillStyle = '#10b981'; ctx.fill(); ctx.lineWidth = 2.5 * scaleX; ctx.strokeStyle = gridLineColor; ctx.stroke();
 
         ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
 
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4.0;
+        ctx.lineWidth = 4.0 * scaleX;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(cancelX - 7, btnY - 7); ctx.lineTo(cancelX + 7, btnY + 7);
-        ctx.moveTo(cancelX + 7, btnY - 7); ctx.lineTo(cancelX - 7, btnY + 7);
+        ctx.moveTo(cancelX - 7 * scaleX, btnY - 7 * scaleY); ctx.lineTo(cancelX + 7 * scaleX, btnY + 7 * scaleY);
+        ctx.moveTo(cancelX + 7 * scaleX, btnY - 7 * scaleY); ctx.lineTo(cancelX - 7 * scaleX, btnY + 7 * scaleY);
         ctx.stroke();
 
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4.0;
+        ctx.lineWidth = 4.0 * scaleX;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.beginPath();
-        ctx.moveTo(confirmX - 8, btnY); ctx.lineTo(confirmX - 3, btnY + 7); ctx.lineTo(confirmX + 8, btnY - 7);
+        ctx.moveTo(confirmX - 8 * scaleX, btnY); ctx.lineTo(confirmX - 3 * scaleX, btnY + 7 * scaleY); ctx.lineTo(confirmX + 8 * scaleX, btnY - 7 * scaleY);
         ctx.stroke();
 
         ctx.restore();
