@@ -4130,8 +4130,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         state.globalTargetW = Math.round(firstCropW * scale);
                         state.globalTargetH = Math.round(firstCropH * scale);
                     }
-                    targetW = state.globalTargetW;
-                    targetH = state.globalTargetH;
 
                     let count = 1;
                     for (let r = 0; r < rows; r++) {
@@ -4171,16 +4169,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             const resultId = state.resultIdCounter++;
                             const sliceName = `${String(startIndex + count).padStart(2, '0')}.${ext}`;
+                            
+                            const scale = getExportScale(cropW);
+                            const cellTargetW = Math.round(cropW * scale);
+                            const cellTargetH = Math.round(cropH * scale);
+
                             const meta = {
                                 slicingMode: 'grid',
                                 gridType: state.gridType,
                                 cellIndex: count - 1,
                                 row: r,
                                 col: c,
-                                targetW: targetW,
-                                targetH: targetH
+                                targetW: cellTargetW,
+                                targetH: cellTargetH
                             };
-                            processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
+                            processSlice(sx, sy, cropW, cropH, sliceName, resultId, cellTargetW, cellTargetH, meta);
                             count++;
                         }
                     }
@@ -4284,8 +4287,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.globalTargetW = Math.round(firstCropW * scale);
                     state.globalTargetH = Math.round(firstCropH * scale);
                 }
-                targetW = state.globalTargetW;
-                targetH = state.globalTargetH;
 
                 state.selectionBoxes.forEach((box, idx) => {
                     const sx = box.x + offset;
@@ -4311,13 +4312,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const resultId = state.resultIdCounter++;
                     const sliceName = `${String(startIndex + idx + 1).padStart(2, '0')}.${ext}`;
+                    
+                    const scale = getExportScale(cropW);
+                    const cellTargetW = Math.round(cropW * scale);
+                    const cellTargetH = Math.round(cropH * scale);
+
                     const meta = {
                         slicingMode: 'box',
                         boxId: box.id,
-                        targetW: targetW,
-                        targetH: targetH
+                        targetW: cellTargetW,
+                        targetH: cellTargetH
                     };
-                    processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, targetH, meta);
+                    processSlice(sx, sy, cropW, cropH, sliceName, resultId, cellTargetW, cellTargetH, meta);
                 });
             }
 

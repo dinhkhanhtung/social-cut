@@ -16,9 +16,9 @@ Giao diện ứng dụng được thiết kế theo phong cách hiện đại, t
   * Cho phép người dùng nhấp kéo chuột trực tiếp trên ảnh để tự vẽ các khung cắt tự do.
   * Hỗ trợ các tính năng bổ trợ mạnh mẽ: **Khóa tỷ lệ khung hình** (1:1, 4:5, 16:9,...), **Đồng dạng kích thước** giữa tất cả các khung vẽ và **Bắt dính thông minh (Smart Snapping)** giúp các khung tự động căn thẳng hàng với nhau.
 
-### 2. Đồng bộ kích thước slide đầu ra (Aspect Ratio Sync)
-* **Giải quyết bài toán Carousel bị giật**: Khi chia lưới thủ công hoặc vẽ tự do, các ô cắt thường bị lệch nhau vài pixel. 
-* **Cơ chế tự động**: Ứng dụng tự động lấy kích thước của ô đầu tiên làm chuẩn gốc và ép tất cả các slide tiếp theo về đúng tỷ lệ kích thước này (bằng thuật toán kéo giãn chất lượng cao). Kết quả là tất cả các slide xuất ra trong file ZIP luôn có kích thước pixel chính xác bằng nhau chằn chặn, hiển thị mượt mà trên Instagram/TikTok.
+### 2. Giữ nguyên tỷ lệ kích thước gốc khi cắt (No Distortion Slicing)
+* **Giải quyết bài toán ảnh bị méo**: Khi chia lưới không đều (Custom Grid) hoặc vẽ nhiều khung cắt (Box Mode) có kích thước và tỷ lệ khác nhau, ứng dụng tự động tính toán kích thước đầu ra động cho từng ô/khung cắt dựa trên kích thước vùng cắt thực tế nhân với tỷ lệ scale xuất khẩu.
+* **Cơ chế tự động**: Đảm bảo tất cả các slide xuất ra luôn giữ đúng tỷ lệ gốc của vùng cắt, tuyệt đối không bị kéo giãn hay bóp méo hình ảnh, trong khi vẫn tối ưu hóa độ phân giải HD sắc nét.
 
 ### 3. Tự động xén rìa ngoài thông minh (Smart Outer Edge Padding)
 * **Xén viền trong (Offset)**: Giúp loại bỏ khoảng trắng hoặc đường chỉ đen phân cách ở giữa các ô ghép.
