@@ -194,7 +194,14 @@ export function restoreResultGrid(loadedSlicedImages) {
         resultItem.classList.add('result-item');
         resultItem.dataset.id = resultId;
         resultItem.setAttribute('draggable', isFacebookMode ? 'false' : 'true');
-        resultItem.style.aspectRatio = `${targetW} / ${targetH}`;
+        
+        let displayRatio = targetW / targetH;
+        if (displayRatio > 2.0) {
+            displayRatio = 2.0;
+        } else if (displayRatio < 0.5) {
+            displayRatio = 0.5;
+        }
+        resultItem.style.aspectRatio = String(displayRatio);
 
         const grip = document.createElement('div');
         grip.classList.add('result-item-grip');

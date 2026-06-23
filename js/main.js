@@ -1826,7 +1826,13 @@ export const handleConfirmRecut = () => {
 
     const resultItem = resultGrid.querySelector(`.result-item[data-id="${recutItem.id}"]`);
     if (resultItem) {
-        resultItem.style.aspectRatio = `${targetW} / ${targetH}`;
+        let displayRatio = targetW / targetH;
+        if (displayRatio > 2.0) {
+            displayRatio = 2.0;
+        } else if (displayRatio < 0.5) {
+            displayRatio = 0.5;
+        }
+        resultItem.style.aspectRatio = String(displayRatio);
         const imgEl = resultItem.querySelector('.result-img');
         if (imgEl) imgEl.src = dataUrl;
         
