@@ -5049,7 +5049,7 @@ input[type="number"] {
 }
 
 /* Checkbox Keep Slide */
-.keep-slide-label {
+.result-item .keep-slide-label {
     position: absolute;
     bottom: 6px;
     right: 6px;
@@ -5073,11 +5073,11 @@ input[type="number"] {
 
 /* Hiển thị khi hover thẻ kết quả hoặc khi slide đang được tích giữ */
 .result-item:hover .keep-slide-label,
-.keep-slide-label:has(.keep-slide-checkbox:checked) {
+.result-item .keep-slide-label:has(.keep-slide-checkbox:checked) {
     opacity: 1;
 }
 
-.keep-slide-label:hover {
+.result-item .keep-slide-label:hover {
     background: rgba(16, 185, 129, 0.2);
     border-color: #34d399;
 }
