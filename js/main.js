@@ -5352,8 +5352,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         let minLimit = 0; let maxLimit = width;
                         if (idx > 0) minLimit = state.colsX[idx - 1] + 20;
                         if (idx < state.colsX.length - 1) maxLimit = state.colsX[idx + 1] - 20;
-                        const finalMin = (idx === 0) ? -20 : minLimit;
-                        const finalMax = (idx === state.colsX.length - 1) ? width + 20 : maxLimit;
+                        const scaleX = coords.scaleX;
+                        const dragOutLimit = 80 * scaleX; // Cho phép kéo ra ngoài tối đa 80px màn hình
+                        const finalMin = (idx === 0) ? -dragOutLimit : minLimit;
+                        const finalMax = (idx === state.colsX.length - 1) ? width + dragOutLimit : maxLimit;
                         state.colsX[idx] = Math.max(finalMin, Math.min(finalMax, targetX));
                         
                     } else if (state.dragTarget.type === 'row') {
@@ -5382,8 +5384,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         let minLimit = 0; let maxLimit = height;
                         if (idx > 0) minLimit = state.rowsY[idx - 1] + 20;
                         if (idx < state.rowsY.length - 1) maxLimit = state.rowsY[idx + 1] - 20;
-                        const finalMin = (idx === 0) ? -20 : minLimit;
-                        const finalMax = (idx === state.rowsY.length - 1) ? height + 20 : maxLimit;
+                        const scaleY = coords.scaleY;
+                        const dragOutLimit = 80 * scaleY; // Cho phép kéo ra ngoài tối đa 80px màn hình
+                        const finalMin = (idx === 0) ? -dragOutLimit : minLimit;
+                        const finalMax = (idx === state.rowsY.length - 1) ? height + dragOutLimit : maxLimit;
                         state.rowsY[idx] = Math.max(finalMin, Math.min(finalMax, targetY));
                     }
 
@@ -5704,7 +5708,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (state.dragTarget.type === 'col') {
                     const width = state.currentImage.naturalWidth;
                     const val = state.colsX[idx];
-                    if (val < 15 || val > width - 15) {
+                    if (val < 0 || val > width) {
                         state.colsX.splice(idx, 1);
                         if (inputCols) {
                             inputCols.value = state.colsX.length + 1;
@@ -5715,7 +5719,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (state.dragTarget.type === 'row') {
                     const height = state.currentImage.naturalHeight;
                     const val = state.rowsY[idx];
-                    if (val < 15 || val > height - 15) {
+                    if (val < 0 || val > height) {
                         state.rowsY.splice(idx, 1);
                         if (inputRows) {
                             inputRows.value = state.rowsY.length + 1;
