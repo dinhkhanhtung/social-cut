@@ -4600,17 +4600,14 @@ input[type="number"] {
 
 /* Hiển thị nút trên giao diện di động (do không có sự kiện hover) */
 @media (max-width: 768px) {
-    .result-item .result-item-btn-edit {
+    .result-item .result-item-btn-copy {
         opacity: 1 !important;
         right: 66px !important;
         left: auto !important;
         top: 6px !important;
     }
-    .result-item .result-item-btn-copy {
+    .result-item .keep-slide-label {
         opacity: 1 !important;
-        right: 96px !important;
-        left: auto !important;
-        top: 6px !important;
     }
 }
 
@@ -5071,6 +5068,13 @@ input[type="number"] {
     width: 22px;
     height: 22px;
     box-sizing: border-box;
+    opacity: 0; /* Ẩn mặc định trên PC */
+}
+
+/* Hiển thị khi hover thẻ kết quả hoặc khi slide đang được tích giữ */
+.result-item:hover .keep-slide-label,
+.keep-slide-label:has(.keep-slide-checkbox:checked) {
+    opacity: 1;
 }
 
 .keep-slide-label:hover {
