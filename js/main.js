@@ -1556,6 +1556,7 @@ export function handleImageSelection(file) {
     }
 
     state.currentOriginalFile = file;
+    state.uploadedOriginalImageUrl = null;
 
     state.slicedImages = [];
     state.slicedBlobs = [];
@@ -2088,6 +2089,8 @@ function resetApp() {
     state.nextBoxId = 1;
     state.isCustomGrid = false;
     
+    state.uploadedOriginalImageUrl = null;
+    
     state.zoomScale = 1.0;
     state.panX = 0;
     state.panY = 0;
@@ -2095,8 +2098,8 @@ function resetApp() {
     state.isPanning = false;
     state.selectedBoxIdx = -1;
     
-    inputRows.value = 4;
-    inputCols.value = 3;
+    inputRows.value = 1;
+    inputCols.value = 4;
     inputOffset.value = 0;
     if (offsetNumberVal) {
         offsetNumberVal.value = 0;
@@ -2533,24 +2536,32 @@ async function saveProjectToDB() {
         return;
     }
 
-    console.log("Đang tải ảnh gốc lên Supabase Storage...");
-    
     try {
-        const fileExt = state.currentOriginalFile.name.split('.').pop() || 'png';
-        const fileName = `${state.syncKey}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await state.supabase.storage
-            .from('project-images')
-            .upload(fileName, state.currentOriginalFile, {
-                cacheControl: '3600',
-                upsert: false
-            });
+        let publicUrl = state.uploadedOriginalImageUrl;
 
-        if (uploadError) throw uploadError;
+        if (!publicUrl) {
+            console.log("Đang tải ảnh gốc lên Supabase Storage...");
+            const fileExt = state.currentOriginalFile.name.split('.').pop() || 'png';
+            const fileName = `${state.syncKey}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+            
+            const { data: uploadData, error: uploadError } = await state.supabase.storage
+                .from('project-images')
+                .upload(fileName, state.currentOriginalFile, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
 
-        const { data: { publicUrl } } = state.supabase.storage
-            .from('project-images')
-            .getPublicUrl(fileName);
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl: url } } = state.supabase.storage
+                .from('project-images')
+                .getPublicUrl(fileName);
+            
+            publicUrl = url;
+            state.uploadedOriginalImageUrl = url;
+        } else {
+            console.log("Sử dụng lại ảnh gốc đã tải lên trước đó:", publicUrl);
+        }
 
         const newProject = {
             sync_key: state.syncKey,
@@ -2894,6 +2905,7 @@ async function loadProject(id) {
         const response = await fetch(proj.image_url);
         const blob = await response.blob();
         state.currentOriginalFile = new File([blob], proj.name, { type: blob.type });
+        state.uploadedOriginalImageUrl = proj.image_url;
 
         state.slicingMode = proj.slicing_mode;
         state.gridType = proj.grid_type;

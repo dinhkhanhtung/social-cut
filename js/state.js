@@ -139,6 +139,7 @@ export const state = {
     gridType: 'even',          // 'even' | 'fb-1d3v' | 'fb-1n3v' | 'tiktok-carousel-916' | 'tiktok-carousel-34' | ...
     currentImage: null,
     currentOriginalFile: null,
+    uploadedOriginalImageUrl: null,
     slicedImages: [],          // Mảng { id, name, dataUrl, meta, sliceParams, keep }
     slicedBlobs: [],           // Mảng { id, name, blob }
     recutSlideId: null,
