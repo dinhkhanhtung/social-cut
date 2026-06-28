@@ -1534,7 +1534,13 @@ function processSlice(sx, sy, cropW, cropH, sliceName, resultId, targetW, target
     });
 
     sliceCanvas.toBlob((blob) => {
-        state.slicedBlobs.push({ id: resultId, name: sliceName, blob: blob });
+        const blobObj = state.slicedBlobs.find(b => b.id === resultId);
+        if (blobObj) {
+            blobObj.blob = blob;
+            blobObj.name = sliceName;
+        } else {
+            state.slicedBlobs.push({ id: resultId, name: sliceName, blob: blob });
+        }
     }, mimeType, quality);
 }
 
@@ -4351,7 +4357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mobileNavResult) mobileNavResult.classList.remove('disabled');
             switchMobileTab('result');
 
-            restoreResultGrid(state.slicedImages);
+            restoreResultGrid(state.slicedImages, true);
 
             saveLocalProjectState();
             saveProjectToDB();

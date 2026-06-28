@@ -174,10 +174,12 @@ export const switchMobileTab = (tabId) => {
 };
 
 // --- Dựng Lưới ảnh kết quả và gắn sự kiện tương tác ---
-export function restoreResultGrid(loadedSlicedImages) {
+export function restoreResultGrid(loadedSlicedImages, skipRegenerate = false) {
     elements.resultGrid.innerHTML = '';
     state.slicedImages = loadedSlicedImages || [];
-    state.slicedBlobs = [];
+    if (!skipRegenerate) {
+        state.slicedBlobs = [];
+    }
     
     if (state.slicedImages.length === 0) return;
     
@@ -443,7 +445,9 @@ export function restoreResultGrid(loadedSlicedImages) {
         elements.btnDownloadZip.disabled = false;
     }
 
-    regenerateSlicedImagesMimeType();
+    if (!skipRegenerate) {
+        regenerateSlicedImagesMimeType();
+    }
 }
 
 // --- Drag & Drop Event Handlers ---

@@ -16,9 +16,19 @@ export async function downloadAllImages() {
     btnDownloadZip.disabled = true;
 
     try {
+        // Loại bỏ các blob trùng lặp theo ID trước khi tải xuống
+        const uniqueBlobs = [];
+        const seenIds = new Set();
+        for (const item of state.slicedBlobs) {
+            if (!seenIds.has(item.id)) {
+                seenIds.add(item.id);
+                uniqueBlobs.push(item);
+            }
+        }
+
         // Sequential download with a small delay (100ms) to ensure browser doesn't block multiple files
-        for (let i = 0; i < state.slicedBlobs.length; i++) {
-            const item = state.slicedBlobs[i];
+        for (let i = 0; i < uniqueBlobs.length; i++) {
+            const item = uniqueBlobs[i];
             const url = URL.createObjectURL(item.blob);
             const a = document.createElement('a');
             a.href = url;
