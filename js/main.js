@@ -350,8 +350,17 @@ export function focusOnRecutArea() {
 export const resetGridToEven = () => {
     if (!state.currentImage) return;
     
-    const rows = parseInt(inputRows.value) || 1;
-    const cols = parseInt(inputCols.value) || 1;
+    let rows = parseInt(inputRows.value);
+    if (isNaN(rows) || rows < 1) rows = 1;
+    else if (rows > 20) rows = 20;
+
+    let cols = parseInt(inputCols.value);
+    if (isNaN(cols) || cols < 1) cols = 1;
+    else if (cols > 20) cols = 20;
+
+    if (inputRows && parseInt(inputRows.value) !== rows) inputRows.value = rows;
+    if (inputCols && parseInt(inputCols.value) !== cols) inputCols.value = cols;
+
     const width = state.currentImage.naturalWidth;
     const height = state.currentImage.naturalHeight;
 
@@ -381,7 +390,11 @@ const updateGridParamsSmart = (type) => {
     const height = state.currentImage.naturalHeight;
 
     if (type === 'cols') {
-        const cols = parseInt(inputCols.value) || 1;
+        let cols = parseInt(inputCols.value);
+        if (isNaN(cols) || cols < 1) cols = 1;
+        else if (cols > 20) cols = 20;
+
+        if (inputCols && parseInt(inputCols.value) !== cols) inputCols.value = cols;
         const targetLen = cols - 1;
 
         state.colsX.sort((a, b) => a - b);
@@ -413,7 +426,11 @@ const updateGridParamsSmart = (type) => {
             }
         }
     } else if (type === 'rows') {
-        const rows = parseInt(inputRows.value) || 1;
+        let rows = parseInt(inputRows.value);
+        if (isNaN(rows) || rows < 1) rows = 1;
+        else if (rows > 20) rows = 20;
+
+        if (inputRows && parseInt(inputRows.value) !== rows) inputRows.value = rows;
         const targetLen = rows - 1;
 
         state.rowsY.sort((a, b) => a - b);
@@ -3879,8 +3896,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (inputRows) inputRows.addEventListener('input', handleManualInputChange);
-    if (inputCols) inputCols.addEventListener('input', handleManualInputChange);
+    if (inputRows) {
+        inputRows.addEventListener('input', handleManualInputChange);
+        inputRows.addEventListener('change', handleManualInputChange);
+        inputRows.addEventListener('blur', () => {
+            let val = parseInt(inputRows.value);
+            if (isNaN(val) || val < 1) inputRows.value = 1;
+            else if (val > 20) inputRows.value = 20;
+            handleManualInputChange({ target: inputRows });
+        });
+    }
+    if (inputCols) {
+        inputCols.addEventListener('input', handleManualInputChange);
+        inputCols.addEventListener('change', handleManualInputChange);
+        inputCols.addEventListener('blur', () => {
+            let val = parseInt(inputCols.value);
+            if (isNaN(val) || val < 1) inputCols.value = 1;
+            else if (val > 20) inputCols.value = 20;
+            handleManualInputChange({ target: inputCols });
+        });
+    }
     if (inputOffset) inputOffset.addEventListener('input', handleManualInputChange);
 
     // Canvas Background Checkerboard/Solid Toggle
