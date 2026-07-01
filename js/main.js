@@ -358,9 +358,6 @@ export const resetGridToEven = () => {
     if (isNaN(cols) || cols < 1) cols = 1;
     else if (cols > 20) cols = 20;
 
-    if (inputRows && parseInt(inputRows.value) !== rows) inputRows.value = rows;
-    if (inputCols && parseInt(inputCols.value) !== cols) inputCols.value = cols;
-
     const width = state.currentImage.naturalWidth;
     const height = state.currentImage.naturalHeight;
 
@@ -394,7 +391,6 @@ const updateGridParamsSmart = (type) => {
         if (isNaN(cols) || cols < 1) cols = 1;
         else if (cols > 20) cols = 20;
 
-        if (inputCols && parseInt(inputCols.value) !== cols) inputCols.value = cols;
         const targetLen = cols - 1;
 
         state.colsX.sort((a, b) => a - b);
@@ -430,7 +426,6 @@ const updateGridParamsSmart = (type) => {
         if (isNaN(rows) || rows < 1) rows = 1;
         else if (rows > 20) rows = 20;
 
-        if (inputRows && parseInt(inputRows.value) !== rows) inputRows.value = rows;
         const targetLen = rows - 1;
 
         state.rowsY.sort((a, b) => a - b);
@@ -3896,23 +3891,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Hàm hỗ trợ chuẩn hóa giá trị hiển thị trên ô nhập liệu
+    const normalizeInputValue = (input) => {
+        if (!input) return;
+        let val = parseInt(input.value);
+        const min = parseInt(input.min) || 1;
+        const max = parseInt(input.max) || 20;
+        if (isNaN(val) || val < min) {
+            input.value = min;
+        } else if (val > max) {
+            input.value = max;
+        }
+    };
+
     if (inputRows) {
         inputRows.addEventListener('input', handleManualInputChange);
-        inputRows.addEventListener('change', handleManualInputChange);
+        inputRows.addEventListener('change', () => {
+            normalizeInputValue(inputRows);
+            handleManualInputChange({ target: inputRows });
+        });
         inputRows.addEventListener('blur', () => {
-            let val = parseInt(inputRows.value);
-            if (isNaN(val) || val < 1) inputRows.value = 1;
-            else if (val > 20) inputRows.value = 20;
+            normalizeInputValue(inputRows);
             handleManualInputChange({ target: inputRows });
         });
     }
     if (inputCols) {
         inputCols.addEventListener('input', handleManualInputChange);
-        inputCols.addEventListener('change', handleManualInputChange);
+        inputCols.addEventListener('change', () => {
+            normalizeInputValue(inputCols);
+            handleManualInputChange({ target: inputCols });
+        });
         inputCols.addEventListener('blur', () => {
-            let val = parseInt(inputCols.value);
-            if (isNaN(val) || val < 1) inputCols.value = 1;
-            else if (val > 20) inputCols.value = 20;
+            normalizeInputValue(inputCols);
             handleManualInputChange({ target: inputCols });
         });
     }
