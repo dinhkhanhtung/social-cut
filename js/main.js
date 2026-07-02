@@ -2332,7 +2332,7 @@ function checkPasswordLock() {
             }
         }
         if (progressFill) {
-            progressFill.style.width = `${progress}%`;
+            progressFill.style.transform = `scaleX(${progress / 100})`;
         }
     }, intervalTime);
 }

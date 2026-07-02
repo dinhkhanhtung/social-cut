@@ -1,0 +1,12 @@
+{
+  "detector": {
+    "ignoreRules": [
+      "flat-type-hierarchy"
+    ],
+    "ignoreFiles": [
+      "backup_stable/**",
+      "app.backup*"
+    ],
+    "ignoreValues": []
+  }
+}
