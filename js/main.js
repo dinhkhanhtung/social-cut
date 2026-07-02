@@ -2982,7 +2982,7 @@ async function loadProject(id) {
         }
 
         if (gridEvenParameters) {
-            gridEvenParameters.style.display = (state.gridType === 'even' || state.gridType === 'insta-square' || state.gridType === 'insta-portrait' || state.gridType === 'tiktok-carousel-916' || state.gridType === 'tiktok-carousel-34') ? 'flex' : 'none';
+            gridEvenParameters.style.display = (state.gridType === 'even' || state.gridType === 'insta-square' || state.gridType === 'insta-portrait' || state.gridType === 'tiktok-carousel-916' || state.gridType === 'tiktok-carousel-34') ? 'grid' : 'none';
         }
 
         dropzonePrompt.style.display = 'none';
